@@ -1,7 +1,8 @@
 import { useEffect } from 'react';
-import { View, ActivityIndicator } from 'react-native';
+import { View, ActivityIndicator, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../contexts/AuthContext';
+import { Colors } from '../constants/theme';
 
 export default function Index() {
   const { user, isLoading } = useAuth();
@@ -16,12 +17,18 @@ export default function Index() {
         return;
       }
 
-      if (user.role === 'employer') {
-        router.replace('/(employer)/dashboard');
-      } else if (user.role === 'employee') {
-        router.replace('/(employee)/home');
-      } else if (user.role === 'admin') {
-        router.replace('/(admin)/dashboard');
+      switch (user.role) {
+        case 'employer':
+          router.replace('/(employer)/dashboard');
+          break;
+        case 'employee':
+          router.replace('/(employee)/home');
+          break;
+        case 'admin':
+          router.replace('/(admin)/dashboard');
+          break;
+        default:
+          router.replace('/(auth)/login');
       }
     }, 100);
 
@@ -29,8 +36,17 @@ export default function Index() {
   }, [user, isLoading]);
 
   return (
-    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-      <ActivityIndicator size="large" color="#6366f1" />
+    <View style={styles.container}>
+      <ActivityIndicator size="large" color={Colors.primary} />
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: Colors.background,
+  },
+});
