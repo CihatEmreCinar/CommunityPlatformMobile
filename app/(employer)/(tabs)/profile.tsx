@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import {
   View,
+  Image,
   Text,
   TextInput,
   StyleSheet,
@@ -11,9 +12,9 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
-import { employerService } from '../../../services/employerService';
-import { EmployerProfile } from '../../../types/dashboard';
+import { employerService, EmployerProfile } from '../../../services/employerService';
 import { Colors, Typography, Spacing, Radius, Shadows } from '../../../constants/theme';
+
 
 export default function EmployerProfileScreen() {
   const router = useRouter();
@@ -25,6 +26,8 @@ export default function EmployerProfileScreen() {
   const [workshopTitle, setWorkshopTitle] = useState('');
   const [yearsExperience, setYearsExperience] = useState('');
   const [specializationText, setSpecializationText] = useState('');
+  const [bio, setBio] = useState('');
+  const [profileImageUrl, setProfileImageUrl] = useState('');
 
   useEffect(() => {
     loadProfile();
@@ -37,6 +40,8 @@ export default function EmployerProfileScreen() {
       setWorkshopTitle(data.workshopTitle || '');
       setYearsExperience(data.yearsExperience?.toString() || '');
       setSpecializationText(data.specialization?.join(', ') || '');
+      setBio(data.bio || '');
+      setProfileImageUrl(data.profileImageUrl || '');
     } catch (error) {
       Alert.alert('Hata', 'Profil yüklenemedi.');
     } finally {
@@ -61,6 +66,8 @@ export default function EmployerProfileScreen() {
         workshopTitle: workshopTitle.trim(),
         specialization,
         yearsExperience: yearsExperience ? parseInt(yearsExperience, 10) : undefined,
+        bio: bio.trim() || undefined,
+        profileImageUrl: profileImageUrl.trim() || undefined,
       });
 
       setProfile(updated);
@@ -106,18 +113,20 @@ export default function EmployerProfileScreen() {
           )}
         </TouchableOpacity>
       </View>
-
-      {/* Avatar Section */}
+{/* Avatar Section */}
       <View style={styles.avatarSection}>
-        <View style={styles.avatarPlaceholder}>
-          <MaterialIcons name="business" size={36} color={Colors.primary} />
-        </View>
+        {profile?.profileImageUrl ? (
+          <Image source={{ uri: profile.profileImageUrl }} style={styles.avatarImage} />
+        ) : (
+          <View style={styles.avatarPlaceholder}>
+            <MaterialIcons name="business" size={36} color={Colors.primary} />
+          </View>
+        )}
         <View style={styles.rankPill}>
           <MaterialIcons name="workspace-premium" size={14} color={Colors.onPrimary} />
           <Text style={styles.rankPillText}>{profile?.employerRank}</Text>
         </View>
       </View>
-
       {/* Stats Row */}
       <View style={styles.statsRow}>
         <View style={styles.statItem}>
@@ -152,6 +161,39 @@ export default function EmployerProfileScreen() {
             />
           ) : (
             <Text style={styles.valueText}>{profile?.workshopTitle || 'Belirtilmemiş'}</Text>
+          )}
+        </View>
+
+        <View style={styles.fieldGroup}>
+          <Text style={styles.label}>Hakkında</Text>
+          {isEditing ? (
+            <TextInput
+              style={[styles.input, styles.textArea]}
+              value={bio}
+              onChangeText={setBio}
+              placeholder="Kendinden ve atölyelerinden bahset..."
+              placeholderTextColor={Colors.outlineVariant}
+              multiline
+              numberOfLines={4}
+            />
+          ) : (
+            <Text style={styles.valueText}>{profile?.bio || 'Belirtilmemiş'}</Text>
+          )}
+        </View>
+
+        <View style={styles.fieldGroup}>
+          <Text style={styles.label}>Profil Fotoğrafı URL</Text>
+          {isEditing ? (
+            <TextInput
+              style={styles.input}
+              value={profileImageUrl}
+              onChangeText={setProfileImageUrl}
+              placeholder="https://..."
+              placeholderTextColor={Colors.outlineVariant}
+              autoCapitalize="none"
+            />
+          ) : (
+            <Text style={styles.valueText}>{profile?.profileImageUrl || 'Belirtilmemiş'}</Text>
           )}
         </View>
 
@@ -267,6 +309,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+  avatarImage: {
+    width: 88,
+    height: 88,
+    borderRadius: Radius.full,
+  },
   rankPill: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -326,6 +373,10 @@ const styles = StyleSheet.create({
     borderRadius: Radius.md,
     paddingHorizontal: Spacing.sm,
     paddingVertical: Spacing.sm,
+  },
+  textArea: {
+    minHeight: 90,
+    textAlignVertical: 'top',
   },
   valueText: {
     ...Typography.bodyLg,

@@ -10,10 +10,10 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
-import { useAuth } from '../../contexts/AuthContext';
-import { employerService } from '../../services/employerService';
-import { EmployerDashboard, EmployerProfile } from '../../types/dashboard';
-import { Colors, Typography, Spacing, Radius, Shadows } from '../../constants/theme';
+import { useAuth } from '../../../contexts/AuthContext';
+import { employerService } from '../../../services/employerService';
+import { EmployerDashboard } from '../../../types/dashboard';
+import { EmployerProfile } from '../../../services/employerService';import { Colors, Typography, Spacing, Radius, Shadows } from '../../../constants/theme';
 
 export default function EmployerDashboardScreen() {
   const { user, logout } = useAuth();

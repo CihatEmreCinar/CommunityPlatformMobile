@@ -11,10 +11,10 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
-import { useAuth } from '../../contexts/AuthContext';
-import { workshopService } from '../../services/workshopService';
-import { Workshop } from '../../types/workshop';
-import { Colors, Typography, Spacing, Radius, Shadows } from '../../constants/theme';
+import { useAuth } from '../../../contexts/AuthContext';
+import { workshopService } from '../../../services/workshopService';
+import { Workshop } from '../../../types/workshop';
+import { Colors, Typography, Spacing, Radius, Shadows } from '../../../constants/theme';
 
 export default function EmployeeHomeScreen() {
   const { user, logout } = useAuth();
@@ -70,7 +70,37 @@ export default function EmployeeHomeScreen() {
         <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} colors={[Colors.primary]} />
       }
     >
-      {/* Header */}
+      <View style={styles.header}>
+  <View>
+    <Text style={styles.greeting}>Merhaba, {user?.firstName}</Text>
+    <Text style={styles.subGreeting}>Bugün ne keşfetmek istersin?</Text>
+  </View>
+
+  <View style={styles.headerActions}>
+    <TouchableOpacity
+      onPress={() => router.push('/(employee)/profile')}
+      style={styles.iconButton}
+    >
+      <MaterialIcons
+        name="person"
+        size={22}
+        color={Colors.onSurfaceVariant}
+      />
+    </TouchableOpacity>
+
+    <TouchableOpacity
+      onPress={handleLogout}
+      style={styles.iconButton}
+    >
+      <MaterialIcons
+        name="logout"
+        size={20}
+        color={Colors.onSurfaceVariant}
+      />
+    </TouchableOpacity>
+  </View>
+</View>
+      {/* Header 
       <View style={styles.header}>
         <View>
           <Text style={styles.greeting}>Merhaba, {user?.firstName}</Text>
@@ -79,7 +109,7 @@ export default function EmployeeHomeScreen() {
         <TouchableOpacity onPress={handleLogout} style={styles.logoutButton}>
           <MaterialIcons name="logout" size={20} color={Colors.onSurfaceVariant} />
         </TouchableOpacity>
-      </View>
+      </View>*/}
 
       {/* XP Card */}
       <View style={styles.xpCard}>
@@ -244,6 +274,15 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.surfaceContainerLowest,
     ...Shadows.sm,
   },
+  headerActions: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  gap: 12,
+},
+
+iconButton: {
+  padding: 8,
+},
   xpCard: {
     flexDirection: 'row',
     alignItems: 'center',

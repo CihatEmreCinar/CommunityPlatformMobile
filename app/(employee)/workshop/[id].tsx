@@ -96,10 +96,14 @@ export default function WorkshopDetailScreen() {
         <View style={styles.content}>
           {/* Title & Employer */}
           <Text style={styles.title}>{workshop.title}</Text>
-          <View style={styles.employerRow}>
+       <TouchableOpacity
+            style={styles.employerRow}
+            onPress={() => router.push(`/(employee)/employer/${workshop.employerId}` as any)}
+          >
             <MaterialIcons name="person" size={16} color={Colors.onSurfaceVariant} />
             <Text style={styles.employerName}>{workshop.employerName}</Text>
-          </View>
+            <MaterialIcons name="chevron-right" size={16} color={Colors.outline} />
+          </TouchableOpacity>
 
           {/* Rating */}
           {workshop.avgRating > 0 && (
