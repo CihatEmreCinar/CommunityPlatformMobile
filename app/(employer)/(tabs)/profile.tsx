@@ -13,8 +13,9 @@ import {
 import { useRouter } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
 import { employerService, EmployerProfile } from '../../../services/employerService';
+import { categoryService } from '../../../services/categoryService';
+import { Category } from '../../../types/category';
 import { Colors, Typography, Spacing, Radius, Shadows } from '../../../constants/theme';
-
 
 export default function EmployerProfileScreen() {
   const router = useRouter();
@@ -29,8 +30,12 @@ export default function EmployerProfileScreen() {
   const [bio, setBio] = useState('');
   const [profileImageUrl, setProfileImageUrl] = useState('');
 
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>([]);
+
   useEffect(() => {
     loadProfile();
+    categoryService.getAll().then(setCategories).catch(() => {});
   }, []);
 
   async function loadProfile() {
@@ -42,11 +47,18 @@ export default function EmployerProfileScreen() {
       setSpecializationText(data.specialization?.join(', ') || '');
       setBio(data.bio || '');
       setProfileImageUrl(data.profileImageUrl || '');
+      setSelectedCategoryIds(data.categoryIds || []);
     } catch (error) {
       Alert.alert('Hata', 'Profil yüklenemedi.');
     } finally {
       setIsLoading(false);
     }
+  }
+
+  function toggleCategory(id: string) {
+    setSelectedCategoryIds((prev) =>
+      prev.includes(id) ? prev.filter((c) => c !== id) : [...prev, id]
+    );
   }
 
   async function handleSave() {
@@ -68,6 +80,7 @@ export default function EmployerProfileScreen() {
         yearsExperience: yearsExperience ? parseInt(yearsExperience, 10) : undefined,
         bio: bio.trim() || undefined,
         profileImageUrl: profileImageUrl.trim() || undefined,
+        categoryIds: selectedCategoryIds,
       });
 
       setProfile(updated);
@@ -113,7 +126,8 @@ export default function EmployerProfileScreen() {
           )}
         </TouchableOpacity>
       </View>
-{/* Avatar Section */}
+
+      {/* Avatar Section */}
       <View style={styles.avatarSection}>
         {profile?.profileImageUrl ? (
           <Image source={{ uri: profile.profileImageUrl }} style={styles.avatarImage} />
@@ -127,6 +141,7 @@ export default function EmployerProfileScreen() {
           <Text style={styles.rankPillText}>{profile?.employerRank}</Text>
         </View>
       </View>
+
       {/* Stats Row */}
       <View style={styles.statsRow}>
         <View style={styles.statItem}>
@@ -241,8 +256,37 @@ export default function EmployerProfileScreen() {
         </View>
 
         <View style={styles.fieldGroup}>
-          <Text style={styles.label}>Kategori</Text>
-          <Text style={styles.valueText}>{profile?.categoryName || 'Belirtilmemiş'}</Text>
+          <Text style={styles.label}>Kategoriler</Text>
+          {isEditing ? (
+            <View style={styles.tagsRow}>
+              {categories.map((cat) => {
+                const isSelected = selectedCategoryIds.includes(cat.id);
+                return (
+                  <TouchableOpacity
+                    key={cat.id}
+                    style={[styles.tag, isSelected && styles.tagActive]}
+                    onPress={() => toggleCategory(cat.id)}
+                  >
+                    <Text style={[styles.tagText, isSelected && styles.tagTextActive]}>
+                      {cat.name}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          ) : (
+            <View style={styles.tagsRow}>
+              {profile?.categoryNames && profile.categoryNames.length > 0 ? (
+                profile.categoryNames.map((name) => (
+                  <View key={name} style={styles.tag}>
+                    <Text style={styles.tagText}>{name}</Text>
+                  </View>
+                ))
+              ) : (
+                <Text style={styles.valueText}>Belirtilmemiş</Text>
+              )}
+            </View>
+          )}
         </View>
       </View>
 
@@ -393,9 +437,15 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     borderRadius: Radius.full,
   },
+  tagActive: {
+    backgroundColor: Colors.primary,
+  },
   tagText: {
     ...Typography.labelSm,
     color: Colors.onPrimaryContainer,
+  },
+  tagTextActive: {
+    color: Colors.onPrimary,
   },
   cancelButton: {
     marginTop: Spacing.lg,

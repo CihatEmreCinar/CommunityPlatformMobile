@@ -1,3 +1,8 @@
+export interface WorkshopCategoryItem {
+  id: string;
+  name: string;
+}
+
 export interface Workshop {
   id: string;
   employerId: string;
@@ -14,6 +19,8 @@ export interface Workshop {
   endAt: string;
   status: string;
   tags: string[];
+  categoryIds: string[];
+  categoryNames: string[];
   avgRating: number;
   reviewCount: number;
   createdAt: string;
@@ -29,6 +36,6 @@ export interface WorkshopRequest {
   locationDetail?: string;
   startAt: string;
   endAt: string;
-  categoryId?: string;
+  categoryIds?: string[];
   tags?: string[];
 }

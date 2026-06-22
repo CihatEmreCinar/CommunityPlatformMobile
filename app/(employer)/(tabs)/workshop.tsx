@@ -125,7 +125,12 @@ export default function MyWorkshopsScreen() {
       ) : (
         <View style={styles.list}>
           {workshops.map((workshop) => (
-            <View key={workshop.id} style={styles.card}>
+            <TouchableOpacity
+              key={workshop.id}
+              style={styles.card}
+              onPress={() => router.push(`/(employer)/workshop/${workshop.id}` as any)}
+              activeOpacity={0.85}
+            >
               <View style={styles.cardHeader}>
                 <View style={styles.cardTitleWrap}>
                   <Text style={styles.cardTitle} numberOfLines={1}>
@@ -194,7 +199,7 @@ export default function MyWorkshopsScreen() {
                   </TouchableOpacity>
                 )}
               </View>
-            </View>
+            </TouchableOpacity>
           ))}
         </View>
       )}

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -13,6 +13,8 @@ import {
 import { useRouter } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
 import { workshopService } from '../../../services/workshopService';
+import { categoryService } from '../../../services/categoryService';
+import { Category } from '../../../types/category';
 import { Colors, Typography, Spacing, Radius, Shadows } from '../../../constants/theme';
 
 export default function CreateWorkshopScreen() {
@@ -30,6 +32,19 @@ export default function CreateWorkshopScreen() {
   const [startDate, setStartDate] = useState('');
   const [startTime, setStartTime] = useState('');
   const [endTime, setEndTime] = useState('');
+
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>([]);
+
+  useEffect(() => {
+    categoryService.getAll().then(setCategories).catch(() => {});
+  }, []);
+
+  function toggleCategory(id: string) {
+    setSelectedCategoryIds((prev) =>
+      prev.includes(id) ? prev.filter((c) => c !== id) : [...prev, id]
+    );
+  }
 
   function validate(): string | null {
     if (!title.trim()) return 'Başlık zorunludur.';
@@ -70,6 +85,7 @@ export default function CreateWorkshopScreen() {
         startAt,
         endAt,
         tags,
+        categoryIds: selectedCategoryIds,
       });
 
       Alert.alert('Başarılı', 'Atölye taslak olarak oluşturuldu.', [
@@ -236,6 +252,27 @@ export default function CreateWorkshopScreen() {
           </View>
         </View>
 
+        {/* Categories */}
+        <View style={styles.fieldGroup}>
+          <Text style={styles.label}>Kategoriler</Text>
+          <View style={styles.categoryWrap}>
+            {categories.map((cat) => {
+              const isSelected = selectedCategoryIds.includes(cat.id);
+              return (
+                <TouchableOpacity
+                  key={cat.id}
+                  style={[styles.categoryChip, isSelected && styles.categoryChipActive]}
+                  onPress={() => toggleCategory(cat.id)}
+                >
+                  <Text style={[styles.categoryChipText, isSelected && styles.categoryChipTextActive]}>
+                    {cat.name}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        </View>
+
         {/* Tags */}
         <View style={styles.fieldGroup}>
           <Text style={styles.label}>Etiketler</Text>
@@ -356,6 +393,30 @@ const styles = StyleSheet.create({
     color: Colors.onSurfaceVariant,
   },
   toggleTextActive: {
+    color: Colors.onPrimary,
+  },
+  categoryWrap: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: Spacing.xs,
+  },
+  categoryChip: {
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: Spacing.xs,
+    borderRadius: Radius.full,
+    borderWidth: 1,
+    borderColor: Colors.surfaceVariant,
+    backgroundColor: Colors.surfaceContainerLowest,
+  },
+  categoryChipActive: {
+    backgroundColor: Colors.primary,
+    borderColor: Colors.primary,
+  },
+  categoryChipText: {
+    ...Typography.labelSm,
+    color: Colors.onSurfaceVariant,
+  },
+  categoryChipTextActive: {
     color: Colors.onPrimary,
   },
   noteBox: {

@@ -7,12 +7,15 @@ import {
   ActivityIndicator,
   TouchableOpacity,
   Alert,
+  TextInput,
 } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
 import { workshopService } from '../../../services/workshopService';
 import { enrollmentService } from '../../../services/enrollmentService';
+import { reviewService } from '../../../services/reviewService';
 import { Workshop } from '../../../types/workshop';
+import { Review } from '../../../types/review';
 import { Colors, Typography, Spacing, Radius, Shadows } from '../../../constants/theme';
 
 export default function WorkshopDetailScreen() {
@@ -22,8 +25,17 @@ export default function WorkshopDetailScreen() {
   const [isLoading, setIsLoading] = useState(true);
   const [isEnrolling, setIsEnrolling] = useState(false);
 
+  const [reviews, setReviews] = useState<Review[]>([]);
+  const [canReview, setCanReview] = useState(false);
+  const [hasReviewed, setHasReviewed] = useState(false);
+  const [rating, setRating] = useState(0);
+  const [comment, setComment] = useState('');
+  const [isSubmittingReview, setIsSubmittingReview] = useState(false);
+
   useEffect(() => {
     loadWorkshop();
+    loadReviews();
+    checkEligibility();
   }, [id]);
 
   async function loadWorkshop() {
@@ -37,6 +49,25 @@ export default function WorkshopDetailScreen() {
       setIsLoading(false);
     }
   }
+
+  async function loadReviews() {
+    try {
+      const data = await reviewService.getAll(id);
+      setReviews(data);
+    } catch (error) {
+      console.log('Yorumlar yüklenemedi', error);
+    }
+  }
+
+async function checkEligibility() {
+  try {
+    const enrollments = await enrollmentService.getMine();
+    const myEnrollment = enrollments.find((e) => e.workshopId === id);
+    setCanReview(myEnrollment?.status === 'attended');
+  } catch (error) {
+    console.log('Kayıt durumu kontrol edilemedi', error);
+  }
+}
 
   async function handleEnroll() {
     if (!workshop) return;
@@ -54,6 +85,30 @@ export default function WorkshopDetailScreen() {
       setIsEnrolling(false);
     }
   }
+
+  async function handleSubmitReview() {
+    if (rating === 0) {
+      Alert.alert('Hata', 'Lütfen bir puan seçin.');
+      return;
+    }
+
+    setIsSubmittingReview(true);
+    try {
+      await reviewService.create(id, { rating, comment: comment.trim() || undefined });
+      setRating(0);
+      setComment('');
+      setHasReviewed(true);
+      await loadReviews();
+      await loadWorkshop();
+      Alert.alert('Başarılı', 'Yorumun eklendi.');
+    } catch (error: any) {
+      const message = error?.response?.data?.message || 'Yorum eklenemedi.';
+      Alert.alert('Hata', message);
+    } finally {
+      setIsSubmittingReview(false);
+    }
+  }
+  
 
   if (isLoading) {
     return (
@@ -78,6 +133,8 @@ export default function WorkshopDetailScreen() {
     minute: '2-digit',
   })} - ${endDate.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}`;
 
+  const showReviewForm = canReview && !hasReviewed;
+
   return (
     <View style={styles.flex}>
       <Stack.Screen options={{ headerShown: false }} />
@@ -96,7 +153,7 @@ export default function WorkshopDetailScreen() {
         <View style={styles.content}>
           {/* Title & Employer */}
           <Text style={styles.title}>{workshop.title}</Text>
-       <TouchableOpacity
+          <TouchableOpacity
             style={styles.employerRow}
             onPress={() => router.push(`/(employee)/employer/${workshop.employerId}` as any)}
           >
@@ -149,6 +206,80 @@ export default function WorkshopDetailScreen() {
               ))}
             </View>
           )}
+
+          {/* Review Form */}
+          {showReviewForm && (
+            <View style={styles.reviewFormSection}>
+              <Text style={styles.sectionTitle}>Deneyimini Paylaş</Text>
+              <View style={styles.starRow}>
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <TouchableOpacity key={star} onPress={() => setRating(star)}>
+                    <MaterialIcons
+                      name={star <= rating ? 'star' : 'star-border'}
+                      size={32}
+                      color={Colors.amber}
+                    />
+                  </TouchableOpacity>
+                ))}
+              </View>
+              <TextInput
+                style={styles.reviewInput}
+                placeholder="Yorumunu yaz (opsiyonel)"
+                placeholderTextColor={Colors.outlineVariant}
+                value={comment}
+                onChangeText={setComment}
+                multiline
+                numberOfLines={3}
+              />
+              <TouchableOpacity
+                style={[styles.submitReviewButton, isSubmittingReview && styles.enrollButtonDisabled]}
+                onPress={handleSubmitReview}
+                disabled={isSubmittingReview}
+                activeOpacity={0.85}
+              >
+                {isSubmittingReview ? (
+                  <ActivityIndicator color={Colors.onPrimary} />
+                ) : (
+                  <Text style={styles.submitReviewButtonText}>Yorumu Gönder</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          )}
+
+          {/* Reviews List */}
+          <View style={styles.reviewsSection}>
+            <Text style={styles.sectionTitle}>
+              Değerlendirmeler {reviews.length > 0 ? `(${reviews.length})` : ''}
+            </Text>
+            {reviews.length === 0 ? (
+              <Text style={styles.emptyReviewText}>Henüz değerlendirme yok.</Text>
+            ) : (
+              reviews.map((r) => (
+                <View key={r.id} style={styles.reviewCard}>
+                  <View style={styles.reviewHeader}>
+                    <Text style={styles.reviewUserName}>{r.userName}</Text>
+                    <View style={styles.reviewStars}>
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <MaterialIcons
+                          key={star}
+                          name={star <= r.rating ? 'star' : 'star-border'}
+                          size={14}
+                          color={Colors.amber}
+                        />
+                      ))}
+                    </View>
+                  </View>
+                  {r.comment && <Text style={styles.reviewComment}>{r.comment}</Text>}
+                  {r.employerReply && (
+                    <View style={styles.replyBox}>
+                      <Text style={styles.replyLabel}>Atölyeci Yanıtı</Text>
+                      <Text style={styles.replyText}>{r.employerReply}</Text>
+                    </View>
+                  )}
+                </View>
+              ))
+            )}
+          </View>
         </View>
       </ScrollView>
 
@@ -326,6 +457,91 @@ const styles = StyleSheet.create({
   tagText: {
     ...Typography.labelSm,
     color: Colors.onSurfaceVariant,
+  },
+  reviewFormSection: {
+    marginTop: Spacing.lg,
+    gap: Spacing.sm,
+    backgroundColor: Colors.surfaceContainerLowest,
+    borderRadius: Radius.lg,
+    borderWidth: 1,
+    borderColor: Colors.surfaceVariant,
+    padding: Spacing.md,
+  },
+  starRow: {
+    flexDirection: 'row',
+    gap: Spacing.xs,
+  },
+  reviewInput: {
+    ...Typography.bodyMd,
+    color: Colors.onSurface,
+    backgroundColor: Colors.surfaceContainerLow,
+    borderWidth: 1,
+    borderColor: Colors.surfaceVariant,
+    borderRadius: Radius.md,
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: Spacing.sm,
+    minHeight: 70,
+    textAlignVertical: 'top',
+  },
+  submitReviewButton: {
+    backgroundColor: Colors.primary,
+    borderRadius: Radius.md,
+    paddingVertical: Spacing.sm,
+    alignItems: 'center',
+  },
+  submitReviewButtonText: {
+    ...Typography.labelMd,
+    color: Colors.onPrimary,
+  },
+  reviewsSection: {
+    marginTop: Spacing.lg,
+    gap: Spacing.sm,
+  },
+  emptyReviewText: {
+    ...Typography.bodyMd,
+    color: Colors.onSurfaceVariant,
+  },
+  reviewCard: {
+    backgroundColor: Colors.surfaceContainerLowest,
+    borderRadius: Radius.lg,
+    borderWidth: 1,
+    borderColor: Colors.surfaceVariant,
+    padding: Spacing.sm,
+    gap: 4,
+  },
+  reviewHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  reviewUserName: {
+    ...Typography.labelMd,
+    fontSize: 14,
+    color: Colors.onSurface,
+  },
+  reviewStars: {
+    flexDirection: 'row',
+  },
+  reviewComment: {
+    ...Typography.bodyMd,
+    color: Colors.onSurfaceVariant,
+  },
+  replyBox: {
+    marginTop: Spacing.xs,
+    backgroundColor: Colors.primaryContainer,
+    borderRadius: Radius.sm,
+    padding: Spacing.sm,
+    gap: 2,
+  },
+  replyLabel: {
+    ...Typography.labelSm,
+    color: Colors.onPrimaryContainer,
+    fontWeight: '700',
+  },
+  replyText: {
+    ...Typography.bodyMd,
+    fontSize: 13,
+    color: Colors.onPrimaryContainer,
   },
   bottomBar: {
     position: 'absolute',

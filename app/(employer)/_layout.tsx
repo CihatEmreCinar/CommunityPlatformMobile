@@ -5,6 +5,7 @@ export default function EmployerLayout() {
     <Stack screenOptions={{ headerShown: false }}>
       <Stack.Screen name="(tabs)" />
       <Stack.Screen name="workshop/create" />
+      <Stack.Screen name="workshop/[id]" />
     </Stack>
   );
-}
+}   

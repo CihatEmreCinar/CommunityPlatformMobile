@@ -114,6 +114,20 @@ export default function EmployerPublicProfileScreen() {
         </View>
       )}
 
+      {/* Categories */}
+      {profile.categoryNames.length > 0 && (
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Kategoriler</Text>
+          <View style={styles.tagsRow}>
+            {profile.categoryNames.map((name) => (
+              <View key={name} style={styles.categoryTag}>
+                <Text style={styles.categoryTagText}>{name}</Text>
+              </View>
+            ))}
+          </View>
+        </View>
+      )}
+
       {/* Workshops */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Aktif Atölyeleri</Text>
@@ -269,4 +283,14 @@ const styles = StyleSheet.create({
   workshopPrice: { ...Typography.bodyMd, fontSize: 12, color: Colors.primary, marginTop: 2 },
   workshopRating: { flexDirection: 'row', alignItems: 'center', gap: 2 },
   workshopRatingText: { ...Typography.labelSm, color: Colors.onSurfaceVariant },
+  categoryTag: {
+    backgroundColor: Colors.secondaryContainer,
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: 4,
+    borderRadius: Radius.full,
+  },
+  categoryTagText: {
+    ...Typography.labelSm,
+    color: Colors.onSecondaryContainer,
+  },
 });

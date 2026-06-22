@@ -5,8 +5,8 @@ export interface EmployerProfile {
   userId: string;
   workshopTitle: string;
   specialization: string[];
-  categoryId: string | null;
-  categoryName: string | null;
+  categoryIds: string[];
+  categoryNames: string[];
   yearsExperience: number | null;
   coverImageUrl: string | null;
   profileImageUrl: string | null;
@@ -19,12 +19,13 @@ export interface EmployerProfile {
 export interface EmployerProfileRequest {
   workshopTitle: string;
   specialization?: string[];
-  categoryId?: string;
+  categoryIds?: string[];
   yearsExperience?: number;
   coverImageUrl?: string;
   profileImageUrl?: string;
   bio?: string;
 }
+
 export interface PublicWorkshopItem {
   id: string;
   title: string;
@@ -41,7 +42,7 @@ export interface EmployerPublicProfile {
   bio: string | null;
   profileImageUrl: string | null;
   specialization: string[];
-  categoryName: string | null;
+  categoryNames: string[];
   yearsExperience: number | null;
   avgRating: number;
   totalWorkshops: number;
@@ -64,7 +65,7 @@ export const employerService = {
     const { data } = await apiClient.put<EmployerProfile>('/employer/profile', request);
     return data;
   },
-  
+
   async getPublicProfile(id: string): Promise<EmployerPublicProfile> {
     const { data } = await apiClient.get<EmployerPublicProfile>(`/employers/${id}/profile`);
     return data;
