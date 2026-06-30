@@ -15,6 +15,12 @@ import { useAuth } from '../../../contexts/AuthContext';
 import { workshopService } from '../../../services/workshopService';
 import { Workshop } from '../../../types/workshop';
 import { Colors, Typography, Spacing, Radius, Shadows } from '../../../constants/theme';
+import {
+  SafeAreaView,
+  SafeAreaProvider,
+  SafeAreaInsetsContext,
+  useSafeAreaInsets,
+} from 'react-native-safe-area-context';
 
 export default function EmployeeHomeScreen() {
   const { user, logout } = useAuth();
@@ -23,6 +29,7 @@ export default function EmployeeHomeScreen() {
   const [allWorkshops, setAllWorkshops] = useState<Workshop[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const insets = useSafeAreaInsets();
 
   const loadData = useCallback(async () => {
     try {
@@ -64,6 +71,7 @@ export default function EmployeeHomeScreen() {
 
   return (
     <ScrollView
+    
       style={styles.flex}
       contentContainerStyle={styles.container}
       refreshControl={

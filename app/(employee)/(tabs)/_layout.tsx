@@ -1,8 +1,32 @@
 import { Tabs } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
+import { View, Text, StyleSheet } from 'react-native';
 import { Colors, Typography } from '../../../constants/theme';
+import { useUnreadCount } from '../../../hooks/useUnreadCount';
+
+function BadgeIcon({ count, icon, color, size }: {
+  count: number;
+  icon: keyof typeof MaterialIcons.glyphMap;
+  color: string;
+  size: number;
+}) {
+  return (
+    <View>
+      <MaterialIcons name={icon} size={size} color={color} />
+      {count > 0 && (
+        <View style={styles.badge}>
+          <Text style={styles.badgeText}>
+            {count > 99 ? '99+' : count}
+          </Text>
+        </View>
+      )}
+    </View>
+  );
+}
 
 export default function EmployeeTabsLayout() {
+  const { unreadCount } = useUnreadCount(30000);
+
   return (
     <Tabs
       screenOptions={{
@@ -32,11 +56,34 @@ export default function EmployeeTabsLayout() {
         }}
       />
       <Tabs.Screen
+        name="feed"
+        options={{
+          title: 'Akış',
+          tabBarIcon: ({ color, size }) => (
+            <MaterialIcons name="dynamic-feed" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="enrollments"
         options={{
           title: 'Kayıtlarım',
           tabBarIcon: ({ color, size }) => (
             <MaterialIcons name="event-available" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="notifications"
+        options={{
+          title: 'Bildirimler',
+          tabBarIcon: ({ color, size }) => (
+            <BadgeIcon
+              icon="notifications"
+              count={unreadCount}
+              color={color}
+              size={size}
+            />
           ),
         }}
       />
@@ -52,3 +99,24 @@ export default function EmployeeTabsLayout() {
     </Tabs>
   );
 }
+
+const styles = StyleSheet.create({
+  badge: {
+    position: 'absolute',
+    top: -4,
+    right: -6,
+    minWidth: 16,
+    height: 16,
+    borderRadius: 8,
+    backgroundColor: '#EF4444',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 3,
+  },
+  badgeText: {
+    fontSize: 9,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    lineHeight: 12,
+  },
+});

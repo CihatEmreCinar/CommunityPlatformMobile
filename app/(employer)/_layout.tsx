@@ -6,6 +6,8 @@ export default function EmployerLayout() {
       <Stack.Screen name="(tabs)" />
       <Stack.Screen name="workshop/create" />
       <Stack.Screen name="workshop/[id]" />
+      <Stack.Screen name="post/[id]" />
+      <Stack.Screen name="post/create" /> 
     </Stack>
   );
 }   

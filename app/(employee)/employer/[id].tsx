@@ -1,296 +1,360 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import {
   View,
   Text,
-  StyleSheet,
-  ScrollView,
-  ActivityIndicator,
+  FlatList,
   TouchableOpacity,
+  StyleSheet,
+  ActivityIndicator,
   Image,
+  RefreshControl,
+  Share,
 } from 'react-native';
-import { useLocalSearchParams, useRouter } from 'expo-router';
-import { MaterialIcons } from '@expo/vector-icons';
-import { employerService, EmployerPublicProfile } from '../../../services/employerService';
-import { Colors, Typography, Spacing, Radius, Shadows } from '../../../constants/theme';
+import { Ionicons } from '@expo/vector-icons';
+import { useRouter, useLocalSearchParams } from 'expo-router';
+import { socialService } from '../../../services/socialService';
+import { postService } from '../../../services/postService';
+import { formatNotificationTime } from '../../../utils/notificationUtils';
+import type { Post, UserSocialStats } from '../../../types/post.types';
+
+const ACCENT = '#6366F1';
+
+// ─── Mini post kartı ──────────────────────────────────────────────────────────
+// NOT: backend alanları → caption (content değil), publishedAt (createdAt değil)
+
+function PostCard({ post, onLike }: { post: Post; onLike: (id: string) => void }) {
+  return (
+    <View style={styles.postCard}>
+      <Text style={styles.postContent} numberOfLines={4}>{post.caption}</Text>
+      {post.tags && post.tags.length > 0 && (
+        <View style={styles.tagRow}>
+          {post.tags.map((t) => (
+            <View key={t} style={styles.tagChip}>
+              <Text style={styles.tagText}>#{t}</Text>
+            </View>
+          ))}
+        </View>
+      )}
+      <View style={styles.postMeta}>
+        <TouchableOpacity style={styles.postAction} onPress={() => onLike(post.id)}>
+          <Ionicons
+            name={post.isLikedByMe ? 'heart' : 'heart-outline'}
+            size={16}
+            color={post.isLikedByMe ? '#EF4444' : '#9CA3AF'}
+          />
+          <Text style={styles.postActionText}>{post.likeCount}</Text>
+        </TouchableOpacity>
+        <View style={styles.postAction}>
+          <Ionicons name="chatbubble-outline" size={16} color="#9CA3AF" />
+          <Text style={styles.postActionText}>{post.commentCount}</Text>
+        </View>
+        <Text style={styles.postTime}>{formatNotificationTime(post.publishedAt ?? '')}</Text>
+      </View>
+    </View>
+  );
+}
+
+// ─── Ana ekran ────────────────────────────────────────────────────────────────
 
 export default function EmployerPublicProfileScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
-  const [profile, setProfile] = useState<EmployerPublicProfile | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const { id: employerId } = useLocalSearchParams<{ id: string }>();
+
+  const [stats, setStats] = useState<UserSocialStats | null>(null);
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [loadingStats, setLoadingStats] = useState(true);
+  const [loadingPosts, setLoadingPosts] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [followLoading, setFollowLoading] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const cursorRef = React.useRef<string | null>(null);
+
+  // ─── İstatistikler ─────────────────────────────────────────────────────────
+  const fetchStats = useCallback(async () => {
+    if (!employerId) return;
+    try {
+      const s = await postService.getSocialStats(employerId);
+      setStats(s);
+    } catch {
+      // sessiz hata
+    } finally {
+      setLoadingStats(false);
+    }
+  }, [employerId]);
+
+  // ─── Postlar ───────────────────────────────────────────────────────────────
+  const fetchPosts = useCallback(async (reset = false) => {
+    if (!employerId) return;
+    const cursor = reset ? null : cursorRef.current;
+    if (reset) setLoadingPosts(true);
+    else setLoadingMore(true);
+    try {
+      const result = await postService.getUserPosts(employerId, { cursor, limit: 15 });
+      cursorRef.current = result.nextCursor;
+      setHasMore(result.hasNextPage);   // backend: hasNextPage
+      if (reset) setPosts(result.posts); // backend: posts
+      else setPosts((prev) => [...prev, ...result.posts]);
+    } catch {
+      // sessiz hata
+    } finally {
+      setLoadingPosts(false);
+      setLoadingMore(false);
+    }
+  }, [employerId]);
+
+  const refresh = useCallback(async () => {
+    setRefreshing(true);
+    cursorRef.current = null;
+    await Promise.all([fetchStats(), fetchPosts(true)]);
+    setRefreshing(false);
+  }, [fetchStats, fetchPosts]);
 
   useEffect(() => {
-    loadProfile();
-  }, [id]);
+    fetchStats();
+    fetchPosts(true);
+  }, []);
 
-  async function loadProfile() {
-    try {
-      const data = await employerService.getPublicProfile(id);
-      setProfile(data);
-    } catch (error) {
-      console.log('Profil yüklenemedi', error);
-    } finally {
-      setIsLoading(false);
-    }
-  }
+  // ─── Takip toggle ──────────────────────────────────────────────────────────
+  const handleFollow = useCallback(async () => {
+    if (!employerId || !stats) return;
+    const wasFollowing = stats.isFollowedByMe;
 
-  if (isLoading) {
-    return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={Colors.primary} />
-      </View>
+    // Optimistic
+    setStats((prev) =>
+      prev
+        ? {
+            ...prev,
+            isFollowedByMe: !prev.isFollowedByMe,
+            followerCount: wasFollowing
+              ? prev.followerCount - 1
+              : prev.followerCount + 1,
+          }
+        : prev
     );
-  }
 
-  if (!profile) return null;
+    setFollowLoading(true);
+    try {
+      await socialService.toggleFollow(employerId);
+    } catch {
+      // Rollback
+      setStats((prev) =>
+        prev
+          ? {
+              ...prev,
+              isFollowedByMe: wasFollowing,
+              followerCount: wasFollowing
+                ? prev.followerCount + 1
+                : prev.followerCount - 1,
+            }
+          : prev
+      );
+    } finally {
+      setFollowLoading(false);
+    }
+  }, [employerId, stats]);
 
-  return (
-    <ScrollView style={styles.flex} contentContainerStyle={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <MaterialIcons name="arrow-back" size={22} color={Colors.onSurface} />
+  // ─── Like toggle ───────────────────────────────────────────────────────────
+  const handleLike = useCallback(async (postId: string) => {
+    setPosts((prev) =>
+      prev.map((p) =>
+        p.id === postId
+          ? { ...p, isLikedByMe: !p.isLikedByMe, likeCount: p.isLikedByMe ? p.likeCount - 1 : p.likeCount + 1 }
+          : p
+      )
+    );
+    try {
+      const result = await socialService.toggleLike(postId);
+      setPosts((prev) =>
+        prev.map((p) =>
+          p.id === postId ? { ...p, isLikedByMe: result.liked, likeCount: result.likeCount } : p
+        )
+      );
+    } catch {
+      // Rollback
+      setPosts((prev) =>
+        prev.map((p) =>
+          p.id === postId
+            ? { ...p, isLikedByMe: !p.isLikedByMe, likeCount: p.isLikedByMe ? p.likeCount - 1 : p.likeCount + 1 }
+            : p
+        )
+      );
+    }
+  }, []);
+
+  // ─── Header ────────────────────────────────────────────────────────────────
+  const renderHeader = () => (
+    <View>
+      {/* Geri + paylaş */}
+      <View style={styles.topBar}>
+        <TouchableOpacity onPress={() => router.back()} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+          <Ionicons name="arrow-back" size={24} color="#111827" />
+        </TouchableOpacity>
+        <TouchableOpacity
+          onPress={() => Share.share({ message: `Atolium'da bu eğitmeni keşfet!` })}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+        >
+          <Ionicons name="share-social-outline" size={22} color="#374151" />
         </TouchableOpacity>
       </View>
 
-      {/* Avatar Section */}
-      <View style={styles.avatarSection}>
-        {profile.profileImageUrl ? (
-          <Image source={{ uri: profile.profileImageUrl }} style={styles.avatarImage} />
+      {/* Avatar + takip butonu */}
+      <View style={styles.profileTop}>
+        <View style={styles.avatar}>
+          <Text style={styles.avatarInitials}>E</Text>
+        </View>
+        {loadingStats ? (
+          <ActivityIndicator color={ACCENT} />
         ) : (
-          <View style={styles.avatarPlaceholder}>
-            <MaterialIcons name="business" size={36} color={Colors.primary} />
-          </View>
-        )}
-        <Text style={styles.name}>
-          {profile.firstName} {profile.lastName}
-        </Text>
-        <Text style={styles.title}>{profile.workshopTitle}</Text>
-        <View style={styles.rankPill}>
-          <MaterialIcons name="workspace-premium" size={14} color={Colors.onPrimary} />
-          <Text style={styles.rankPillText}>{profile.employerRank}</Text>
-        </View>
-      </View>
-
-      {/* Stats Row */}
-      <View style={styles.statsRow}>
-        <View style={styles.statItem}>
-          <Text style={styles.statValue}>{profile.totalWorkshops}</Text>
-          <Text style={styles.statLabel}>Atölye</Text>
-        </View>
-        <View style={styles.statDivider} />
-        <View style={styles.statItem}>
-          <Text style={styles.statValue}>
-            {profile.avgRating ? profile.avgRating.toFixed(1) : '—'}
-          </Text>
-          <Text style={styles.statLabel}>Puan</Text>
-        </View>
-        <View style={styles.statDivider} />
-        <View style={styles.statItem}>
-          <Text style={styles.statValue}>{profile.yearsExperience ?? '—'}</Text>
-          <Text style={styles.statLabel}>Yıl Tecrübe</Text>
-        </View>
-      </View>
-
-      {/* Bio */}
-      {profile.bio && (
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Hakkında</Text>
-          <Text style={styles.bioText}>{profile.bio}</Text>
-        </View>
-      )}
-
-      {/* Specialization */}
-      {profile.specialization.length > 0 && (
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Uzmanlık Alanları</Text>
-          <View style={styles.tagsRow}>
-            {profile.specialization.map((tag) => (
-              <View key={tag} style={styles.tag}>
-                <Text style={styles.tagText}>{tag}</Text>
-              </View>
-            ))}
-          </View>
-        </View>
-      )}
-
-      {/* Categories */}
-      {profile.categoryNames.length > 0 && (
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Kategoriler</Text>
-          <View style={styles.tagsRow}>
-            {profile.categoryNames.map((name) => (
-              <View key={name} style={styles.categoryTag}>
-                <Text style={styles.categoryTagText}>{name}</Text>
-              </View>
-            ))}
-          </View>
-        </View>
-      )}
-
-      {/* Workshops */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Aktif Atölyeleri</Text>
-        {profile.workshops.length === 0 ? (
-          <Text style={styles.emptyText}>Şu anda yayında atölyesi yok</Text>
-        ) : (
-          <View style={styles.workshopList}>
-            {profile.workshops.map((w) => (
-              <TouchableOpacity
-                key={w.id}
-                style={styles.workshopItem}
-                onPress={() => router.push(`/(employee)/workshop/${w.id}` as any)}
-                activeOpacity={0.85}
-              >
-                <View style={styles.workshopIconWrap}>
-                  <MaterialIcons name="event" size={18} color={Colors.primary} />
-                </View>
-                <View style={styles.workshopInfo}>
-                  <Text style={styles.workshopTitle} numberOfLines={1}>
-                    {w.title}
-                  </Text>
-                  <Text style={styles.workshopPrice}>{w.price} ₺</Text>
-                </View>
-                {w.avgRating > 0 && (
-                  <View style={styles.workshopRating}>
-                    <MaterialIcons name="star" size={14} color={Colors.amber} />
-                    <Text style={styles.workshopRatingText}>{w.avgRating.toFixed(1)}</Text>
-                  </View>
-                )}
-              </TouchableOpacity>
-            ))}
-          </View>
+          <TouchableOpacity
+            style={[
+              styles.followBtn,
+              stats?.isFollowedByMe && styles.followingBtn,
+            ]}
+            onPress={handleFollow}
+            disabled={followLoading}
+            activeOpacity={0.8}
+          >
+            {followLoading ? (
+              <ActivityIndicator size="small" color={stats?.isFollowedByMe ? ACCENT : '#FFFFFF'} />
+            ) : (
+              <>
+                <Ionicons
+                  name={stats?.isFollowedByMe ? 'checkmark' : 'person-add-outline'}
+                  size={16}
+                  color={stats?.isFollowedByMe ? ACCENT : '#FFFFFF'}
+                />
+                <Text
+                  style={[
+                    styles.followBtnText,
+                    stats?.isFollowedByMe && styles.followingBtnText,
+                  ]}
+                >
+                  {stats?.isFollowedByMe ? 'Takip Ediliyor' : 'Takip Et'}
+                </Text>
+              </>
+            )}
+          </TouchableOpacity>
         )}
       </View>
-    </ScrollView>
+
+      {/* İsim + rol */}
+      <View style={styles.nameSection}>
+        <Text style={styles.fullName}>Eğitmen Profili</Text>
+        <View style={styles.roleBadge}>
+          <Text style={styles.roleText}>Eğitmen</Text>
+        </View>
+      </View>
+
+      {/* Sosyal sayaçlar */}
+      {loadingStats ? (
+        <ActivityIndicator color={ACCENT} style={{ marginVertical: 14 }} />
+      ) : (
+        <View style={styles.statsRow}>
+          <View style={styles.statBox}>
+            <Text style={styles.statValue}>{stats?.postCount ?? 0}</Text>
+            <Text style={styles.statLabel}>Gönderi</Text>
+          </View>
+          <View style={styles.statDivider} />
+          <View style={styles.statBox}>
+            <Text style={styles.statValue}>{stats?.followerCount ?? 0}</Text>
+            <Text style={styles.statLabel}>Takipçi</Text>
+          </View>
+          <View style={styles.statDivider} />
+          <View style={styles.statBox}>
+            <Text style={styles.statValue}>{stats?.followingCount ?? 0}</Text>
+            <Text style={styles.statLabel}>Takip</Text>
+          </View>
+        </View>
+      )}
+
+      {/* Postlar başlık */}
+      <View style={styles.postsSectionHeader}>
+        <Ionicons name="grid-outline" size={16} color="#6B7280" />
+        <Text style={styles.postsSectionTitle}>Gönderiler</Text>
+      </View>
+    </View>
+  );
+
+  return (
+    <View style={styles.container}>
+      <FlatList
+        data={posts}
+        keyExtractor={(item) => item.id}
+        renderItem={({ item }) => <PostCard post={item} onLike={handleLike} />}
+        ListHeaderComponent={renderHeader}
+        ListEmptyComponent={
+          !loadingPosts ? (
+            <View style={styles.empty}>
+              <Ionicons name="newspaper-outline" size={44} color="#D1D5DB" />
+              <Text style={styles.emptyText}>Henüz gönderi paylaşılmamış</Text>
+            </View>
+          ) : null
+        }
+        ListFooterComponent={
+          loadingPosts ? (
+            <ActivityIndicator color={ACCENT} style={{ marginVertical: 24 }} />
+          ) : loadingMore ? (
+            <ActivityIndicator color={ACCENT} style={{ marginVertical: 16 }} />
+          ) : null
+        }
+        onEndReached={() => { if (hasMore && !loadingMore) fetchPosts(); }}
+        onEndReachedThreshold={0.3}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refresh} tintColor={ACCENT} />}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.listContent}
+      />
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  flex: { flex: 1, backgroundColor: Colors.background },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: Colors.background,
-  },
-  container: {
-    paddingHorizontal: Spacing.containerMargin,
-    paddingTop: Spacing.xl,
-    paddingBottom: Spacing.xl,
-  },
-  header: {
-    marginBottom: Spacing.md,
-  },
-  backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: Radius.full,
-    backgroundColor: Colors.surfaceContainerLowest,
-    justifyContent: 'center',
-    alignItems: 'center',
-    ...Shadows.sm,
-  },
-  avatarSection: {
-    alignItems: 'center',
-    marginBottom: Spacing.lg,
-    gap: Spacing.xs,
-  },
-  avatarImage: {
-    width: 88,
-    height: 88,
-    borderRadius: Radius.full,
-  },
-  avatarPlaceholder: {
-    width: 88,
-    height: 88,
-    borderRadius: Radius.full,
-    backgroundColor: Colors.primaryContainer,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  name: {
-    ...Typography.h2,
-    color: Colors.onSurface,
-    marginTop: Spacing.sm,
-  },
-  title: {
-    ...Typography.bodyMd,
-    color: Colors.onSurfaceVariant,
-  },
-  rankPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    backgroundColor: Colors.primary,
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: 4,
-    borderRadius: Radius.full,
-    marginTop: Spacing.xs,
-  },
-  rankPillText: {
-    ...Typography.labelSm,
-    color: Colors.onPrimary,
-  },
-  statsRow: {
-    flexDirection: 'row',
-    backgroundColor: Colors.surfaceContainerLowest,
-    borderRadius: Radius.lg,
-    borderWidth: 1,
-    borderColor: Colors.surfaceVariant,
-    paddingVertical: Spacing.md,
-    marginBottom: Spacing.lg,
-    ...Shadows.sm,
-  },
-  statItem: { flex: 1, alignItems: 'center' },
-  statDivider: { width: 1, backgroundColor: Colors.surfaceVariant },
-  statValue: { ...Typography.h2, color: Colors.onSurface },
-  statLabel: { ...Typography.labelSm, color: Colors.onSurfaceVariant, marginTop: 2 },
-  section: { marginBottom: Spacing.lg, gap: Spacing.sm },
-  sectionTitle: { ...Typography.h3, color: Colors.onSurface },
-  bioText: { ...Typography.bodyLg, color: Colors.onSurfaceVariant, lineHeight: 22 },
-  tagsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.xs },
-  tag: {
-    backgroundColor: Colors.primaryContainer,
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: 4,
-    borderRadius: Radius.full,
-  },
-  tagText: { ...Typography.labelSm, color: Colors.onPrimaryContainer },
-  emptyText: { ...Typography.bodyMd, color: Colors.onSurfaceVariant },
-  workshopList: { gap: Spacing.sm },
-  workshopItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Colors.surfaceContainerLowest,
-    borderRadius: Radius.lg,
-    borderWidth: 1,
-    borderColor: Colors.surfaceVariant,
-    padding: Spacing.sm,
-    gap: Spacing.sm,
-    ...Shadows.sm,
-  },
-  workshopIconWrap: {
-    width: 36,
-    height: 36,
-    borderRadius: Radius.md,
-    backgroundColor: Colors.primaryContainer,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  workshopInfo: { flex: 1 },
-  workshopTitle: { ...Typography.labelMd, fontSize: 14, color: Colors.onSurface },
-  workshopPrice: { ...Typography.bodyMd, fontSize: 12, color: Colors.primary, marginTop: 2 },
-  workshopRating: { flexDirection: 'row', alignItems: 'center', gap: 2 },
-  workshopRatingText: { ...Typography.labelSm, color: Colors.onSurfaceVariant },
-  categoryTag: {
-    backgroundColor: Colors.secondaryContainer,
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: 4,
-    borderRadius: Radius.full,
-  },
-  categoryTagText: {
-    ...Typography.labelSm,
-    color: Colors.onSecondaryContainer,
-  },
+  container: { flex: 1, backgroundColor: '#F9FAFB' },
+  listContent: { paddingBottom: 32 },
+
+  // ─── Top bar ───────────────────────────────────────────────────────────────
+  topBar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingTop: 16, paddingBottom: 8, backgroundColor: '#FFFFFF' },
+
+  // ─── Profil ────────────────────────────────────────────────────────────────
+  profileTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 10, backgroundColor: '#FFFFFF' },
+  avatar: { width: 72, height: 72, borderRadius: 36, backgroundColor: ACCENT, alignItems: 'center', justifyContent: 'center' },
+  avatarInitials: { fontSize: 26, fontWeight: '700', color: '#FFFFFF' },
+
+  // ─── Follow ────────────────────────────────────────────────────────────────
+  followBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: ACCENT, borderRadius: 20, paddingHorizontal: 18, paddingVertical: 10, minWidth: 130, justifyContent: 'center' },
+  followingBtn: { backgroundColor: '#FFFFFF', borderWidth: 1.5, borderColor: ACCENT },
+  followBtnText: { fontSize: 14, fontWeight: '700', color: '#FFFFFF' },
+  followingBtnText: { color: ACCENT },
+
+  // ─── İsim ──────────────────────────────────────────────────────────────────
+  nameSection: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 16, paddingBottom: 10, backgroundColor: '#FFFFFF' },
+  fullName: { fontSize: 17, fontWeight: '700', color: '#111827' },
+  roleBadge: { backgroundColor: '#EEF2FF', borderRadius: 6, paddingHorizontal: 8, paddingVertical: 2 },
+  roleText: { fontSize: 11, fontWeight: '600', color: ACCENT },
+
+  // ─── Stats ─────────────────────────────────────────────────────────────────
+  statsRow: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#FFFFFF', paddingVertical: 14, borderTopWidth: StyleSheet.hairlineWidth, borderBottomWidth: StyleSheet.hairlineWidth, borderColor: '#E5E7EB' },
+  statBox: { flex: 1, alignItems: 'center', gap: 2 },
+  statValue: { fontSize: 18, fontWeight: '700', color: '#111827' },
+  statLabel: { fontSize: 12, color: '#6B7280' },
+  statDivider: { width: StyleSheet.hairlineWidth, height: 32, backgroundColor: '#E5E7EB' },
+
+  // ─── Posts section ─────────────────────────────────────────────────────────
+  postsSectionHeader: { flexDirection: 'row', alignItems: 'center', gap: 6, padding: 14, backgroundColor: '#FFFFFF', borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: '#E5E7EB', marginTop: 8 },
+  postsSectionTitle: { fontSize: 13, fontWeight: '600', color: '#374151' },
+
+  // ─── Post kartı ────────────────────────────────────────────────────────────
+  postCard: { backgroundColor: '#FFFFFF', marginHorizontal: 8, marginTop: 8, borderRadius: 10, padding: 14, gap: 8, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 3, elevation: 1 },
+  postContent: { fontSize: 14, color: '#374151', lineHeight: 20 },
+  tagRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
+  tagChip: { backgroundColor: '#EEF2FF', borderRadius: 10, paddingHorizontal: 8, paddingVertical: 2 },
+  tagText: { fontSize: 11, color: ACCENT, fontWeight: '500' },
+  postMeta: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  postAction: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  postActionText: { fontSize: 12, color: '#9CA3AF' },
+  postTime: { marginLeft: 'auto', fontSize: 11, color: '#9CA3AF' },
+
+  // ─── Empty ─────────────────────────────────────────────────────────────────
+  empty: { alignItems: 'center', justifyContent: 'center', gap: 10, paddingTop: 48 },
+  emptyText: { fontSize: 14, color: '#9CA3AF' },
 });

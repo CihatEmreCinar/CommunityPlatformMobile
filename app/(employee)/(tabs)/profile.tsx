@@ -1,256 +1,196 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import {
-  View, Text, StyleSheet, ScrollView, TextInput,
-  TouchableOpacity, ActivityIndicator, Alert,
+  View,
+  Text,
+  ScrollView,
+  TouchableOpacity,
+  StyleSheet,
+  ActivityIndicator,
+  Alert,
+  RefreshControl,
 } from 'react-native';
-import { MaterialIcons } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 import { useAuth } from '../../../contexts/AuthContext';
-import { apiClient } from '../../../services/apiClient';
-import { Colors, Typography, Spacing, Radius, Shadows } from '../../../constants/theme';
+import { postService } from '../../../services/postService';
+import type { UserSocialStats } from '../../../types/post.types';
 
-interface EmployeeProfile {
-  interests: string[];
-  hobbies:   string[];
+const ACCENT = '#6366F1';
+
+function StatBox({ value, label }: { value: number; label: string }) {
+  return (
+    <View style={styles.statBox}>
+      <Text style={styles.statValue}>{value}</Text>
+      <Text style={styles.statLabel}>{label}</Text>
+    </View>
+  );
 }
 
 export default function EmployeeProfileScreen() {
+  const router = useRouter();
   const { user, logout } = useAuth();
-  const [profile, setProfile]       = useState<EmployeeProfile>({ interests: [], hobbies: [] });
-  const [isLoading, setIsLoading]   = useState(true);
-  const [isSaving, setIsSaving]     = useState(false);
-  const [newInterest, setNewInterest] = useState('');
-  const [newHobby, setNewHobby]       = useState('');
 
-  useEffect(() => { loadProfile(); }, []);
+  const [stats, setStats] = useState<UserSocialStats | null>(null);
+  const [loadingStats, setLoadingStats] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
-  async function loadProfile() {
+  const fetchStats = useCallback(async () => {
+    if (!user?.id) return;
     try {
-      const { data } = await apiClient.get('/employee/profile');
-      setProfile({ interests: data.interests ?? [], hobbies: data.hobbies ?? [] });
-    } catch (e) {
-      console.log('Profil yüklenemedi', e);
+      const s = await postService.getSocialStats(user.id);
+      setStats(s);
+    } catch {
+      // sessiz hata
     } finally {
-      setIsLoading(false);
+      setLoadingStats(false);
     }
+  }, [user?.id]);
+
+  async function handleLogout() {
+    await logout();
+    router.replace('/(auth)/login');
   }
 
-  async function saveProfile() {
-    setIsSaving(true);
-    try {
-      await apiClient.put('/employee/profile', profile);
-      Alert.alert('Başarılı', 'Profil güncellendi.');
-    } catch (e) {
-      Alert.alert('Hata', 'Profil kaydedilemedi.');
-    } finally {
-      setIsSaving(false);
-    }
-  }
+  const refresh = useCallback(async () => {
+    setRefreshing(true);
+    await fetchStats();
+    setRefreshing(false);
+  }, [fetchStats]);
 
-  function addInterest() {
-    const val = newInterest.trim();
-    if (!val || profile.interests.includes(val)) return;
-    setProfile(p => ({ ...p, interests: [...p.interests, val] }));
-    setNewInterest('');
-  }
-
-  function removeInterest(item: string) {
-    setProfile(p => ({ ...p, interests: p.interests.filter(i => i !== item) }));
-  }
-
-  function addHobby() {
-    const val = newHobby.trim();
-    if (!val || profile.hobbies.includes(val)) return;
-    setProfile(p => ({ ...p, hobbies: [...p.hobbies, val] }));
-    setNewHobby('');
-  }
-
-  function removeHobby(item: string) {
-    setProfile(p => ({ ...p, hobbies: p.hobbies.filter(h => h !== item) }));
-  }
-
-  if (isLoading) {
-    return (
-      <View style={styles.center}>
-        <ActivityIndicator size="large" color={Colors.primary} />
-      </View>
-    );
-  }
+  useEffect(() => { fetchStats(); }, []);
 
   return (
-    <ScrollView style={styles.flex} contentContainerStyle={styles.container}>
-
-      {/* User Info Card */}
-      <View style={styles.userCard}>
+    <ScrollView
+      style={styles.container}
+      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refresh} tintColor={ACCENT} />}
+      showsVerticalScrollIndicator={false}
+    >
+      {/* Profil üst */}
+      <View style={styles.profileTop}>
         <View style={styles.avatar}>
-          <Text style={styles.avatarText}>
+          <Text style={styles.avatarInitials}>
             {user?.firstName?.[0]}{user?.lastName?.[0]}
           </Text>
         </View>
-        <View style={styles.userInfo}>
-          <Text style={styles.userName}>{user?.firstName} {user?.lastName}</Text>
-          <Text style={styles.userEmail}>{user?.email}</Text>
-          <View style={styles.xpRow}>
-            <MaterialIcons name="bolt" size={14} color={Colors.primary} />
-            <Text style={styles.xpText}>{user?.xpPoints ?? 0} XP · Seviye {user?.rankLevel ?? 1}</Text>
+        <TouchableOpacity
+          style={styles.logoutBtn}
+          onPress={() =>
+            Alert.alert('Çıkış', 'Çıkış yapmak istiyor musun?', [
+              { text: 'İptal', style: 'cancel' },
+              { text: 'Çıkış', style: 'destructive', onPress: handleLogout },
+            ])
+          }
+        >
+          <Ionicons name="log-out-outline" size={20} color="#6B7280" />
+        </TouchableOpacity>
+      </View>
+
+      {/* İsim */}
+      <View style={styles.nameSection}>
+        <Text style={styles.fullName}>{user?.firstName} {user?.lastName}</Text>
+        <View style={styles.roleBadge}>
+          <Text style={styles.roleText}>Katılımcı</Text>
+        </View>
+      </View>
+
+      {/* Sosyal sayaçlar */}
+      {loadingStats ? (
+        <ActivityIndicator color={ACCENT} style={{ marginVertical: 16 }} />
+      ) : (
+        <View style={styles.statsRow}>
+          <StatBox value={stats?.postCount ?? 0} label="Gönderi" />
+          <View style={styles.statDivider} />
+          <StatBox value={stats?.followerCount ?? 0} label="Takipçi" />
+          <View style={styles.statDivider} />
+          <StatBox value={stats?.followingCount ?? 0} label="Takip" />
+        </View>
+      )}
+
+      {/* Bilgiler */}
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Hesap Bilgileri</Text>
+
+        <View style={styles.infoCard}>
+          <View style={styles.infoRow}>
+            <Ionicons name="mail-outline" size={18} color="#6B7280" />
+            <Text style={styles.infoText}>{user?.email}</Text>
+          </View>
+          <View style={styles.separator} />
+          <View style={styles.infoRow}>
+            <Ionicons name="star-outline" size={18} color="#F59E0B" />
+            <Text style={styles.infoText}>{user?.xpPoints ?? 0} XP</Text>
+            <View style={styles.levelChip}>
+              <Text style={styles.levelText}>Seviye {user?.rankLevel ?? 1}</Text>
+            </View>
           </View>
         </View>
       </View>
 
-      {/* Interests */}
+      {/* Hızlı erişim */}
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>İlgi Alanlarım</Text>
-        <View style={styles.chipWrap}>
-          {profile.interests.map(item => (
-            <TouchableOpacity key={item} style={styles.chip} onPress={() => removeInterest(item)}>
-              <Text style={styles.chipText}>{item}</Text>
-              <MaterialIcons name="close" size={12} color={Colors.primary} />
-            </TouchableOpacity>
-          ))}
-        </View>
-        <View style={styles.addRow}>
-          <TextInput
-            style={styles.addInput}
-            placeholder="İlgi alanı ekle..."
-            placeholderTextColor={Colors.outlineVariant}
-            value={newInterest}
-            onChangeText={setNewInterest}
-            onSubmitEditing={addInterest}
-            returnKeyType="done"
-          />
-          <TouchableOpacity style={styles.addBtn} onPress={addInterest}>
-            <MaterialIcons name="add" size={20} color={Colors.onPrimary} />
+        <Text style={styles.sectionTitle}>Hızlı Erişim</Text>
+        <View style={styles.quickCard}>
+          <TouchableOpacity
+            style={styles.quickRow}
+            onPress={() => router.push('/(employee)/(tabs)/enrollments' as any)}
+            activeOpacity={0.7}
+          >
+            <Ionicons name="calendar-outline" size={20} color={ACCENT} />
+            <Text style={styles.quickText}>Kayıtlarım</Text>
+            <Ionicons name="chevron-forward" size={16} color="#9CA3AF" />
+          </TouchableOpacity>
+          <View style={styles.separator} />
+          <TouchableOpacity
+            style={styles.quickRow}
+            onPress={() => router.push('/(employee)/(tabs)/home' as any)}
+            activeOpacity={0.7}
+          >
+            <Ionicons name="search-outline" size={20} color={ACCENT} />
+            <Text style={styles.quickText}>Atölyeleri Keşfet</Text>
+            <Ionicons name="chevron-forward" size={16} color="#9CA3AF" />
           </TouchableOpacity>
         </View>
       </View>
-
-      {/* Hobbies */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Hobilerin</Text>
-        <View style={styles.chipWrap}>
-          {profile.hobbies.map(item => (
-            <TouchableOpacity key={item} style={styles.chip} onPress={() => removeHobby(item)}>
-              <Text style={styles.chipText}>{item}</Text>
-              <MaterialIcons name="close" size={12} color={Colors.primary} />
-            </TouchableOpacity>
-          ))}
-        </View>
-        <View style={styles.addRow}>
-          <TextInput
-            style={styles.addInput}
-            placeholder="Hobi ekle..."
-            placeholderTextColor={Colors.outlineVariant}
-            value={newHobby}
-            onChangeText={setNewHobby}
-            onSubmitEditing={addHobby}
-            returnKeyType="done"
-          />
-          <TouchableOpacity style={styles.addBtn} onPress={addHobby}>
-            <MaterialIcons name="add" size={20} color={Colors.onPrimary} />
-          </TouchableOpacity>
-        </View>
-      </View>
-
-      {/* Save */}
-      <TouchableOpacity style={styles.saveBtn} onPress={saveProfile} disabled={isSaving} activeOpacity={0.85}>
-        {isSaving
-          ? <ActivityIndicator color={Colors.onPrimary} />
-          : <Text style={styles.saveBtnText}>Değişiklikleri Kaydet</Text>
-        }
-      </TouchableOpacity>
-
-      {/* Logout */}
-      <TouchableOpacity style={styles.logoutBtn} onPress={logout} activeOpacity={0.8}>
-        <MaterialIcons name="logout" size={18} color={Colors.error} />
-        <Text style={styles.logoutText}>Çıkış Yap</Text>
-      </TouchableOpacity>
-
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  flex:    { flex: 1, backgroundColor: Colors.background },
-  center:  { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: Colors.background },
-  container: { padding: Spacing.containerMargin, paddingBottom: Spacing.xl },
+  container: { flex: 1, backgroundColor: '#F9FAFB' },
 
-  userCard: {
-    flexDirection: 'row',
-    backgroundColor: Colors.surfaceContainerLowest,
-    borderRadius: Radius.xl,
-    padding: Spacing.md,
-    gap: Spacing.md,
-    alignItems: 'center',
-    marginBottom: Spacing.lg,
-    borderWidth: 1,
-    borderColor: Colors.outlineVariant,
-    ...Shadows.card,
-  },
-  avatar: {
-    width: 56, height: 56,
-    borderRadius: Radius.full,
-    backgroundColor: Colors.primaryContainer,
-    justifyContent: 'center', alignItems: 'center',
-  },
-  avatarText: { ...Typography.h2, color: Colors.primary },
-  userInfo:  { flex: 1 },
-  userName:  { ...Typography.h3, color: Colors.onSurface },
-  userEmail: { ...Typography.bodyMd, color: Colors.onSurfaceVariant, marginTop: 2 },
-  xpRow:    { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 4 },
-  xpText:   { ...Typography.labelSm, color: Colors.primary },
+  // ─── Profil üst ────────────────────────────────────────────────────────────
+  profileTop: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', padding: 20, paddingBottom: 8, backgroundColor: '#FFFFFF' },
+  avatar: { width: 72, height: 72, borderRadius: 36, backgroundColor: ACCENT, alignItems: 'center', justifyContent: 'center' },
+  avatarInitials: { fontSize: 26, fontWeight: '700', color: '#FFFFFF' },
+  logoutBtn: { padding: 8, borderWidth: 1, borderColor: '#E5E7EB', borderRadius: 8, marginTop: 4 },
 
-  section: {
-    backgroundColor: Colors.surfaceContainerLowest,
-    borderRadius: Radius.xl,
-    padding: Spacing.md,
-    marginBottom: Spacing.md,
-    borderWidth: 1,
-    borderColor: Colors.outlineVariant,
-    gap: Spacing.sm,
-    ...Shadows.sm,
-  },
-  sectionTitle: { ...Typography.h3, color: Colors.onSurface, fontSize: 15 },
+  // ─── İsim ──────────────────────────────────────────────────────────────────
+  nameSection: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 20, paddingBottom: 14, backgroundColor: '#FFFFFF' },
+  fullName: { fontSize: 18, fontWeight: '700', color: '#111827' },
+  roleBadge: { backgroundColor: '#EEF2FF', borderRadius: 6, paddingHorizontal: 8, paddingVertical: 2 },
+  roleText: { fontSize: 11, fontWeight: '600', color: ACCENT },
 
-  chipWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.sm },
-  chip: {
-    flexDirection: 'row', alignItems: 'center', gap: 4,
-    backgroundColor: Colors.primaryContainer,
-    paddingHorizontal: Spacing.sm, paddingVertical: Spacing.xs,
-    borderRadius: Radius.full,
-  },
-  chipText: { ...Typography.labelSm, color: Colors.primary },
+  // ─── Stats ─────────────────────────────────────────────────────────────────
+  statsRow: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#FFFFFF', paddingVertical: 14, borderTopWidth: StyleSheet.hairlineWidth, borderBottomWidth: StyleSheet.hairlineWidth, borderColor: '#E5E7EB' },
+  statBox: { flex: 1, alignItems: 'center', gap: 2 },
+  statValue: { fontSize: 18, fontWeight: '700', color: '#111827' },
+  statLabel: { fontSize: 12, color: '#6B7280' },
+  statDivider: { width: StyleSheet.hairlineWidth, height: 32, backgroundColor: '#E5E7EB' },
 
-  addRow:  { flexDirection: 'row', gap: Spacing.sm },
-  addInput: {
-    flex: 1,
-    backgroundColor: Colors.surfaceContainerLow,
-    borderRadius: Radius.md,
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: Spacing.xs,
-    borderWidth: 1,
-    borderColor: Colors.outlineVariant,
-    ...Typography.bodyMd,
-    color: Colors.onSurface,
-  },
-  addBtn: {
-    width: 36, height: 36,
-    borderRadius: Radius.md,
-    backgroundColor: Colors.primary,
-    justifyContent: 'center', alignItems: 'center',
-  },
+  // ─── Section ───────────────────────────────────────────────────────────────
+  section: { padding: 16, gap: 8 },
+  sectionTitle: { fontSize: 12, fontWeight: '600', color: '#9CA3AF', letterSpacing: 0.5, textTransform: 'uppercase', marginBottom: 4 },
 
-  saveBtn: {
-    backgroundColor: Colors.primary,
-    borderRadius: Radius.md,
-    paddingVertical: Spacing.md,
-    alignItems: 'center',
-    marginBottom: Spacing.md,
-    ...Shadows.sm,
-  },
-  saveBtnText: { ...Typography.h3, color: Colors.onPrimary, fontSize: 15 },
+  // ─── Info card ─────────────────────────────────────────────────────────────
+  infoCard: { backgroundColor: '#FFFFFF', borderRadius: 12, overflow: 'hidden' },
+  infoRow: { flexDirection: 'row', alignItems: 'center', gap: 10, padding: 14 },
+  infoText: { flex: 1, fontSize: 14, color: '#374151' },
+  levelChip: { backgroundColor: '#FEF3C7', borderRadius: 6, paddingHorizontal: 8, paddingVertical: 2 },
+  levelText: { fontSize: 11, fontWeight: '600', color: '#D97706' },
+  separator: { height: StyleSheet.hairlineWidth, backgroundColor: '#F3F4F6', marginHorizontal: 14 },
 
-  logoutBtn: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-    gap: Spacing.sm, paddingVertical: Spacing.md,
-  },
-  logoutText: { ...Typography.labelMd, color: Colors.error, fontSize: 13 },
+  // ─── Quick access ──────────────────────────────────────────────────────────
+  quickCard: { backgroundColor: '#FFFFFF', borderRadius: 12, overflow: 'hidden' },
+  quickRow: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14 },
+  quickText: { flex: 1, fontSize: 14, color: '#374151', fontWeight: '500' },
 });
