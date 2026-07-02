@@ -72,17 +72,25 @@ export default function EmployeeProfileScreen() {
             {user?.firstName?.[0]}{user?.lastName?.[0]}
           </Text>
         </View>
-        <TouchableOpacity
-          style={styles.logoutBtn}
-          onPress={() =>
-            Alert.alert('Çıkış', 'Çıkış yapmak istiyor musun?', [
-              { text: 'İptal', style: 'cancel' },
-              { text: 'Çıkış', style: 'destructive', onPress: handleLogout },
-            ])
-          }
-        >
-          <Ionicons name="log-out-outline" size={20} color="#6B7280" />
-        </TouchableOpacity>
+        <View style={styles.topActions}>
+          <TouchableOpacity
+            style={styles.editProfileBtn}
+            onPress={() => router.push('/(employee)/edit-profile' as any)}
+          >
+            <Text style={styles.editProfileText}>Profili Düzenle</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.logoutBtn}
+            onPress={() =>
+              Alert.alert('Çıkış', 'Çıkış yapmak istiyor musun?', [
+                { text: 'İptal', style: 'cancel' },
+                { text: 'Çıkış', style: 'destructive', onPress: handleLogout },
+              ])
+            }
+          >
+            <Ionicons name="log-out-outline" size={20} color="#6B7280" />
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* İsim */}
@@ -163,6 +171,9 @@ const styles = StyleSheet.create({
   avatar: { width: 72, height: 72, borderRadius: 36, backgroundColor: ACCENT, alignItems: 'center', justifyContent: 'center' },
   avatarInitials: { fontSize: 26, fontWeight: '700', color: '#FFFFFF' },
   logoutBtn: { padding: 8, borderWidth: 1, borderColor: '#E5E7EB', borderRadius: 8, marginTop: 4 },
+  topActions: { flexDirection: 'column', gap: 8, alignItems: 'flex-end' },
+  editProfileBtn: { borderWidth: 1, borderColor: '#E5E7EB', borderRadius: 8, paddingHorizontal: 14, paddingVertical: 7, backgroundColor: '#FFFFFF' },
+  editProfileText: { fontSize: 13, fontWeight: '600', color: ACCENT },
 
   // ─── İsim ──────────────────────────────────────────────────────────────────
   nameSection: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 20, paddingBottom: 14, backgroundColor: '#FFFFFF' },

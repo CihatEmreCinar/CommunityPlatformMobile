@@ -46,8 +46,8 @@ function MyPostCard({ post, onEdit, onDelete }: {
         ) : null}
         {post.tags && post.tags.length > 0 && (
           <View style={styles.tagRow}>
-            {post.tags.map((t) => (
-              <View key={t} style={styles.tagChip}><Text style={styles.tagText}>#{t}</Text></View>
+            {post.tags.map((t, index) => (
+              <View key={`${t}-${index}`} style={styles.tagChip}><Text style={styles.tagText}>#{t}</Text></View>
             ))}
           </View>
         )}
@@ -244,8 +244,8 @@ export default function EmployerProfileScreen() {
       {/* YENİ: uzmanlık tag'leri */}
       {profile?.specialization && profile.specialization.length > 0 && (
         <View style={styles.specializationRow}>
-          {profile.specialization.map((s) => (
-            <View key={s} style={styles.specChip}><Text style={styles.specChipText}>{s}</Text></View>
+          {profile.specialization.map((s, index) => (
+            <View key={`${s}-${index}`} style={styles.specChip}><Text style={styles.specChipText}>{s}</Text></View>
           ))}
         </View>
       )}

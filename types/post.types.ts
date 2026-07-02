@@ -36,6 +36,7 @@ export interface CreatePostRequest {
   workshopId: string;        // backend zorunlu
   caption: string;           // backend: Caption
   tagSlugs?: string[];       // backend: TagSlugs
+  allowComments?: boolean;
 }
 
 export interface UpdatePostRequest {

@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -10,28 +10,77 @@ import {
   Alert,
   KeyboardAvoidingView,
   Platform,
+  Image,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter, useLocalSearchParams } from 'expo-router';
+import * as ImagePicker from 'expo-image-picker';
 import { postService } from '../../../services/postService';
+import { workshopService } from '../../../services/workshopService';
+import type { Workshop } from '../../../types/workshop';
 
 const ACCENT = '#0F766E';
 const MAX_CONTENT = 1000;
 const MAX_TAGS = 5;
+const MAX_MEDIA = 4;
+
+type LocalMediaItem = {
+  uri: string;
+  type: 'image' | 'video';
+  name: string;
+  mime: string;
+};
 
 export default function PostCreateScreen() {
   const router = useRouter();
-  // NOT: backend CreatePostRequest.workshopId zorunlu — bu ekrana
-  // workshop seçimi yok, route param olarak bekleniyor.
-  // Çağıran ekran (ör. profile.tsx) şu an `/employer/post/create` derken
-  // workshopId GEÇMİYOR — orası da güncellenmeli, yoksa submit hep hata verir.
-  const { workshopId } = useLocalSearchParams<{ workshopId?: string }>();
+  const { workshopId: routeWorkshopId } = useLocalSearchParams<{ workshopId?: string }>();
 
+  const [workshops, setWorkshops] = useState<Workshop[]>([]);
+  const [selectedWorkshopId, setSelectedWorkshopId] = useState<string | null>(routeWorkshopId ?? null);
+  const [loadingWorkshops, setLoadingWorkshops] = useState(true);
   const [content, setContent] = useState('');
   const [tagInput, setTagInput] = useState('');
   const [tags, setTags] = useState<string[]>([]);
+  const [mediaFiles, setMediaFiles] = useState<LocalMediaItem[]>([]);
+  const [commentsEnabled, setCommentsEnabled] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const tagInputRef = useRef<TextInput>(null);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    (async () => {
+      try {
+        const list = await workshopService.getMyWorkshops();
+        if (!isMounted) return;
+        setWorkshops(list);
+
+        if (routeWorkshopId && list.some((workshop) => workshop.id === routeWorkshopId)) {
+          setSelectedWorkshopId(routeWorkshopId);
+          return;
+        }
+
+        if (!routeWorkshopId && list.length === 1) {
+          setSelectedWorkshopId(list[0].id);
+        }
+      } catch {
+        if (isMounted) {
+          Alert.alert('Hata', 'Atölyelerin yüklenmesi sırasında bir sorun oluştu.');
+        }
+      } finally {
+        if (isMounted) {
+          setLoadingWorkshops(false);
+        }
+      }
+    })();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [routeWorkshopId]);
+
+  const selectedWorkshop = workshops.find((w) => w.id === selectedWorkshopId) ?? null;
+  const availableWorkshopTags = selectedWorkshop?.tags.map((tag) => tag.toLowerCase()) ?? [];
 
   const addTag = useCallback(() => {
     const clean = tagInput.trim().replace(/^#/, '').toLowerCase();
@@ -44,12 +93,50 @@ export default function PostCreateScreen() {
       Alert.alert('En fazla 5 etiket ekleyebilirsin.');
       return;
     }
+    if (availableWorkshopTags.length > 0 && !availableWorkshopTags.includes(clean)) {
+      Alert.alert('Etiket yalnızca seçili atölyenin etiketleri arasında olabilir.');
+      return;
+    }
     setTags((prev) => [...prev, clean]);
     setTagInput('');
-  }, [tagInput, tags]);
+  }, [tagInput, tags, availableWorkshopTags]);
 
   const removeTag = useCallback((tag: string) => {
     setTags((prev) => prev.filter((t) => t !== tag));
+  }, []);
+
+  const pickMedia = useCallback(async () => {
+    if (mediaFiles.length >= MAX_MEDIA) {
+      Alert.alert('En fazla 4 medya ekleyebilirsin.');
+      return;
+    }
+
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert('İzin gerekli', 'Medya eklemek için medya erişim izni vermelisiniz.');
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.All,
+      quality: 0.7,
+    });
+
+    if (result.canceled) return;
+
+    const asset = result.assets?.[0];
+    if (!asset?.uri) return;
+
+    const type = (asset.type ?? 'image') as 'image' | 'video';
+    const extension = asset.uri.split('.').pop()?.split('?')[0] ?? (type === 'video' ? 'mp4' : 'jpg');
+    const mime = type === 'video' ? 'video/mp4' : 'image/jpeg';
+    const name = `media_${Date.now()}.${extension}`;
+
+    setMediaFiles((prev) => [...prev, { uri: asset.uri, type, name, mime }]);
+  }, [mediaFiles.length]);
+
+  const removeMedia = useCallback((index: number) => {
+    setMediaFiles((prev) => prev.filter((_, idx) => idx !== index));
   }, []);
 
   const handleSubmit = useCallback(async () => {
@@ -57,26 +144,42 @@ export default function PostCreateScreen() {
       Alert.alert('İçerik boş olamaz.');
       return;
     }
-    if (!workshopId) {
-      Alert.alert('Hata', 'Atölye bilgisi bulunamadı. Lütfen bir atölye üzerinden gönderi paylaş.');
+
+    if (!selectedWorkshop) {
+      Alert.alert('Hata', 'Bir atölye seçmelisin.');
       return;
     }
+
     setSubmitting(true);
+
     try {
-      await postService.create({
-        workshopId,
+      const post = await postService.create({
+        workshopId: selectedWorkshop.id,
         caption: content.trim(),
         tagSlugs: tags,
+        allowComments: commentsEnabled,
       });
+
+      for (let index = 0; index < mediaFiles.length; index += 1) {
+        const media = mediaFiles[index];
+        const formData = new FormData();
+        formData.append('file', {
+          uri: media.uri,
+          name: media.name,
+          type: media.mime,
+        } as any);
+        await postService.uploadMedia(post.id, formData, index);
+      }
+
       router.back();
     } catch {
       Alert.alert('Hata', 'Gönderi paylaşılamadı. Tekrar dene.');
     } finally {
       setSubmitting(false);
     }
-  }, [content, tags, workshopId, router]);
+  }, [commentsEnabled, content, selectedWorkshop, tags, mediaFiles, router]);
 
-  const canSubmit = content.trim().length > 0 && !submitting;
+  const canSubmit = content.trim().length > 0 && !submitting && !!selectedWorkshop;
 
   return (
     <KeyboardAvoidingView
@@ -106,32 +209,115 @@ export default function PostCreateScreen() {
       </View>
 
       <ScrollView style={styles.body} keyboardShouldPersistTaps="handled">
-        {/* İçerik */}
         <View style={styles.section}>
+          <Text style={styles.sectionLabel}>Atölye</Text>
+          {loadingWorkshops ? (
+            <ActivityIndicator color={ACCENT} />
+          ) : workshops.length === 0 ? (
+            <Text style={styles.sectionHint}>
+              Henüz bir atölyen yok. Atölye oluşturduktan sonra gönderi paylaşabilirsin.
+            </Text>
+          ) : (
+            <View style={styles.workshopList}>
+              {workshops.map((workshop) => {
+                const selected = workshop.id === selectedWorkshopId;
+                return (
+                  <TouchableOpacity
+                    key={workshop.id}
+                    style={[styles.workshopItem, selected && styles.workshopItemSelected]}
+                    onPress={() => setSelectedWorkshopId(workshop.id)}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={[styles.workshopName, selected && styles.workshopNameSelected]} numberOfLines={1}>
+                      {workshop.title}
+                    </Text>
+                    {selected && <Text style={styles.workshopSelectedLabel}>Seçili</Text>}
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          )}
+          {selectedWorkshop ? (
+            <Text style={styles.sectionHint}>
+              Atölye etiketleri: {availableWorkshopTags.length > 0 ? availableWorkshopTags.map((tag) => `#${tag}`).join(' ') : 'Etiket listesi boş. İstediğin etiketleri kullanabilirsin.'}
+            </Text>
+          ) : null}
+        </View>
+
+        <View style={styles.divider} />
+
+        <View style={styles.section}>
+          <Text style={styles.sectionLabel}>Medya</Text>
+          <Text style={styles.sectionHint}>Fotoğraf veya video ekleyebilirsin.</Text>
+          <View style={styles.mediaRow}>
+            {mediaFiles.map((file, index) => (
+              <View key={`${file.uri}-${index}`} style={styles.mediaPreview}>
+                {file.type === 'image' ? (
+                  <Image source={{ uri: file.uri }} style={styles.mediaImage} />
+                ) : (
+                  <View style={styles.mediaVideoPlaceholder}>
+                    <Ionicons name="play-circle" size={28} color="#FFFFFF" />
+                  </View>
+                )}
+                <TouchableOpacity style={styles.removeMediaBtn} onPress={() => removeMedia(index)}>
+                  <Ionicons name="close" size={16} color="#FFFFFF" />
+                </TouchableOpacity>
+              </View>
+            ))}
+          </View>
+          <TouchableOpacity
+            style={[styles.addMediaBtn, mediaFiles.length >= MAX_MEDIA && styles.addMediaBtnDisabled]}
+            onPress={pickMedia}
+            disabled={mediaFiles.length >= MAX_MEDIA}
+          >
+            <Ionicons name="image-outline" size={18} color="#FFFFFF" />
+            <Text style={styles.addMediaText}>Medya Ekle</Text>
+          </TouchableOpacity>
+          <Text style={styles.sectionHint}>{mediaFiles.length}/{MAX_MEDIA} medya eklendi</Text>
+        </View>
+
+        <View style={styles.divider} />
+
+        <View style={styles.section}>
+          <Text style={styles.sectionLabel}>Yorumlar</Text>
+          <TouchableOpacity
+            style={[styles.commentToggle, commentsEnabled ? styles.commentToggleActive : styles.commentToggleInactive]}
+            onPress={() => setCommentsEnabled((prev) => !prev)}
+            activeOpacity={0.8}
+          >
+            <Ionicons name={commentsEnabled ? 'chatbubble-ellipses' : 'chatbubble-outline'} size={18} color={commentsEnabled ? '#FFFFFF' : '#374151'} />
+            <Text style={[styles.commentToggleText, commentsEnabled && styles.commentToggleTextActive]}>
+              {commentsEnabled ? 'Yorumlara izin ver' : 'Yorumları kapat'}
+            </Text>
+          </TouchableOpacity>
+          <Text style={styles.sectionHint}>
+            Yorum seçeneği, gönderin yayınlandıktan sonra takipçilerinin geri bildirimde bulunmasını sağlar.
+          </Text>
+        </View>
+
+        <View style={styles.divider} />
+
+        <View style={styles.section}>
+          <Text style={styles.sectionLabel}>İçerik</Text>
           <TextInput
-            style={styles.contentInput}
+            style={[styles.contentInput, styles.contentInputSmall]}
             placeholder="Ne paylaşmak istiyorsun?"
             placeholderTextColor="#9CA3AF"
             value={content}
             onChangeText={setContent}
             multiline
             maxLength={MAX_CONTENT}
-            autoFocus
             textAlignVertical="top"
           />
-          <Text style={styles.charCount}>
-            {content.length}/{MAX_CONTENT}
-          </Text>
+          <Text style={styles.charCount}>{content.length}/{MAX_CONTENT}</Text>
         </View>
 
         <View style={styles.divider} />
 
-        {/* Etiketler */}
         <View style={styles.section}>
           <Text style={styles.sectionLabel}>Etiketler</Text>
           <Text style={styles.sectionHint}>En fazla 5 etiket ekleyebilirsin</Text>
 
-          {/* Mevcut etiketler */}
           {tags.length > 0 && (
             <View style={styles.tagList}>
               {tags.map((t) => (
@@ -148,7 +334,6 @@ export default function PostCreateScreen() {
             </View>
           )}
 
-          {/* Etiket girişi */}
           {tags.length < MAX_TAGS && (
             <View style={styles.tagInputRow}>
               <TextInput
@@ -176,7 +361,6 @@ export default function PostCreateScreen() {
 
         <View style={styles.divider} />
 
-        {/* İpucu */}
         <View style={styles.tipsSection}>
           <Ionicons name="bulb-outline" size={16} color="#9CA3AF" />
           <Text style={styles.tipsText}>
@@ -240,13 +424,12 @@ const styles = StyleSheet.create({
   sectionHint: {
     fontSize: 12,
     color: '#9CA3AF',
-    marginBottom: 12,
+    marginTop: 4,
   },
   divider: {
     height: 8,
     backgroundColor: '#F3F4F6',
   },
-  // ─── Content input ─────────────────────────────────────────────────────────
   contentInput: {
     fontSize: 16,
     color: '#111827',
@@ -254,13 +437,15 @@ const styles = StyleSheet.create({
     minHeight: 160,
     textAlignVertical: 'top',
   },
+  contentInputSmall: {
+    minHeight: 120,
+  },
   charCount: {
     fontSize: 12,
     color: '#9CA3AF',
     textAlign: 'right',
     marginTop: 8,
   },
-  // ─── Tags ──────────────────────────────────────────────────────────────────
   tagList: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -310,7 +495,115 @@ const styles = StyleSheet.create({
   addTagBtnDisabled: {
     backgroundColor: '#99D6D0',
   },
-  // ─── Tips ──────────────────────────────────────────────────────────────────
+  workshopList: {
+    gap: 8,
+  },
+  workshopItem: {
+    padding: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    backgroundColor: '#F9FAFB',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  workshopItemSelected: {
+    borderColor: ACCENT,
+    backgroundColor: '#ECFDF5',
+  },
+  workshopName: {
+    flex: 1,
+    fontSize: 14,
+    color: '#111827',
+    fontWeight: '600',
+  },
+  workshopNameSelected: {
+    color: ACCENT,
+  },
+  workshopSelectedLabel: {
+    fontSize: 12,
+    color: ACCENT,
+    fontWeight: '700',
+  },
+  mediaRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginTop: 12,
+  },
+  mediaPreview: {
+    width: 88,
+    height: 88,
+    borderRadius: 12,
+    overflow: 'hidden',
+    position: 'relative',
+    backgroundColor: '#F3F4F6',
+  },
+  mediaImage: {
+    width: '100%',
+    height: '100%',
+  },
+  mediaVideoPlaceholder: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#111827',
+  },
+  removeMediaBtn: {
+    position: 'absolute',
+    top: 6,
+    right: 6,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  addMediaBtn: {
+    marginTop: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: ACCENT,
+    borderRadius: 14,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    alignSelf: 'flex-start',
+  },
+  addMediaBtnDisabled: {
+    opacity: 0.5,
+  },
+  addMediaText: {
+    color: '#FFFFFF',
+    fontWeight: '700',
+    fontSize: 14,
+  },
+  commentToggle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    borderRadius: 14,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  commentToggleActive: {
+    backgroundColor: ACCENT,
+    borderColor: ACCENT,
+  },
+  commentToggleInactive: {
+    backgroundColor: '#F9FAFB',
+  },
+  commentToggleText: {
+    fontSize: 14,
+    color: '#374151',
+    fontWeight: '600',
+  },
+  commentToggleTextActive: {
+    color: '#FFFFFF',
+  },
   tipsSection: {
     flexDirection: 'row',
     alignItems: 'flex-start',
