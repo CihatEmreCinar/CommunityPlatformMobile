@@ -14,6 +14,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter, useLocalSearchParams } from 'expo-router';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
 import { postService } from '../../../services/postService';
 import { workshopService } from '../../../services/workshopService';
@@ -117,7 +118,7 @@ export default function PostCreateScreen() {
     }
 
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.All,
+      mediaTypes: ['images', 'videos'],
       quality: 0.7,
     });
 
@@ -180,6 +181,7 @@ export default function PostCreateScreen() {
   const canSubmit = content.trim().length > 0 && !submitting && !!selectedWorkshop;
 
   return (
+    <SafeAreaView style={styles.root} edges={['top', 'bottom']}>
     <KeyboardAvoidingView
       style={styles.root}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -348,6 +350,7 @@ export default function PostCreateScreen() {
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
 

@@ -16,6 +16,7 @@ import { workshopService } from '../../../services/workshopService';
 import { categoryService } from '../../../services/categoryService';
 import { Category } from '../../../types/category';
 import { Colors, Typography, Spacing, Radius, Shadows } from '../../../constants/theme';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function CreateWorkshopScreen() {
   const router = useRouter();
@@ -100,6 +101,7 @@ export default function CreateWorkshopScreen() {
   }
 
   return (
+    <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
     <ScrollView style={styles.flex} contentContainerStyle={styles.container}>
       {/* Header */}
       <View style={styles.header}>
@@ -308,11 +310,13 @@ export default function CreateWorkshopScreen() {
         </TouchableOpacity>
       </View>
     </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   flex: { flex: 1, backgroundColor: Colors.background },
+  safeArea: { flex: 1, backgroundColor: Colors.background },
   container: {
     paddingHorizontal: Spacing.containerMargin,
     paddingTop: Spacing.xl,

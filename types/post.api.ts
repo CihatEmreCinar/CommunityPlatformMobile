@@ -1,7 +1,8 @@
 export interface PostMediaItemDto {
   id: string;
   mediaType: 'Image' | 'Video';
-  url: string;
+  url?: string | null;
+  cdnUrl?: string | null;
   orderIndex: number;
   widthPx: number | null;
   heightPx: number | null;

@@ -6,6 +6,7 @@ import type {
   UploadedFileResponseDto,
 } from '../../types/user.api';
 import type { UploadedFileResponse } from '../userService';
+import { normalizeApiMediaUrl, debugLogMediaUrl } from '../urlUtils';
 
 function mapEmployeeProfile(dto: MyEmployeeProfileDto | null): UserEmployeeProfile | null {
   if (!dto) {
@@ -30,7 +31,7 @@ function mapEmployerProfile(dto: MyEmployerProfileDto | null): UserEmployerProfi
     categoryIds: dto.categoryIds ?? [],
     categoryNames: dto.categoryNames ?? [],
     yearsExperience: dto.yearsExperience,
-    coverImageUrl: dto.coverImageUrl,
+    coverImageUrl: normalizeApiMediaUrl(dto.coverImageUrl),
     avgRating: dto.avgRating,
     totalWorkshops: dto.totalWorkshops,
     employerRank: dto.employerRank,
@@ -38,6 +39,10 @@ function mapEmployerProfile(dto: MyEmployerProfileDto | null): UserEmployerProfi
 }
 
 export function mapMyProfile(dto: MyProfileDto): User {
+  if (__DEV__) {
+    console.log('[ME_PROFILE] avatarUrl=', JSON.stringify(dto.avatarUrl), '| coverImageUrl=', JSON.stringify((dto.employerProfile as any)?.coverImageUrl));
+  }
+
   return {
     id: dto.id,
     email: dto.email,
@@ -46,7 +51,7 @@ export function mapMyProfile(dto: MyProfileDto): User {
     role: dto.role as User['role'],
     city: dto.city,
     bio: dto.bio,
-    avatarUrl: dto.avatarUrl,
+    avatarUrl: normalizeApiMediaUrl(dto.avatarUrl),
     xpPoints: dto.xpPoints,
     rankLevel: dto.rankLevel,
     isVerified: dto.isVerified,
@@ -57,8 +62,14 @@ export function mapMyProfile(dto: MyProfileDto): User {
 }
 
 export function mapUploadedFileResponse(dto: UploadedFileResponseDto): UploadedFileResponse {
+  if (__DEV__) {
+    console.log('[UPLOAD_RESPONSE] raw dto=', JSON.stringify(dto));
+  }
+  debugLogMediaUrl('upload.url', dto.url);
+  const normalizedUrl = normalizeApiMediaUrl(dto.url);
+
   return {
-    url: dto.url,
+    url: normalizedUrl ?? '',
     sizeBytes: dto.sizeBytes,
   };
 }

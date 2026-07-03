@@ -14,12 +14,26 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { socialService } from '../../../services/socialService';
 import { postService } from '../../../services/postService';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { employerService } from '../../../services/employerService';
 import { formatNotificationTime } from '../../../utils/notificationUtils';
 import type { Post, UserSocialStats } from '../../../types/post.types';
 import type { EmployerPublicProfile } from '../../../services/employerService';
 
 const ACCENT = '#6366F1';
+
+function dedupePostsById(items: Post[]): Post[] {
+  const seen = new Set<string>();
+  const unique: Post[] = [];
+
+  for (const item of items) {
+    if (seen.has(item.id)) continue;
+    seen.add(item.id);
+    unique.push(item);
+  }
+
+  return unique;
+}
 
 // ─── Mini post kartı ──────────────────────────────────────────────────────────
 // NOT: backend alanları → caption (content değil), publishedAt (createdAt değil)
@@ -28,6 +42,13 @@ function PostCard({ post, onLike }: { post: Post; onLike: (id: string) => void }
   return (
     <View style={styles.postCard}>
       <Text style={styles.postContent} numberOfLines={4}>{post.caption}</Text>
+      {post.media && post.media.length > 0 ? (
+        <View style={styles.postMediaRow}>
+          {post.media.slice(0, 3).map((m) => (
+            <Image key={m.id} source={{ uri: m.url }} style={styles.postMediaThumb} resizeMode="cover" />
+          ))}
+        </View>
+      ) : null}
       {post.tags && post.tags.length > 0 && (
         <View style={styles.tagRow}>
           {post.tags.map((t) => (
@@ -109,8 +130,8 @@ export default function EmployerPublicProfileScreen() {
       const result = await postService.getUserPosts(employerId, { cursor, limit: 15 });
       cursorRef.current = result.nextCursor;
       setHasMore(result.hasNextPage);   // backend: hasNextPage
-      if (reset) setPosts(result.posts); // backend: posts
-      else setPosts((prev) => [...prev, ...result.posts]);
+      if (reset) setPosts(dedupePostsById(result.posts)); // backend: posts
+      else setPosts((prev) => dedupePostsById([...prev, ...result.posts]));
     } catch {
       // sessiz hata
     } finally {
@@ -279,6 +300,10 @@ export default function EmployerPublicProfileScreen() {
         <Text style={styles.bioText}>{profile.bio}</Text>
       ) : null}
 
+      {profile?.city ? (
+        <Text style={styles.cityText}>{profile.city}</Text>
+      ) : null}
+
       {profile?.specialization?.length ? (
         <View style={styles.tagRowWrap}>
           {profile.specialization.map((item, index) => (
@@ -330,7 +355,7 @@ export default function EmployerPublicProfileScreen() {
   );
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
       <FlatList
         data={posts}
         keyExtractor={(item) => item.id}
@@ -357,7 +382,7 @@ export default function EmployerPublicProfileScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.listContent}
       />
-    </View>
+    </SafeAreaView>
   );
 }
 
@@ -387,6 +412,7 @@ const styles = StyleSheet.create({
   roleText: { fontSize: 11, fontWeight: '600', color: ACCENT },
   workshopTitleText: { fontSize: 13, color: '#6B7280', paddingHorizontal: 16, paddingBottom: 6, backgroundColor: '#FFFFFF' },
   bioText: { fontSize: 13, color: '#374151', lineHeight: 19, paddingHorizontal: 16, paddingBottom: 10, backgroundColor: '#FFFFFF' },
+  cityText: { fontSize: 13, color: '#6B7280', fontWeight: '600', paddingHorizontal: 16, paddingBottom: 10, backgroundColor: '#FFFFFF' },
   tagRowWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, paddingHorizontal: 16, paddingBottom: 10, backgroundColor: '#FFFFFF' },
   profileChip: { backgroundColor: '#EEF2FF', borderRadius: 12, paddingHorizontal: 10, paddingVertical: 4 },
   profileChipText: { fontSize: 12, color: ACCENT, fontWeight: '500' },
@@ -407,6 +433,8 @@ const styles = StyleSheet.create({
   // ─── Post kartı ────────────────────────────────────────────────────────────
   postCard: { backgroundColor: '#FFFFFF', marginHorizontal: 8, marginTop: 8, borderRadius: 10, padding: 14, gap: 8, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 3, elevation: 1 },
   postContent: { fontSize: 14, color: '#374151', lineHeight: 20 },
+  postMediaRow: { flexDirection: 'row', gap: 6 },
+  postMediaThumb: { width: 92, height: 92, borderRadius: 10, backgroundColor: '#E5E7EB' },
   tagRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   tagChip: { backgroundColor: '#EEF2FF', borderRadius: 10, paddingHorizontal: 8, paddingVertical: 2 },
   tagText: { fontSize: 11, color: ACCENT, fontWeight: '500' },

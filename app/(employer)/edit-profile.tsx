@@ -63,7 +63,7 @@ export default function EditEmployerProfileScreen() {
         return;
       }
       const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        mediaTypes: ['images'],
         allowsEditing: true,
         aspect: [1, 1],
         quality: 0.7,
@@ -81,7 +81,7 @@ export default function EditEmployerProfileScreen() {
       } as any);
 
       const uploaded = await userService.uploadAvatar(formData);
-      setProfileImageUrl(uploaded.url);
+      setProfileImageUrl(uploaded.url || asset.uri);
       await refreshUser();
     } catch {
       setProfileImageUrl(previousAvatarUrl);
@@ -102,7 +102,7 @@ export default function EditEmployerProfileScreen() {
       }
 
       const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        mediaTypes: ['images'],
         allowsEditing: true,
         aspect: [16, 9],
         quality: 0.8,
@@ -121,7 +121,7 @@ export default function EditEmployerProfileScreen() {
       } as any);
 
       const uploaded = await employerService.uploadEmployerCover(formData);
-      setCoverImageUrl(uploaded.url);
+      setCoverImageUrl(uploaded.url || asset.uri);
       await refreshUser();
     } catch {
       setCoverImageUrl(previousCoverUrl);

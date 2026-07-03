@@ -7,6 +7,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useFeed } from '../../../hooks/useFeed';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useComments, useShare } from '../../../hooks/useSocial';
 import { useAuth } from '../../../contexts/AuthContext';
 import { formatNotificationTime } from '../../../utils/notificationUtils';
@@ -222,7 +223,7 @@ export default function EmployerFeedScreen() {
   }
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Akış</Text>
         <TouchableOpacity style={styles.createBtn} onPress={() => router.push('/(employer)/post/create' as any)}>
@@ -254,7 +255,7 @@ export default function EmployerFeedScreen() {
       />
 
       <CommentsModal visible={!!commentPost} post={commentPost} onClose={() => setCommentPost(null)} />
-    </View>
+    </SafeAreaView>
   );
 }
 

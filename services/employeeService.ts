@@ -1,4 +1,5 @@
 import { apiClient } from './apiClient';
+import { normalizeApiMediaUrl } from './urlUtils';
 
 // Backend: CommunityPlatform.Application.DTOs.Employee.EmployeeProfileResponse
 export interface EmployeeProfile {
@@ -24,13 +25,20 @@ export interface UpdateEmployeeProfileRequest {
 
 const BASE_URL = '/employee';
 
+function normalizeEmployeeProfile(profile: EmployeeProfile): EmployeeProfile {
+  return {
+    ...profile,
+    avatarUrl: normalizeApiMediaUrl(profile.avatarUrl),
+  };
+}
+
 export const employeeService = {
   /**
    * GET /api/v1/employee/profile
    */
   getProfile: async (): Promise<EmployeeProfile> => {
     const response = await apiClient.get<EmployeeProfile>(`${BASE_URL}/profile`);
-    return response.data;
+    return normalizeEmployeeProfile(response.data);
   },
 
   /**
@@ -38,7 +46,7 @@ export const employeeService = {
    */
   updateProfile: async (data: UpdateEmployeeProfileRequest): Promise<EmployeeProfile> => {
     const response = await apiClient.put<EmployeeProfile>(`${BASE_URL}/profile`, data);
-    return response.data;
+    return normalizeEmployeeProfile(response.data);
   },
 };
 

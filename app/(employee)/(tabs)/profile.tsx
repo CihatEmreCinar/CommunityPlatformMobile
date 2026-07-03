@@ -13,6 +13,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../../../contexts/AuthContext';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { postService } from '../../../services/postService';
 import type { UserSocialStats } from '../../../types/post.types';
 
@@ -61,6 +62,7 @@ export default function EmployeeProfileScreen() {
   useEffect(() => { fetchStats(); }, []);
 
   return (
+    <SafeAreaView style={styles.safeArea} edges={['top']}>
     <ScrollView
       style={styles.container}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refresh} tintColor={ACCENT} />}
@@ -192,11 +194,13 @@ export default function EmployeeProfileScreen() {
         </View>
       </View>
     </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F9FAFB' },
+  safeArea: { flex: 1, backgroundColor: '#F9FAFB' },
 
   // ─── Profil üst ────────────────────────────────────────────────────────────
   profileTop: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', padding: 20, paddingBottom: 8, backgroundColor: '#FFFFFF' },

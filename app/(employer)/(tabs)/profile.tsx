@@ -6,6 +6,7 @@ import {
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../../../contexts/AuthContext';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { postService } from '../../../services/postService';
 import { formatNotificationTime } from '../../../utils/notificationUtils';
 import type { Post, UserSocialStats } from '../../../types/post.types';
@@ -13,6 +14,19 @@ import type { Post, UserSocialStats } from '../../../types/post.types';
 const ACCENT = '#0F766E';
 
 type Tab = 'posts' | 'info';
+
+function dedupePostsById(items: Post[]): Post[] {
+  const seen = new Set<string>();
+  const unique: Post[] = [];
+
+  for (const item of items) {
+    if (seen.has(item.id)) continue;
+    seen.add(item.id);
+    unique.push(item);
+  }
+
+  return unique;
+}
 
 // ─── Stat kutusu ─────────────────────────────────────────────────────────────
 
@@ -40,6 +54,13 @@ function MyPostCard({ post, onEdit, onDelete }: {
           <View style={styles.workshopTag}>
             <Ionicons name="briefcase-outline" size={11} color="#6B7280" />
             <Text style={styles.workshopTagText} numberOfLines={1}>{post.workshopTitle}</Text>
+          </View>
+        ) : null}
+        {post.media && post.media.length > 0 ? (
+          <View style={styles.postMediaRow}>
+            {post.media.slice(0, 3).map((m) => (
+              <Image key={m.id} source={{ uri: m.url }} style={styles.postMediaThumb} resizeMode="cover" />
+            ))}
           </View>
         ) : null}
         {post.tags && post.tags.length > 0 && (
@@ -109,15 +130,23 @@ export default function EmployerProfileScreen() {
   // ─── Postlar ───────────────────────────────────────────────────────────────
   const fetchPosts = useCallback(async (reset = false) => {
     if (!user?.id) return;
+    if (!reset && (loadingPosts || loadingMore || !hasMore)) return;
+
     const cursor = reset ? null : cursorRef.current;
     if (reset) setLoadingPosts(true);
     else setLoadingMore(true);
+
     try {
       const result = await postService.getUserPosts(user.id, { cursor, limit: 15 });
       cursorRef.current = result.nextCursor;
       setHasMore(result.hasNextPage);
-      if (reset) setPosts(result.posts);
-      else setPosts((prev) => [...prev, ...result.posts]);
+
+      const incoming = dedupePostsById(result.posts);
+      if (reset) {
+        setPosts(incoming);
+      } else {
+        setPosts((prev) => dedupePostsById([...prev, ...incoming]));
+      }
     } catch {
       // sessiz hata
     } finally {
@@ -136,7 +165,7 @@ export default function EmployerProfileScreen() {
   useEffect(() => {
     fetchStats();
     fetchPosts(true);
-  }, []);
+  }, [fetchStats, fetchPosts]);
 
   const handleEdit = useCallback((id: string) => {
     // DÜZELTİLDİ: /(employer)/post/${id} — route group parantezi eklendi
@@ -298,7 +327,7 @@ export default function EmployerProfileScreen() {
   );
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top']}>
       {activeTab === 'posts' ? (
         <FlatList
           data={posts}
@@ -321,7 +350,7 @@ export default function EmployerProfileScreen() {
             : loadingMore ? <ActivityIndicator color={ACCENT} style={{ marginVertical: 16 }} />
             : null
           }
-          onEndReached={() => { if (hasMore && !loadingMore) fetchPosts(); }}
+          onEndReached={() => { if (hasMore && !loadingMore && !loadingPosts) fetchPosts(); }}
           onEndReachedThreshold={0.3}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refresh} tintColor={ACCENT} />}
           showsVerticalScrollIndicator={false}
@@ -336,7 +365,7 @@ export default function EmployerProfileScreen() {
           {renderInfo()}
         </ScrollView>
       )}
-    </View>
+    </SafeAreaView>
   );
 }
 
@@ -382,6 +411,8 @@ const styles = StyleSheet.create({
   workshopTag: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   workshopTagText: { fontSize: 11, color: '#6B7280', flexShrink: 1 },
   tagRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
+  postMediaRow: { flexDirection: 'row', gap: 6 },
+  postMediaThumb: { width: 82, height: 82, borderRadius: 10, backgroundColor: '#E5E7EB' },
   tagChip: { backgroundColor: '#F0FDFA', borderRadius: 10, paddingHorizontal: 8, paddingVertical: 2 },
   tagText: { fontSize: 11, color: ACCENT, fontWeight: '500' },
   postMeta: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 2 },

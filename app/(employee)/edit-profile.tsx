@@ -78,7 +78,7 @@ export default function EditEmployeeProfileScreen() {
       }
 
       const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        mediaTypes: ['images'],
         allowsEditing: true,
         aspect: [1, 1],
         quality: 0.7,
@@ -96,7 +96,7 @@ export default function EditEmployeeProfileScreen() {
       } as any);
 
       const uploaded = await userService.uploadAvatar(formData);
-      setAvatarUrl(uploaded.url);
+      setAvatarUrl(uploaded.url || asset.uri);
       await refreshUser();
     } catch {
       setAvatarUrl(previousAvatarUrl);

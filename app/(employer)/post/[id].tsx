@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter, useLocalSearchParams } from 'expo-router';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { postService } from '../../../services/postService';
 import type { Post } from '../../../types/post.types';
 
@@ -117,6 +118,7 @@ export default function PostEditScreen() {
     (content.trim() !== (post?.caption ?? '') || JSON.stringify(tags) !== JSON.stringify(post?.tags));
 
   return (
+    <SafeAreaView style={styles.root} edges={['top', 'bottom']}>
     <KeyboardAvoidingView
       style={styles.root}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -221,6 +223,7 @@ export default function PostEditScreen() {
         </TouchableOpacity>
       </ScrollView>
     </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
 

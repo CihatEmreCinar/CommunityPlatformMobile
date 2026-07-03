@@ -14,6 +14,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { enrollmentService } from '../../services/enrollmentService';
 import { EmployerEnrollment } from '../../types/enrollment';
 import { Colors, Typography, Spacing, Radius, Shadows } from '../../constants/theme';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const STATUS_LABELS: Record<string, { label: string; color: string; bg: string }> = {
   confirmed: { label: 'Onaylandı', color: Colors.primary, bg: Colors.primaryContainer },
@@ -86,6 +87,7 @@ export default function EmployerEnrollmentsScreen() {
   }
 
   return (
+    <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
     <ScrollView
       style={styles.flex}
       contentContainerStyle={styles.container}
@@ -157,11 +159,13 @@ export default function EmployerEnrollmentsScreen() {
         })
       )}
     </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   flex: { flex: 1, backgroundColor: Colors.background },
+  safeArea: { flex: 1, backgroundColor: Colors.background },
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: Colors.background },
   container: { padding: Spacing.containerMargin, paddingBottom: Spacing.xl },
   header: {

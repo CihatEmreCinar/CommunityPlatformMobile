@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNotifications } from '../../../hooks/useNotifications';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { getNotificationConfig, formatNotificationTime, getNotificationRoute } from '../../../utils/notificationUtils';
 import type { Notification } from '../../../types/notification.types';
 import { useRouter } from 'expo-router';
@@ -146,7 +147,7 @@ export default function EmployeeNotificationsScreen() {
   }
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top']}>
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Bildirimler</Text>
@@ -187,7 +188,7 @@ export default function EmployeeNotificationsScreen() {
         }
         showsVerticalScrollIndicator={false}
       />
-    </View>
+    </SafeAreaView>
   );
 }
 

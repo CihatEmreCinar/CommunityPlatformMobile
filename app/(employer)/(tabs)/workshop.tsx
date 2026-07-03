@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { useRouter, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { workshopService } from '../../../services/workshopService';
 import { Workshop } from '../../../types/workshop';
 import { Colors, Typography, Spacing, Radius, Shadows } from '../../../constants/theme';
@@ -96,6 +97,7 @@ export default function MyWorkshopsScreen() {
   }
 
   return (
+    <SafeAreaView style={styles.safeArea} edges={['top']}>
     <ScrollView
       style={styles.flex}
       contentContainerStyle={styles.container}
@@ -204,12 +206,12 @@ export default function MyWorkshopsScreen() {
           ))}
         </View>
       )}
-    </ScrollView>
-  );
+    </ScrollView>    </SafeAreaView>  );
 }
 
 const styles = StyleSheet.create({
   flex: { flex: 1, backgroundColor: Colors.background },
+  safeArea: { flex: 1, backgroundColor: Colors.background },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',

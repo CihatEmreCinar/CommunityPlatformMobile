@@ -18,6 +18,7 @@ import { Workshop } from '../../../types/workshop';
 import { Review } from '../../../types/review';
 import { Enrollment } from '../../../types/enrollment';
 import { Colors, Typography, Spacing, Radius, Shadows } from '../../../constants/theme';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function WorkshopDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -158,6 +159,7 @@ async function checkEligibility() {
   const enrollmentButtonDisabled = isFull || isEnrolling || isEnrolled;
 
   return (
+    <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
     <View style={styles.flex}>
       <Stack.Screen options={{ headerShown: false }} />
 
@@ -325,6 +327,7 @@ async function checkEligibility() {
         </TouchableOpacity>
       </View>
     </View>
+    </SafeAreaView>
   );
 }
 
@@ -354,6 +357,7 @@ function InfoItem({
 
 const styles = StyleSheet.create({
   flex: { flex: 1, backgroundColor: Colors.background },
+  safeArea: { flex: 1, backgroundColor: Colors.background },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',

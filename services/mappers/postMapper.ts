@@ -12,12 +12,22 @@ import type {
   UploadMediaResponseDto,
   UserSocialStatsDto,
 } from '../../types/post.api';
+import { normalizeApiMediaUrl, debugLogMediaUrl } from '../urlUtils';
 
-function mapPostMediaItem(dto: PostMediaItemDto): PostMediaItem {
+function mapPostMediaItem(dto: PostMediaItemDto): PostMediaItem | null {
+  if (__DEV__) {
+    debugLogMediaUrl(`media[${dto.id}] url/cdnUrl`, dto.url ?? dto.cdnUrl);
+  }
+  const normalizedUrl = normalizeApiMediaUrl(dto.url ?? dto.cdnUrl);
+  if (!normalizedUrl) {
+    if (__DEV__) console.warn('[POST_MEDIA] Skipping unrenderable media item id=', dto.id, 'raw=', dto.url ?? dto.cdnUrl);
+    return null;
+  }
+
   return {
     id: dto.id,
     mediaType: dto.mediaType,
-    url: dto.url,
+    url: normalizedUrl,
     orderIndex: dto.orderIndex,
     widthPx: dto.widthPx,
     heightPx: dto.heightPx,
@@ -25,11 +35,15 @@ function mapPostMediaItem(dto: PostMediaItemDto): PostMediaItem {
 }
 
 export function mapPost(dto: PostDto): Post {
+  const mappedMedia = (dto.media ?? [])
+    .map(mapPostMediaItem)
+    .filter((item): item is PostMediaItem => item != null);
+
   return {
     id: dto.id,
     employerId: dto.employerId,
     employerName: dto.employerName,
-    employerAvatarUrl: dto.employerAvatarUrl,
+    employerAvatarUrl: normalizeApiMediaUrl(dto.employerAvatarUrl),
     workshopId: dto.workshopId,
     workshopTitle: dto.workshopTitle,
     caption: dto.caption,
@@ -39,7 +53,7 @@ export function mapPost(dto: PostDto): Post {
     viewCount: dto.viewCount,
     isLikedByMe: dto.isLikedByMe,
     isFollowingEmployer: dto.isFollowingEmployer,
-    media: dto.media.map(mapPostMediaItem),
+    media: mappedMedia,
     tags: dto.tags,
     publishedAt: dto.publishedAt,
   };

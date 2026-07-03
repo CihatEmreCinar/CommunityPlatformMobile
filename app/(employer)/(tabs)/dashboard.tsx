@@ -16,6 +16,7 @@ import { enrollmentService } from '../../../services/enrollmentService';
 import { workshopService } from '../../../services/workshopService';
 import { EmployerDashboard } from '../../../types/dashboard';
 import { Colors, Typography, Spacing, Radius, Shadows } from '../../../constants/theme';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function EmployerDashboardScreen() {
   const { user, logout } = useAuth();
@@ -90,6 +91,7 @@ export default function EmployerDashboardScreen() {
   }
 
   return (
+    <SafeAreaView style={styles.safeArea} edges={['top']}>
     <ScrollView
       style={styles.flex}
       contentContainerStyle={styles.container}
@@ -195,6 +197,7 @@ export default function EmployerDashboardScreen() {
         />
       </View>
     </ScrollView>
+    </SafeAreaView>
   );
 }
 
@@ -250,7 +253,8 @@ function ActionButton({
 }
 
 const styles = StyleSheet.create({
-  flex: { flex: 1, backgroundColor: Colors.background },
+  flex: { flex: 1 },
+  safeArea: { flex: 1, backgroundColor: Colors.background },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',

@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { enrollmentService } from '../../../services/enrollmentService';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Enrollment } from '../../../types/enrollment';
 import { Colors, Typography, Spacing, Radius, Shadows } from '../../../constants/theme';
 
@@ -59,6 +60,7 @@ export default function EnrollmentsScreen() {
   }
 
   return (
+    <SafeAreaView style={styles.flex} edges={['top']}>
     <ScrollView
       style={styles.flex}
       contentContainerStyle={styles.container}
@@ -84,8 +86,7 @@ export default function EnrollmentsScreen() {
       ) : (
         enrollments.map((e) => <EnrollmentCard key={e.id} enrollment={e} onCancel={handleCancel} />)
       )}
-    </ScrollView>
-  );
+    </ScrollView>    </SafeAreaView>  );
 }
 
 function EnrollmentCard({ enrollment: e, onCancel }: { enrollment: Enrollment; onCancel: (id: string) => void }) {

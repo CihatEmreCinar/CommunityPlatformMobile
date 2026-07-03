@@ -16,6 +16,7 @@ import { reviewService } from '../../../services/reviewService';
 import { Workshop } from '../../../types/workshop';
 import { Review } from '../../../types/review';
 import { Colors, Typography, Spacing, Radius, Shadows } from '../../../constants/theme';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function EmployerWorkshopDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -76,6 +77,7 @@ export default function EmployerWorkshopDetailScreen() {
   if (!workshop) return null;
 
   return (
+    <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
     <ScrollView style={styles.flex} contentContainerStyle={styles.container}>
       {/* Header */}
       <View style={styles.header}>
@@ -169,11 +171,13 @@ export default function EmployerWorkshopDetailScreen() {
         )}
       </View>
     </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   flex: { flex: 1, backgroundColor: Colors.background },
+  safeArea: { flex: 1, backgroundColor: Colors.background },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',

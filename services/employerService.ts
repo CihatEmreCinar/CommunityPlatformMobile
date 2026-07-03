@@ -3,6 +3,7 @@ import { EmployerDashboard } from '../types/dashboard';
 import type { UploadedFileResponse } from './userService';
 import type { UploadedFileResponseDto } from '../types/user.api';
 import { mapUploadedFileResponse } from './mappers/userMapper';
+import { normalizeApiMediaUrl } from './urlUtils';
 
 export interface EmployerProfile {
   userId: string;
@@ -45,6 +46,7 @@ export interface EmployerPublicProfile {
   lastName: string;
   workshopTitle: string;
   bio: string | null;
+  city: string | null;
   profileImageUrl: string | null;
   specialization: string[];
   categoryNames: string[];
@@ -55,6 +57,21 @@ export interface EmployerPublicProfile {
   workshops: PublicWorkshopItem[];
 }
 
+function normalizeEmployerProfile(profile: EmployerProfile): EmployerProfile {
+  return {
+    ...profile,
+    coverImageUrl: normalizeApiMediaUrl(profile.coverImageUrl),
+    profileImageUrl: normalizeApiMediaUrl(profile.profileImageUrl),
+  };
+}
+
+function normalizeEmployerPublicProfile(profile: EmployerPublicProfile): EmployerPublicProfile {
+  return {
+    ...profile,
+    profileImageUrl: normalizeApiMediaUrl(profile.profileImageUrl),
+  };
+}
+
 export const employerService = {
   async getDashboard(): Promise<EmployerDashboard> {
     const { data } = await apiClient.get<EmployerDashboard>('/employer/dashboard');
@@ -63,12 +80,12 @@ export const employerService = {
 
   async getProfile(): Promise<EmployerProfile> {
     const { data } = await apiClient.get<EmployerProfile>('/employer/profile');
-    return data;
+    return normalizeEmployerProfile(data);
   },
 
   async updateProfile(request: EmployerProfileRequest): Promise<EmployerProfile> {
     const { data } = await apiClient.put<EmployerProfile>('/employer/profile', request);
-    return data;
+    return normalizeEmployerProfile(data);
   },
 
   async uploadEmployerCover(file: FormData): Promise<UploadedFileResponse> {
@@ -80,6 +97,6 @@ export const employerService = {
 
   async getPublicProfile(id: string): Promise<EmployerPublicProfile> {
     const { data } = await apiClient.get<EmployerPublicProfile>(`/employers/${id}/profile`);
-    return data;
+    return normalizeEmployerPublicProfile(data);
   },
 };
