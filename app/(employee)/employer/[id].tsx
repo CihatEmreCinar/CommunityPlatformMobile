@@ -14,8 +14,10 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { socialService } from '../../../services/socialService';
 import { postService } from '../../../services/postService';
+import { employerService } from '../../../services/employerService';
 import { formatNotificationTime } from '../../../utils/notificationUtils';
 import type { Post, UserSocialStats } from '../../../types/post.types';
+import type { EmployerPublicProfile } from '../../../services/employerService';
 
 const ACCENT = '#6366F1';
 
@@ -60,8 +62,10 @@ export default function EmployerPublicProfileScreen() {
   const router = useRouter();
   const { id: employerId } = useLocalSearchParams<{ id: string }>();
 
+  const [profile, setProfile] = useState<EmployerPublicProfile | null>(null);
   const [stats, setStats] = useState<UserSocialStats | null>(null);
   const [posts, setPosts] = useState<Post[]>([]);
+  const [loadingProfile, setLoadingProfile] = useState(true);
   const [loadingStats, setLoadingStats] = useState(true);
   const [loadingPosts, setLoadingPosts] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -69,6 +73,18 @@ export default function EmployerPublicProfileScreen() {
   const [hasMore, setHasMore] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const cursorRef = React.useRef<string | null>(null);
+
+  const fetchProfile = useCallback(async () => {
+    if (!employerId) return;
+    try {
+      const result = await employerService.getPublicProfile(employerId);
+      setProfile(result);
+    } catch {
+      // sessiz hata
+    } finally {
+      setLoadingProfile(false);
+    }
+  }, [employerId]);
 
   // ─── İstatistikler ─────────────────────────────────────────────────────────
   const fetchStats = useCallback(async () => {
@@ -106,11 +122,12 @@ export default function EmployerPublicProfileScreen() {
   const refresh = useCallback(async () => {
     setRefreshing(true);
     cursorRef.current = null;
-    await Promise.all([fetchStats(), fetchPosts(true)]);
+    await Promise.all([fetchProfile(), fetchStats(), fetchPosts(true)]);
     setRefreshing(false);
-  }, [fetchStats, fetchPosts]);
+  }, [fetchProfile, fetchStats, fetchPosts]);
 
   useEffect(() => {
+    fetchProfile();
     fetchStats();
     fetchPosts(true);
   }, []);
@@ -200,9 +217,15 @@ export default function EmployerPublicProfileScreen() {
 
       {/* Avatar + takip butonu */}
       <View style={styles.profileTop}>
-        <View style={styles.avatar}>
-          <Text style={styles.avatarInitials}>E</Text>
-        </View>
+        {profile?.profileImageUrl ? (
+          <Image source={{ uri: profile.profileImageUrl }} style={styles.avatarImage} />
+        ) : (
+          <View style={styles.avatar}>
+            <Text style={styles.avatarInitials}>
+              {(profile?.firstName?.[0] ?? 'E')}{(profile?.lastName?.[0] ?? '')}
+            </Text>
+          </View>
+        )}
         {loadingStats ? (
           <ActivityIndicator color={ACCENT} />
         ) : (
@@ -240,14 +263,44 @@ export default function EmployerPublicProfileScreen() {
 
       {/* İsim + rol */}
       <View style={styles.nameSection}>
-        <Text style={styles.fullName}>Eğitmen Profili</Text>
+        <Text style={styles.fullName}>
+          {profile ? `${profile.firstName} ${profile.lastName}` : 'Eğitmen Profili'}
+        </Text>
         <View style={styles.roleBadge}>
           <Text style={styles.roleText}>Eğitmen</Text>
         </View>
       </View>
 
+      {profile?.workshopTitle ? (
+        <Text style={styles.workshopTitleText}>{profile.workshopTitle}</Text>
+      ) : null}
+
+      {profile?.bio ? (
+        <Text style={styles.bioText}>{profile.bio}</Text>
+      ) : null}
+
+      {profile?.specialization?.length ? (
+        <View style={styles.tagRowWrap}>
+          {profile.specialization.map((item, index) => (
+            <View key={`${item}-${index}`} style={styles.profileChip}>
+              <Text style={styles.profileChipText}>{item}</Text>
+            </View>
+          ))}
+        </View>
+      ) : null}
+
+      {profile?.categoryNames?.length ? (
+        <View style={styles.tagRowWrap}>
+          {profile.categoryNames.map((item, index) => (
+            <View key={`${item}-${index}`} style={styles.categoryChip}>
+              <Text style={styles.categoryChipText}>{item}</Text>
+            </View>
+          ))}
+        </View>
+      ) : null}
+
       {/* Sosyal sayaçlar */}
-      {loadingStats ? (
+      {loadingProfile || loadingStats ? (
         <ActivityIndicator color={ACCENT} style={{ marginVertical: 14 }} />
       ) : (
         <View style={styles.statsRow}>
@@ -318,6 +371,7 @@ const styles = StyleSheet.create({
   // ─── Profil ────────────────────────────────────────────────────────────────
   profileTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 10, backgroundColor: '#FFFFFF' },
   avatar: { width: 72, height: 72, borderRadius: 36, backgroundColor: ACCENT, alignItems: 'center', justifyContent: 'center' },
+  avatarImage: { width: 72, height: 72, borderRadius: 36 },
   avatarInitials: { fontSize: 26, fontWeight: '700', color: '#FFFFFF' },
 
   // ─── Follow ────────────────────────────────────────────────────────────────
@@ -331,6 +385,13 @@ const styles = StyleSheet.create({
   fullName: { fontSize: 17, fontWeight: '700', color: '#111827' },
   roleBadge: { backgroundColor: '#EEF2FF', borderRadius: 6, paddingHorizontal: 8, paddingVertical: 2 },
   roleText: { fontSize: 11, fontWeight: '600', color: ACCENT },
+  workshopTitleText: { fontSize: 13, color: '#6B7280', paddingHorizontal: 16, paddingBottom: 6, backgroundColor: '#FFFFFF' },
+  bioText: { fontSize: 13, color: '#374151', lineHeight: 19, paddingHorizontal: 16, paddingBottom: 10, backgroundColor: '#FFFFFF' },
+  tagRowWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, paddingHorizontal: 16, paddingBottom: 10, backgroundColor: '#FFFFFF' },
+  profileChip: { backgroundColor: '#EEF2FF', borderRadius: 12, paddingHorizontal: 10, paddingVertical: 4 },
+  profileChipText: { fontSize: 12, color: ACCENT, fontWeight: '500' },
+  categoryChip: { backgroundColor: '#F3F4F6', borderRadius: 12, paddingHorizontal: 10, paddingVertical: 4 },
+  categoryChipText: { fontSize: 12, color: '#4B5563', fontWeight: '500' },
 
   // ─── Stats ─────────────────────────────────────────────────────────────────
   statsRow: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#FFFFFF', paddingVertical: 14, borderTopWidth: StyleSheet.hairlineWidth, borderBottomWidth: StyleSheet.hairlineWidth, borderColor: '#E5E7EB' },

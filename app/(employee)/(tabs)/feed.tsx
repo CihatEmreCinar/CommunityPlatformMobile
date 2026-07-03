@@ -8,6 +8,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useFeed } from '../../../hooks/useFeed';
 import { useComments, useShare } from '../../../hooks/useSocial';
+import { useAuth } from '../../../contexts/AuthContext';
 import { formatNotificationTime } from '../../../utils/notificationUtils';
 import type { FeedPost, FeedPostMedia } from '../../../types/feed.types';
 import type { CommentResponse } from '../../../types/social.types';
@@ -182,14 +183,14 @@ function PostCard({ post, onLike, onComment, onShare, isMine }: {
 
 export default function EmployerFeedScreen() {
   const router = useRouter();
+  const { user } = useAuth();
   // employer kendi feed'inde herkesi görmeli → explore mode
   const { posts, loading, loadingMore, refreshing, error, hasMore, refresh, loadMore, toggleLike } =
     useFeed(20, { mode: 'explore' });
   const { getShareUrl } = useShare();
   const [commentPost, setCommentPost] = useState<FeedPost | null>(null);
 
-  // TODO: useAuth ile gerçek employerId karşılaştırması — şimdilik prop placeholder
-  const currentEmployerId: string | null = null;
+  const currentEmployerId = user?.role === 'employer' ? user.id : null;
 
   useEffect(() => { refresh(); }, []);
 

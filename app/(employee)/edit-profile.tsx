@@ -7,6 +7,7 @@ import type { EmployeeProfile } from '../../services/employeeService';
 import { ScreenContainer } from '../../components/layout/ScreenContainer';
 import { FormHeader } from '../../components/layout/FormHeader';
 import { useAuth } from '../../contexts/AuthContext';
+import { userService } from '../../services/userService';
 
 const ACCENT = '#6366F1';
 
@@ -67,6 +68,7 @@ export default function EditEmployeeProfileScreen() {
   }, []);
 
   const handlePickImage = useCallback(async () => {
+    const previousAvatarUrl = avatarUrl;
     setUploadingPhoto(true);
     try {
       const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -83,14 +85,33 @@ export default function EditEmployeeProfileScreen() {
       });
 
       if (result.canceled || !result.assets?.[0]) return;
-      setAvatarUrl(result.assets[0].uri);
-      Alert.alert('Önizleme', 'Fotoğraf seçildi ancak yükleme henüz aktif değil — bu değer profil kaydına yazılacak.');
+      const asset = result.assets[0];
+      setAvatarUrl(asset.uri);
+
+      const formData = new FormData();
+      formData.append('file', {
+        uri: asset.uri,
+        name: asset.fileName ?? `avatar-${Date.now()}.jpg`,
+        type: asset.mimeType ?? 'image/jpeg',
+      } as any);
+
+      const uploaded = await userService.uploadAvatar(formData);
+      setAvatarUrl(uploaded.url);
+      await refreshUser();
+    } catch {
+      setAvatarUrl(previousAvatarUrl);
+      Alert.alert('Hata', 'Profil fotoğrafı yüklenemedi. Lütfen tekrar dene.');
     } finally {
       setUploadingPhoto(false);
     }
-  }, []);
+  }, [avatarUrl, refreshUser]);
 
   const handleSave = useCallback(async () => {
+    if (uploadingPhoto) {
+      Alert.alert('Lütfen bekle', 'Profil fotoğrafı yüklenirken kaydetme işlemi başlatılamaz.');
+      return;
+    }
+
     setSaving(true);
     try {
       await employeeService.updateProfile({
@@ -107,7 +128,7 @@ export default function EditEmployeeProfileScreen() {
     } finally {
       setSaving(false);
     }
-  }, [interests, hobbies, bio, city, avatarUrl, refreshUser, router]);
+  }, [uploadingPhoto, interests, hobbies, bio, city, avatarUrl, refreshUser, router]);
 
   if (loading) {
     return (
@@ -125,7 +146,7 @@ export default function EditEmployeeProfileScreen() {
           title="Profili Düzenle"
           onClose={() => router.back()}
           onSave={handleSave}
-          saving={saving}
+          saving={saving || uploadingPhoto}
           accentColor={ACCENT}
         />
       }
@@ -139,8 +160,15 @@ export default function EditEmployeeProfileScreen() {
               <Text style={styles.avatarPlaceholderText}>Foto</Text>
             </View>
           )}
+          {uploadingPhoto ? (
+            <View style={styles.avatarLoadingOverlay}>
+              <ActivityIndicator size="small" color="#FFFFFF" />
+            </View>
+          ) : null}
         </TouchableOpacity>
-        <Text style={styles.photoHint}>Fotoğrafı değiştirmek için dokun</Text>
+        <Text style={styles.photoHint}>
+          {uploadingPhoto ? 'Fotoğraf yükleniyor...' : 'Fotoğrafı değiştirmek için dokun'}
+        </Text>
       </View>
 
       <View style={styles.section}>
@@ -247,6 +275,7 @@ const styles = StyleSheet.create({
   avatarWrap: { borderRadius: 48, overflow: 'hidden' },
   avatarImage: { width: 96, height: 96, borderRadius: 48 },
   avatarPlaceholder: { width: 96, height: 96, borderRadius: 48, backgroundColor: '#EEF2FF', alignItems: 'center', justifyContent: 'center' },
+  avatarLoadingOverlay: { position: 'absolute', inset: 0, backgroundColor: 'rgba(17, 24, 39, 0.35)', alignItems: 'center', justifyContent: 'center' },
   avatarPlaceholderText: { fontSize: 15, fontWeight: '700', color: ACCENT },
   photoHint: { fontSize: 12, color: '#9CA3AF' },
   section: { paddingHorizontal: 16, paddingTop: 20, gap: 10 },

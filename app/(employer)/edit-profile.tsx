@@ -10,6 +10,7 @@ import { ScreenContainer } from '../../components/layout/ScreenContainer';
 import { FormHeader } from '../../components/layout/FormHeader';
 import { ProfileEditForm } from '../../components/layout/profile/ProfileEditForm';
 import { useAuth } from '../../contexts/AuthContext';
+import { userService } from '../../services/userService';
 
 const ACCENT = '#6366F1'; // employee tab'lerindeki mevcut accent renk ile aynı
 const MAX_BIO = 300;
@@ -23,6 +24,7 @@ export default function EditEmployerProfileScreen() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [uploadingCover, setUploadingCover] = useState(false);
 
   const [title, setTitle] = useState('');
   const [bio, setBio] = useState('');
@@ -31,6 +33,7 @@ export default function EditEmployerProfileScreen() {
   const [specialization, setSpecialization] = useState<string[]>([]);
   const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>([]);
   const [profileImageUrl, setProfileImageUrl] = useState<string | null>(null);
+  const [coverImageUrl, setCoverImageUrl] = useState<string | null>(null);
   const [city, setCity] = useState('');
 
   useEffect(() => {
@@ -43,6 +46,7 @@ export default function EditEmployerProfileScreen() {
         setSpecialization(p.specialization ?? []);
         setSelectedCategoryIds(p.categoryIds ?? []);
         setProfileImageUrl(p.profileImageUrl ?? null);
+        setCoverImageUrl(p.coverImageUrl ?? null);
         setCity(p.city ?? '');
       })
       .catch(() => Alert.alert('Hata', 'Profil yüklenemedi.'))
@@ -50,21 +54,82 @@ export default function EditEmployerProfileScreen() {
   }, []);
 
   const handlePickImage = useCallback(async () => {
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== 'granted') {
-      Alert.alert('İzin gerekli', 'Fotoğraf seçmek için galeri izni vermelisin.');
-      return;
+    const previousAvatarUrl = profileImageUrl;
+    setUploadingPhoto(true);
+    try {
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('İzin gerekli', 'Fotoğraf seçmek için galeri izni vermelisin.');
+        return;
+      }
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.7,
+      });
+      if (result.canceled || !result.assets?.[0]) return;
+
+      const asset = result.assets[0];
+      setProfileImageUrl(asset.uri);
+
+      const formData = new FormData();
+      formData.append('file', {
+        uri: asset.uri,
+        name: asset.fileName ?? `avatar-${Date.now()}.jpg`,
+        type: asset.mimeType ?? 'image/jpeg',
+      } as any);
+
+      const uploaded = await userService.uploadAvatar(formData);
+      setProfileImageUrl(uploaded.url);
+      await refreshUser();
+    } catch {
+      setProfileImageUrl(previousAvatarUrl);
+      Alert.alert('Hata', 'Profil fotoğrafı yüklenemedi. Lütfen tekrar dene.');
+    } finally {
+      setUploadingPhoto(false);
     }
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 0.7,
-    });
-    if (result.canceled || !result.assets?.[0]) return;
-    setProfileImageUrl(result.assets[0].uri);
-    Alert.alert('Önizleme', 'Fotoğraf seçildi ancak yükleme henüz aktif değil — bu özellik yakında eklenecek.');
-  }, []);
+  }, [profileImageUrl, refreshUser]);
+
+  const handlePickCoverImage = useCallback(async () => {
+    const previousCoverUrl = coverImageUrl;
+    setUploadingCover(true);
+    try {
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('İzin gerekli', 'Kapak görseli seçmek için galeri izni vermelisin.');
+        return;
+      }
+
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [16, 9],
+        quality: 0.8,
+      });
+
+      if (result.canceled || !result.assets?.[0]) return;
+
+      const asset = result.assets[0];
+      setCoverImageUrl(asset.uri);
+
+      const formData = new FormData();
+      formData.append('file', {
+        uri: asset.uri,
+        name: asset.fileName ?? `cover-${Date.now()}.jpg`,
+        type: asset.mimeType ?? 'image/jpeg',
+      } as any);
+
+      const uploaded = await employerService.uploadEmployerCover(formData);
+      setCoverImageUrl(uploaded.url);
+      await refreshUser();
+    } catch {
+      setCoverImageUrl(previousCoverUrl);
+      Alert.alert('Hata', 'Kapak görseli yüklenemedi. Lütfen tekrar dene.');
+    } finally {
+      setUploadingCover(false);
+    }
+  }, [coverImageUrl, refreshUser]);
 
   const addSpecialization = useCallback(() => {
     const clean = specInput.trim();
@@ -90,6 +155,12 @@ export default function EditEmployerProfileScreen() {
       Alert.alert('Unvan gerekli', 'Lütfen bir unvan/başlık gir.');
       return;
     }
+
+    if (uploadingPhoto || uploadingCover) {
+      Alert.alert('Lütfen bekle', 'Görsel yükleme tamamlanmadan profil kaydedilemez.');
+      return;
+    }
+
     setSaving(true);
     try {
       await employerService.updateProfile({
@@ -99,6 +170,7 @@ export default function EditEmployerProfileScreen() {
         specialization,
         categoryIds: selectedCategoryIds,
         profileImageUrl: profileImageUrl ?? undefined,
+        coverImageUrl: coverImageUrl ?? undefined,
         city: city.trim() || undefined,
       });
       await refreshUser();
@@ -108,7 +180,7 @@ export default function EditEmployerProfileScreen() {
     } finally {
       setSaving(false);
     }
-  }, [title, bio, yearsExperience, specialization, selectedCategoryIds, profileImageUrl, city, refreshUser, router]);
+  }, [title, uploadingPhoto, uploadingCover, bio, yearsExperience, specialization, selectedCategoryIds, profileImageUrl, coverImageUrl, city, refreshUser, router]);
 
   if (loading) {
     return (
@@ -126,7 +198,7 @@ export default function EditEmployerProfileScreen() {
           title="Profili Düzenle"
           onClose={() => router.back()}
           onSave={handleSave}
-          saving={saving}
+          saving={saving || uploadingPhoto || uploadingCover}
           accentColor={ACCENT}
         />
       }
@@ -135,6 +207,9 @@ export default function EditEmployerProfileScreen() {
         photoUrl={profileImageUrl}
         onPickPhoto={handlePickImage}
         uploadingPhoto={uploadingPhoto}
+        coverImageUrl={coverImageUrl}
+        onPickCoverImage={handlePickCoverImage}
+        uploadingCoverImage={uploadingCover}
         titleLabel="Unvan"
         titlePlaceholder="örn. Seramik Meraklısı"
         title={title}

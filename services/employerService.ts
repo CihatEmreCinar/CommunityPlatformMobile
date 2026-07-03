@@ -1,5 +1,8 @@
 import { apiClient } from './apiClient';
 import { EmployerDashboard } from '../types/dashboard';
+import type { UploadedFileResponse } from './userService';
+import type { UploadedFileResponseDto } from '../types/user.api';
+import { mapUploadedFileResponse } from './mappers/userMapper';
 
 export interface EmployerProfile {
   userId: string;
@@ -66,6 +69,13 @@ export const employerService = {
   async updateProfile(request: EmployerProfileRequest): Promise<EmployerProfile> {
     const { data } = await apiClient.put<EmployerProfile>('/employer/profile', request);
     return data;
+  },
+
+  async uploadEmployerCover(file: FormData): Promise<UploadedFileResponse> {
+    const { data } = await apiClient.post<UploadedFileResponseDto>('/employer/profile/cover', file, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return mapUploadedFileResponse(data);
   },
 
   async getPublicProfile(id: string): Promise<EmployerPublicProfile> {

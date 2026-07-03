@@ -11,33 +11,26 @@ import {
 import { useRouter } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useAuth } from '../../../contexts/AuthContext';
-import { employerService } from '../../../services/employerService';import { enrollmentService } from '../../../services/enrollmentService';
-import { workshopService } from '../../../services/workshopService';import { EmployerDashboard } from '../../../types/dashboard';
-import { EmployerProfile } from '../../../services/employerService';
+import { employerService } from '../../../services/employerService';
+import { enrollmentService } from '../../../services/enrollmentService';
+import { workshopService } from '../../../services/workshopService';
+import { EmployerDashboard } from '../../../types/dashboard';
 import { Colors, Typography, Spacing, Radius, Shadows } from '../../../constants/theme';
 
 export default function EmployerDashboardScreen() {
   const { user, logout } = useAuth();
   const router = useRouter();
   const [dashboard, setDashboard] = useState<EmployerDashboard | null>(null);
-  const [profile, setProfile] = useState<EmployerProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [fallbackCounts, setFallbackCounts] = useState({ pendingEnrollments: 0, totalEnrollments: 0, activeWorkshops: 0, totalWorkshops: 0 });
 
   const loadData = useCallback(async () => {
     try {
-      const [dashboardResult, profileResult] = await Promise.allSettled([
-        employerService.getDashboard(),
-        employerService.getProfile(),
-      ]);
+      const [dashboardResult] = await Promise.allSettled([employerService.getDashboard()]);
 
       if (dashboardResult.status === 'fulfilled') {
         setDashboard(dashboardResult.value);
-      }
-
-      if (profileResult.status === 'fulfilled') {
-        setProfile(profileResult.value);
       }
 
       const dashboardCountsMissing =
@@ -109,7 +102,7 @@ export default function EmployerDashboardScreen() {
         <View>
           <Text style={styles.greeting}>Merhaba, {user?.firstName}</Text>
           <Text style={styles.subGreeting}>
-            {profile?.workshopTitle || 'Profilini tamamla'}
+            {user?.employerProfile?.workshopTitle || 'Profilini tamamla'}
           </Text>
         </View>
         <TouchableOpacity onPress={handleLogout} style={styles.logoutButton}>

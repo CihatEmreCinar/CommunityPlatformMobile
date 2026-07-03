@@ -11,6 +11,11 @@ export type ProfileEditFormProps = {
   onPickPhoto: () => void;
   uploadingPhoto?: boolean;
 
+  // Cover
+  coverImageUrl?: string | null;
+  onPickCoverImage?: () => void;
+  uploadingCoverImage?: boolean;
+
   // Unvan
   titleLabel?: string;
   titlePlaceholder?: string;
@@ -54,6 +59,9 @@ export function ProfileEditForm({
   photoUrl,
   onPickPhoto,
   uploadingPhoto,
+  coverImageUrl,
+  onPickCoverImage,
+  uploadingCoverImage,
   titleLabel = 'Unvan',
   titlePlaceholder = 'örn. Resim Eğitmeni',
   title,
@@ -97,6 +105,34 @@ export function ProfileEditForm({
         </TouchableOpacity>
         <Text style={styles.photoHint}>Fotoğrafı değiştirmek için dokun</Text>
       </View>
+
+      {onPickCoverImage ? (
+        <View style={styles.section}>
+          <Text style={styles.sectionLabel}>Kapak Görseli</Text>
+          <TouchableOpacity
+            onPress={onPickCoverImage}
+            disabled={uploadingCoverImage}
+            style={styles.coverWrap}
+            activeOpacity={0.85}
+          >
+            {coverImageUrl ? (
+              <Image source={{ uri: coverImageUrl }} style={styles.coverImage} />
+            ) : (
+              <View style={styles.coverPlaceholder}>
+                <Ionicons name="image-outline" size={28} color="#9CA3AF" />
+                <Text style={styles.coverPlaceholderText}>Kapak görseli seç</Text>
+              </View>
+            )}
+            <View style={styles.coverEditBadge}>
+              {uploadingCoverImage ? (
+                <ActivityIndicator size="small" color="#FFFFFF" />
+              ) : (
+                <Ionicons name="images" size={14} color="#FFFFFF" />
+              )}
+            </View>
+          </TouchableOpacity>
+        </View>
+      ) : null}
 
       {/* Unvan */}
       <View style={styles.section}>
@@ -228,6 +264,11 @@ const styles = StyleSheet.create({
   photoHint: { fontSize: 12, color: '#9CA3AF' },
   section: { paddingHorizontal: 16, paddingVertical: 12 },
   sectionLabel: { fontSize: 13, fontWeight: '600', color: '#374151', marginBottom: 8 },
+  coverWrap: { borderRadius: 16, overflow: 'hidden', backgroundColor: '#F9FAFB', position: 'relative' },
+  coverImage: { width: '100%', height: 150, borderRadius: 16 },
+  coverPlaceholder: { height: 150, borderRadius: 16, borderWidth: 1, borderColor: '#E5E7EB', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: '#F9FAFB' },
+  coverPlaceholderText: { fontSize: 13, color: '#6B7280' },
+  coverEditBadge: { position: 'absolute', right: 10, bottom: 10, width: 28, height: 28, borderRadius: 14, backgroundColor: ACCENT, alignItems: 'center', justifyContent: 'center' },
   input: { backgroundColor: '#F9FAFB', borderWidth: 1, borderColor: '#E5E7EB', borderRadius: 10, paddingHorizontal: 14, paddingVertical: 10, fontSize: 14, color: '#111827' },
   bioInput: { backgroundColor: '#F9FAFB', borderWidth: 1, borderColor: '#E5E7EB', borderRadius: 10, paddingHorizontal: 14, paddingVertical: 10, fontSize: 14, color: '#111827', minHeight: 90 },
   charCount: { fontSize: 12, color: '#9CA3AF', textAlign: 'right', marginTop: 6 },
