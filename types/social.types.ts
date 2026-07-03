@@ -1,7 +1,6 @@
 // ─── Like ────────────────────────────────────────────────────────────────────
 
 export interface LikeResponse {
-  postId: string;
   liked: boolean;
   likeCount: number;
 }
@@ -21,6 +20,8 @@ export interface CommentResponse {
   authorAvatarUrl: string | null;
   content: string;
   parentCommentId: string | null;
+  likeCount: number;
+  replies: CommentResponse[];
   createdAt: string;
 }
 
@@ -33,17 +34,15 @@ export interface CommentListResponse {
 // ─── Follow ──────────────────────────────────────────────────────────────────
 
 export interface FollowResponse {
-  targetUserId: string;
   following: boolean;
   followerCount: number;
 }
 
 export interface FollowUser {
   userId: string;
-  firstName: string;
-  lastName: string;
+  name: string;
   avatarUrl: string | null;
-  role: string;
+  isFollowingBack: boolean;
 }
 
 export interface FollowListResponse {
@@ -55,8 +54,6 @@ export interface FollowListResponse {
 // ─── Share ───────────────────────────────────────────────────────────────────
 
 export interface ShareResponse {
-  id: string;
-  postId: string;
+  shareToken: string;
   shareUrl: string;
-  shareCount: number;
 }

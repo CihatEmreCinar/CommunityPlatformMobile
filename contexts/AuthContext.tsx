@@ -3,6 +3,7 @@ import { authService } from '../services/authService';
 import { tokenStorage } from '../services/tokenStorage';
 import { User, LoginRequest, RegisterRequest } from '../types/auth';
 import { apiClient } from '../services/apiClient';
+import { userService } from '../services/userService';
 
 interface AuthContextType {
   user: User | null;
@@ -40,6 +41,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     loadStoredUser();
   }, []);
 
+  async function syncCurrentUser(fallbackUser?: User | null): Promise<User | null> {
+    try {
+      const currentUser = await userService.getMe();
+      await tokenStorage.setUser(currentUser);
+      setUser(currentUser);
+      return currentUser;
+    } catch {
+      if (fallbackUser) {
+        setUser(fallbackUser);
+        return fallbackUser;
+      }
+      return null;
+    }
+  }
+
   async function loadStoredUser() {
     try {
       const accessToken = await tokenStorage.getAccessToken();
@@ -55,8 +71,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const isExpired = exp !== null && exp < now;
 
       if (!isExpired) {
-        // Token geçerli, direkt kullanıcıyı yükle
-        setUser(storedUser);
+        await syncCurrentUser(storedUser);
         setIsLoading(false);
         return;
       }
@@ -73,8 +88,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const response = await apiClient.post('/auth/refresh', { refreshToken });
         const { accessToken: newAccess, refreshToken: newRefresh, user: freshUser } = response.data;
         await tokenStorage.setTokens(newAccess, newRefresh);
-        await tokenStorage.setUser(freshUser);
-        setUser(freshUser);
+        await syncCurrentUser(freshUser);
       } catch {
         // Refresh de başarısız, kullanıcıyı logout yap
         await tokenStorage.clearAll();
@@ -87,19 +101,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   async function refreshUser() {
-    const storedUser = await tokenStorage.getUser<User>();
-    if (storedUser) setUser(storedUser);
+    await syncCurrentUser(user);
   }
 
   async function login(request: LoginRequest): Promise<User> {
     const response = await authService.login(request);
-    setUser(response.user);
-    return response.user;
+    const currentUser = await syncCurrentUser(response.user);
+    return currentUser ?? response.user;
   }
 
   async function register(request: RegisterRequest) {
     const response = await authService.register(request);
-    setUser(response.user);
+    await syncCurrentUser(response.user);
   }
 
   async function logout() {

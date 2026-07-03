@@ -8,12 +8,28 @@ import type {
   FollowListResponse,
   ShareResponse,
 } from '../types/social.types';
+import type {
+  CommentListResponseDto,
+  CommentResponseDto,
+  FollowListResponseDto,
+  FollowResponseDto,
+  LikeResponseDto,
+  ShareResponseDto,
+} from '../types/social.api';
+import {
+  mapCommentListResponse,
+  mapCommentResponse,
+  mapFollowListResponse,
+  mapFollowResponse,
+  mapLikeResponse,
+  mapShareResponse,
+} from './mappers/socialMapper';
 
 export const socialService = {
   // ─── Like ──────────────────────────────────────────────────────────────────
   toggleLike: async (postId: string): Promise<LikeResponse> => {
-    const { data } = await apiClient.post<LikeResponse>(`/posts/${postId}/like`);
-    return data;
+    const { data } = await apiClient.post<LikeResponseDto>(`/posts/${postId}/like`);
+    return mapLikeResponse(data);
   },
 
   // ─── Comment ───────────────────────────────────────────────────────────────
@@ -21,11 +37,11 @@ export const socialService = {
     postId: string,
     body: CreateCommentRequest
   ): Promise<CommentResponse> => {
-    const { data } = await apiClient.post<CommentResponse>(
+    const { data } = await apiClient.post<CommentResponseDto>(
       `/posts/${postId}/comments`,
       body
     );
-    return data;
+    return mapCommentResponse(data);
   },
 
   getComments: async (
@@ -33,11 +49,11 @@ export const socialService = {
     cursor?: string,
     limit = 20
   ): Promise<CommentListResponse> => {
-    const { data } = await apiClient.get<CommentListResponse>(
+    const { data } = await apiClient.get<CommentListResponseDto>(
       `/posts/${postId}/comments`,
       { params: { ...(cursor ? { cursor } : {}), limit } }
     );
-    return data;
+    return mapCommentListResponse(data);
   },
 
   // Backend: DELETE /api/v1/comments/{commentId} — postId YOK
@@ -47,10 +63,10 @@ export const socialService = {
 
   // ─── Follow ────────────────────────────────────────────────────────────────
   toggleFollow: async (targetUserId: string): Promise<FollowResponse> => {
-    const { data } = await apiClient.post<FollowResponse>(
+    const { data } = await apiClient.post<FollowResponseDto>(
       `/users/${targetUserId}/follow`
     );
-    return data;
+    return mapFollowResponse(data);
   },
 
   getFollowers: async (
@@ -58,11 +74,11 @@ export const socialService = {
     cursor?: string,
     limit = 20
   ): Promise<FollowListResponse> => {
-    const { data } = await apiClient.get<FollowListResponse>(
+    const { data } = await apiClient.get<FollowListResponseDto>(
       `/users/${userId}/followers`,
       { params: { ...(cursor ? { cursor } : {}), limit } }
     );
-    return data;
+    return mapFollowListResponse(data);
   },
 
   getFollowing: async (
@@ -70,16 +86,16 @@ export const socialService = {
     cursor?: string,
     limit = 20
   ): Promise<FollowListResponse> => {
-    const { data } = await apiClient.get<FollowListResponse>(
+    const { data } = await apiClient.get<FollowListResponseDto>(
       `/users/${userId}/following`,
       { params: { ...(cursor ? { cursor } : {}), limit } }
     );
-    return data;
+    return mapFollowListResponse(data);
   },
 
   // ─── Share ─────────────────────────────────────────────────────────────────
   getOrCreateShare: async (postId: string): Promise<ShareResponse> => {
-    const { data } = await apiClient.get<ShareResponse>(`/posts/${postId}/share`);
-    return data;
+    const { data } = await apiClient.get<ShareResponseDto>(`/posts/${postId}/share`);
+    return mapShareResponse(data);
   },
 };

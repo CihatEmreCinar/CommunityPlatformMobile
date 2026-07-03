@@ -18,7 +18,7 @@ export interface Post {
   employerAvatarUrl: string | null;
   workshopId: string;
   workshopTitle: string;
-  caption: string;           // backend: Caption (content değil)
+  caption: string | null;    // backend: Caption nullable
   likeCount: number;
   commentCount: number;
   shareCount: number;
@@ -34,9 +34,8 @@ export interface Post {
 
 export interface CreatePostRequest {
   workshopId: string;        // backend zorunlu
-  caption: string;           // backend: Caption
+  caption: string | null;    // backend: Caption
   tagSlugs?: string[];       // backend: TagSlugs
-  allowComments?: boolean;
 }
 
 export interface UpdatePostRequest {

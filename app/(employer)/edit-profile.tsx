@@ -6,9 +6,10 @@ import { employerService } from '../../services/employerService';
 import { categoryService } from '../../services/categoryService';
 import type { EmployerProfile } from '../../services/employerService';
 import type { Category } from '../../types/category';
-import { ScreenContainer } from '../components/layout/ScreenContainer';
-import { FormHeader } from '../components/layout/FormHeader';
-import { ProfileEditForm } from '../components/layout/profile/ProfileEditForm';
+import { ScreenContainer } from '../../components/layout/ScreenContainer';
+import { FormHeader } from '../../components/layout/FormHeader';
+import { ProfileEditForm } from '../../components/layout/profile/ProfileEditForm';
+import { useAuth } from '../../contexts/AuthContext';
 
 const ACCENT = '#6366F1'; // employee tab'lerindeki mevcut accent renk ile aynı
 const MAX_BIO = 300;
@@ -16,6 +17,7 @@ const MAX_SPECIALIZATION = 8;
 
 export default function EditEmployerProfileScreen() {
   const router = useRouter();
+  const { refreshUser } = useAuth();
 
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
@@ -29,6 +31,7 @@ export default function EditEmployerProfileScreen() {
   const [specialization, setSpecialization] = useState<string[]>([]);
   const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>([]);
   const [profileImageUrl, setProfileImageUrl] = useState<string | null>(null);
+  const [city, setCity] = useState('');
 
   useEffect(() => {
     Promise.all([employerService.getProfile(), categoryService.getAll()])
@@ -40,6 +43,7 @@ export default function EditEmployerProfileScreen() {
         setSpecialization(p.specialization ?? []);
         setSelectedCategoryIds(p.categoryIds ?? []);
         setProfileImageUrl(p.profileImageUrl ?? null);
+        setCity(p.city ?? '');
       })
       .catch(() => Alert.alert('Hata', 'Profil yüklenemedi.'))
       .finally(() => setLoading(false));
@@ -94,14 +98,17 @@ export default function EditEmployerProfileScreen() {
         yearsExperience: yearsExperience ? Number(yearsExperience) : undefined,
         specialization,
         categoryIds: selectedCategoryIds,
+        profileImageUrl: profileImageUrl ?? undefined,
+        city: city.trim() || undefined,
       });
+      await refreshUser();
       router.back();
     } catch {
       Alert.alert('Hata', 'Profil güncellenemedi.');
     } finally {
       setSaving(false);
     }
-  }, [title, bio, yearsExperience, specialization, selectedCategoryIds, router]);
+  }, [title, bio, yearsExperience, specialization, selectedCategoryIds, profileImageUrl, city, refreshUser, router]);
 
   if (loading) {
     return (
@@ -135,6 +142,8 @@ export default function EditEmployerProfileScreen() {
         bio={bio}
         onBioChange={setBio}
         maxBio={MAX_BIO}
+        city={city}
+        onCityChange={setCity}
         yearsExperience={yearsExperience}
         onYearsExperienceChange={setYearsExperience}
         specialization={specialization}

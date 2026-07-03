@@ -16,6 +16,7 @@ import { enrollmentService } from '../../../services/enrollmentService';
 import { reviewService } from '../../../services/reviewService';
 import { Workshop } from '../../../types/workshop';
 import { Review } from '../../../types/review';
+import { Enrollment } from '../../../types/enrollment';
 import { Colors, Typography, Spacing, Radius, Shadows } from '../../../constants/theme';
 
 export default function WorkshopDetailScreen() {
@@ -31,6 +32,7 @@ export default function WorkshopDetailScreen() {
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState('');
   const [isSubmittingReview, setIsSubmittingReview] = useState(false);
+  const [enrollmentStatus, setEnrollmentStatus] = useState<Enrollment['status'] | null>(null);
 
   useEffect(() => {
     loadWorkshop();
@@ -64,6 +66,7 @@ async function checkEligibility() {
     const enrollments = await enrollmentService.getMine();
     const myEnrollment = enrollments.find((e) => e.workshopId === id);
     setCanReview(myEnrollment?.status === 'attended');
+    setEnrollmentStatus(myEnrollment?.status ?? null);
   } catch (error) {
     console.log('Kayıt durumu kontrol edilemedi', error);
   }
@@ -74,9 +77,14 @@ async function checkEligibility() {
 
     setIsEnrolling(true);
     try {
-      await enrollmentService.create({ workshopId: workshop.id });
-      Alert.alert('Başarılı', 'Atölyeye kaydoldun!', [
-        { text: 'Tamam', onPress: () => router.back() },
+      const created = await enrollmentService.create({ workshopId: workshop.id });
+      setEnrollmentStatus(created.status);
+      const message =
+        created.status === 'pending'
+          ? 'Kayıt talebin gönderildi. Onay bekleniyor.'
+          : 'Atölyeye kaydoldun!';
+      Alert.alert('Başarılı', message, [
+        { text: 'Tamam' },
       ]);
     } catch (error: any) {
       const message = error?.response?.data?.message || 'Kayıt işlemi başarısız oldu.';
@@ -134,6 +142,20 @@ async function checkEligibility() {
   })} - ${endDate.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}`;
 
   const showReviewForm = canReview && !hasReviewed;
+  const isEnrolled = enrollmentStatus != null;
+  const enrollmentButtonText =
+    enrollmentStatus === 'pending'
+      ? 'Onay Bekleniyor'
+      : enrollmentStatus === 'confirmed'
+      ? 'Kaydın Onaylandı'
+      : enrollmentStatus === 'attended'
+      ? 'Katıldın'
+      : enrollmentStatus === 'cancelled'
+      ? 'Kayıt İptal Edildi'
+      : isFull
+      ? 'Kapasite Doldu'
+      : 'Kaydol';
+  const enrollmentButtonDisabled = isFull || isEnrolling || isEnrolled;
 
   return (
     <View style={styles.flex}>
@@ -290,15 +312,15 @@ async function checkEligibility() {
           <Text style={styles.priceValue}>{workshop.price} ₺</Text>
         </View>
         <TouchableOpacity
-          style={[styles.enrollButton, (isFull || isEnrolling) && styles.enrollButtonDisabled]}
+          style={[styles.enrollButton, enrollmentButtonDisabled && styles.enrollButtonDisabled]}
           onPress={handleEnroll}
-          disabled={isFull || isEnrolling}
+          disabled={enrollmentButtonDisabled}
           activeOpacity={0.85}
         >
           {isEnrolling ? (
             <ActivityIndicator color={Colors.onPrimary} />
           ) : (
-            <Text style={styles.enrollButtonText}>{isFull ? 'Kapasite Doldu' : 'Kaydol'}</Text>
+            <Text style={styles.enrollButtonText}>{enrollmentButtonText}</Text>
           )}
         </TouchableOpacity>
       </View>

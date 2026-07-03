@@ -195,7 +195,7 @@ export default function EmployerFeedScreen() {
 
   const handleShare = useCallback(async (post: FeedPost) => {
     const url = await getShareUrl(post.id);
-    await Share.share({ message: url ?? post.caption.slice(0, 80), title: 'Atolium' });
+    await Share.share({ message: url ?? post.caption?.slice(0, 80) ?? 'Atolium paylaşımı', title: 'Atolium' });
   }, [getShareUrl]);
 
   const renderItem = useCallback(({ item }: { item: FeedPost }) => (

@@ -7,23 +7,35 @@ import type {
   UserSocialStats,
   UploadMediaResponse,
 } from '../types/post.types';
+import type {
+  PostDto,
+  PostListDto,
+  UploadMediaResponseDto,
+  UserSocialStatsDto,
+} from '../types/post.api';
+import {
+  mapPost,
+  mapPostList,
+  mapUploadMediaResponse,
+  mapUserSocialStats,
+} from './mappers/postMapper';
 
 export const postService = {
   // ─── Post CRUD ─────────────────────────────────────────────────────────────
 
   create: async (body: CreatePostRequest): Promise<Post> => {
-    const { data } = await apiClient.post<Post>('/posts', body);
-    return data;
+    const { data } = await apiClient.post<PostDto>('/posts', body);
+    return mapPost(data);
   },
 
   getById: async (id: string): Promise<Post> => {
-    const { data } = await apiClient.get<Post>(`/posts/${id}`);
-    return data;
+    const { data } = await apiClient.get<PostDto>(`/posts/${id}`);
+    return mapPost(data);
   },
 
   update: async (id: string, body: UpdatePostRequest): Promise<Post> => {
-    const { data } = await apiClient.patch<Post>(`/posts/${id}`, body);
-    return data;
+    const { data } = await apiClient.patch<PostDto>(`/posts/${id}`, body);
+    return mapPost(data);
   },
 
   delete: async (id: string): Promise<void> => {
@@ -37,7 +49,7 @@ export const postService = {
     file: FormData,
     orderIndex = 0
   ): Promise<UploadMediaResponse> => {
-    const { data } = await apiClient.post<UploadMediaResponse>(
+    const { data } = await apiClient.post<UploadMediaResponseDto>(
       `/posts/${postId}/media`,
       file,
       {
@@ -45,7 +57,7 @@ export const postService = {
         headers: { 'Content-Type': 'multipart/form-data' },
       }
     );
-    return data;
+    return mapUploadMediaResponse(data);
   },
 
   deleteMedia: async (postId: string, mediaId: string): Promise<void> => {
@@ -59,7 +71,7 @@ export const postService = {
     params: { cursor?: string | null; limit?: number } = {}
   ): Promise<PostListResponse> => {
     const { cursor, limit = 15 } = params;
-    const { data } = await apiClient.get<PostListResponse>(
+    const { data } = await apiClient.get<PostListDto>(
       `/users/${userId}/posts`,
       {
         params: {
@@ -68,15 +80,15 @@ export const postService = {
         },
       }
     );
-    return data;
+    return mapPostList(data);
   },
 
   // ─── Sosyal istatistikler ──────────────────────────────────────────────────
   // NOT: Bu endpoint backend'de henüz yok — eklenince çalışır
   getSocialStats: async (userId: string): Promise<UserSocialStats> => {
-    const { data } = await apiClient.get<UserSocialStats>(
+    const { data } = await apiClient.get<UserSocialStatsDto>(
       `/users/${userId}/social-stats`
     );
-    return data;
+    return mapUserSocialStats(data);
   },
 };

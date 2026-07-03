@@ -7,10 +7,8 @@ import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../../../contexts/AuthContext';
 import { postService } from '../../../services/postService';
-import { employerService } from '../../../services/employerService';
 import { formatNotificationTime } from '../../../utils/notificationUtils';
 import type { Post, UserSocialStats } from '../../../types/post.types';
-import type { EmployerProfile } from '../../../services/employerService';
 
 const ACCENT = '#0F766E';
 
@@ -77,31 +75,18 @@ function MyPostCard({ post, onEdit, onDelete }: {
 
 export default function EmployerProfileScreen() {
   const router = useRouter();
-  const { user, logout } = useAuth();
+  const { user, logout, refreshUser } = useAuth();
+  const profile = user?.employerProfile ?? null;
 
   const [activeTab, setActiveTab] = useState<Tab>('posts');
   const [stats, setStats] = useState<UserSocialStats | null>(null);
-  const [profile, setProfile] = useState<EmployerProfile | null>(null);
   const [posts, setPosts] = useState<Post[]>([]);
   const [loadingStats, setLoadingStats] = useState(true);
-  const [loadingProfile, setLoadingProfile] = useState(true);
   const [loadingPosts, setLoadingPosts] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const cursorRef = React.useRef<string | null>(null);
-
-  // ─── Profil detayı (bio, uzmanlık, kategoriler) ───────────────────────────
-  const fetchProfile = useCallback(async () => {
-    try {
-      const p = await employerService.getProfile();
-      setProfile(p);
-    } catch {
-      // sessiz hata — profil henüz oluşturulmamış olabilir
-    } finally {
-      setLoadingProfile(false);
-    }
-  }, []);
 
   // ─── Stats ─────────────────────────────────────────────────────────────────
   const fetchStats = useCallback(async () => {
@@ -144,14 +129,13 @@ export default function EmployerProfileScreen() {
   const refresh = useCallback(async () => {
     setRefreshing(true);
     cursorRef.current = null;
-    await Promise.all([fetchStats(), fetchPosts(true), fetchProfile()]);
+    await Promise.all([refreshUser(), fetchStats(), fetchPosts(true)]);
     setRefreshing(false);
-  }, [fetchStats, fetchPosts, fetchProfile]);
+  }, [refreshUser, fetchStats, fetchPosts]);
 
   useEffect(() => {
     fetchStats();
     fetchPosts(true);
-    fetchProfile();
   }, []);
 
   const handleEdit = useCallback((id: string) => {
@@ -187,8 +171,8 @@ export default function EmployerProfileScreen() {
           onPress={() => router.push('/(employer)/edit-profile' as any)}
           activeOpacity={0.7}
         >
-          {profile?.profileImageUrl ? (
-            <Image source={{ uri: profile.profileImageUrl }} style={styles.avatarImage} />
+          {user?.avatarUrl ? (
+            <Image source={{ uri: user.avatarUrl }} style={styles.avatarImage} />
           ) : (
             <View style={styles.avatar}>
               <Text style={styles.avatarInitials}>{user?.firstName?.[0]}{user?.lastName?.[0]}</Text>
@@ -237,8 +221,12 @@ export default function EmployerProfileScreen() {
       ) : null}
 
       {/* YENİ: bio */}
-      {profile?.bio ? (
-        <Text style={styles.bioText}>{profile.bio}</Text>
+      {user?.bio ? (
+        <Text style={styles.bioText}>{user.bio}</Text>
+      ) : null}
+
+      {user?.city ? (
+        <Text style={styles.cityText}>{user.city}</Text>
       ) : null}
 
       {/* YENİ: uzmanlık tag'leri */}
@@ -292,6 +280,12 @@ export default function EmployerProfileScreen() {
           <Text style={styles.infoText}>{profile.yearsExperience} yıl deneyim</Text>
         </View>
       )}
+      {user?.city ? (
+        <View style={styles.infoRow}>
+          <Ionicons name="location-outline" size={18} color="#6B7280" />
+          <Text style={styles.infoText}>{user.city}</Text>
+        </View>
+      ) : null}
       {/* YENİ: kategoriler */}
       {profile?.categoryNames && profile.categoryNames.length > 0 && (
         <View style={styles.infoRow}>
@@ -366,6 +360,7 @@ const styles = StyleSheet.create({
   roleText: { fontSize: 11, fontWeight: '600', color: ACCENT },
   workshopTitleText: { fontSize: 13, color: '#6B7280', paddingHorizontal: 16, paddingBottom: 6, backgroundColor: '#FFFFFF' },
   bioText: { fontSize: 13, color: '#374151', lineHeight: 19, paddingHorizontal: 16, paddingBottom: 10, backgroundColor: '#FFFFFF' },
+  cityText: { fontSize: 13, color: '#6B7280', fontWeight: '600', paddingHorizontal: 16, paddingBottom: 8, backgroundColor: '#FFFFFF' },
   specializationRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, paddingHorizontal: 16, paddingBottom: 12, backgroundColor: '#FFFFFF' },
   specChip: { backgroundColor: '#F0FDFA', borderRadius: 12, paddingHorizontal: 10, paddingVertical: 4 },
   specChipText: { fontSize: 12, color: ACCENT, fontWeight: '500' },

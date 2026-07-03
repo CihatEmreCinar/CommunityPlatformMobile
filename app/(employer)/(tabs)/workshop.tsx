@@ -9,7 +9,7 @@ import {
   TouchableOpacity,
   Alert,
 } from 'react-native';
-import { useRouter, useFocusEffect } from 'expo-router';
+import { useRouter, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
 import { workshopService } from '../../../services/workshopService';
 import { Workshop } from '../../../types/workshop';
@@ -31,6 +31,7 @@ const STATUS_COLORS: Record<string, string> = {
 
 export default function MyWorkshopsScreen() {
   const router = useRouter();
+  const { status } = useLocalSearchParams<{ status?: string }>();
   const [workshops, setWorkshops] = useState<Workshop[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -38,7 +39,7 @@ export default function MyWorkshopsScreen() {
 
   const loadWorkshops = useCallback(async () => {
     try {
-      const data = await workshopService.getMyWorkshops();
+      const data = await workshopService.getMyWorkshops(status);
       setWorkshops(data);
     } catch (error) {
       console.log('Atölyeler yüklenemedi', error);
@@ -46,7 +47,7 @@ export default function MyWorkshopsScreen() {
       setIsLoading(false);
       setIsRefreshing(false);
     }
-  }, []);
+  }, [status]);
 
   useFocusEffect(
     useCallback(() => {

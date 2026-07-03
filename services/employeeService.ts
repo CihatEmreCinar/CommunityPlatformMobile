@@ -5,6 +5,9 @@ export interface EmployeeProfile {
   userId: string;
   interests: string[];
   hobbies: string[];
+  bio: string | null;
+  avatarUrl: string | null;
+  city: string | null;
   totalAttendedWorkshops: number;
   xpPoints: number;
   rankLevel: number;
@@ -14,6 +17,9 @@ export interface EmployeeProfile {
 export interface UpdateEmployeeProfileRequest {
   interests?: string[];
   hobbies?: string[];
+  bio?: string;
+  avatarUrl?: string;
+  city?: string;
 }
 
 const BASE_URL = '/employee';

@@ -35,9 +35,9 @@ export interface Notification {
   title: string;
   body: string;
   channel: NotificationChannel;
-  metadata?: string | null;
+  metadata: NotificationMetadata | null;
   isRead: boolean;
-  readAt?: string | null;
+  readAt: string | null;
   createdAt: string;
 }
 
@@ -46,13 +46,15 @@ export interface NotificationListParams {
   limit?: number;
 }
 
-export interface NotificationListResponse {
-  data: Notification[];
+export interface NotificationListResult {
+  items: Notification[];
   page: number;
   limit: number;
+  hasMore: boolean;
+  total?: number;
 }
 
-export interface UnreadCountResponse {
+export interface UnreadCountResult {
   unreadCount: number;
 }
 

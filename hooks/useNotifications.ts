@@ -41,16 +41,16 @@ export function useNotifications(
     try {
       setError(null);
       const currentPage = resetPage ? 1 : pageRef.current;
-      const data = await notificationService.getAll({ page: currentPage, limit });
+      const result = await notificationService.getAll({ page: currentPage, limit });
 
       if (resetPage) {
-        setNotifications(data);
+        setNotifications(result.items);
         setPage(1);
       } else {
-        setNotifications(prev => [...prev, ...data]);
+        setNotifications(prev => [...prev, ...result.items]);
       }
 
-      setHasMore(data.length === limit);
+      setHasMore(result.hasMore);
     } catch (e) {
       setError('Bildirimler yüklenemedi.');
     }
@@ -76,9 +76,9 @@ export function useNotifications(
     const nextPage = pageRef.current + 1;
     setPage(nextPage);
     try {
-      const data = await notificationService.getAll({ page: nextPage, limit });
-      setNotifications(prev => [...prev, ...data]);
-      setHasMore(data.length === limit);
+      const result = await notificationService.getAll({ page: nextPage, limit });
+      setNotifications(prev => [...prev, ...result.items]);
+      setHasMore(result.hasMore);
     } catch {
       setError('Daha fazla yüklenemedi.');
     } finally {

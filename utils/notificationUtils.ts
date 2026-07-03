@@ -1,17 +1,33 @@
 import type { Notification, NotificationMetadata, NotificationType } from '../types/notification.types';
 
-export function parseMetadata(metadata?: string | null): NotificationMetadata | null {
-  if (!metadata) return null;
-  try {
-    return JSON.parse(metadata) as NotificationMetadata;
-  } catch {
-    return null;
-  }
+export function parseMetadata(metadata?: NotificationMetadata | null): NotificationMetadata | null {
+  return metadata ?? null;
 }
 
 export function getNotificationRoute(notification: Notification): string | null {
   const meta = parseMetadata(notification.metadata);
-  return meta?.route ?? null;
+  if (!meta) return null;
+
+  if (meta.route?.startsWith('/')) {
+    return meta.route;
+  }
+
+  if (meta.route === 'workshop/detail' && typeof meta.workshopId === 'string') {
+    return `/(employee)/workshop/${meta.workshopId}`;
+  }
+
+  if (notification.type === 'ApplicationReceived' && typeof meta.enrollmentId === 'string') {
+    return '/(employer)/enrollments';
+  }
+
+  if (
+    (notification.type === 'ApplicationApproved' || notification.type === 'WorkshopCompleted') &&
+    typeof meta.workshopId === 'string'
+  ) {
+    return `/(employee)/workshop/${meta.workshopId}`;
+  }
+
+  return null;
 }
 
 type NotificationConfig = {

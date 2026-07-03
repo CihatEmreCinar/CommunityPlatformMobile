@@ -40,7 +40,7 @@ export default function PostEditScreen() {
       .getById(id)
       .then((p) => {
         setPost(p);
-        setContent(p.caption);
+        setContent(p.caption ?? '');
         setTags(p.tags ?? []);
       })
       .catch(() => Alert.alert('Hata', 'Gönderi yüklenemedi.'))
@@ -114,7 +114,7 @@ export default function PostEditScreen() {
     content.trim().length > 0 &&
     !submitting &&
     !deleting &&
-    (content.trim() !== post?.caption || JSON.stringify(tags) !== JSON.stringify(post?.tags));
+    (content.trim() !== (post?.caption ?? '') || JSON.stringify(tags) !== JSON.stringify(post?.tags));
 
   return (
     <KeyboardAvoidingView

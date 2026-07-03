@@ -11,9 +11,10 @@ import {
 import { useRouter } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useAuth } from '../../../contexts/AuthContext';
-import { employerService } from '../../../services/employerService';
-import { EmployerDashboard } from '../../../types/dashboard';
-import { EmployerProfile } from '../../../services/employerService';import { Colors, Typography, Spacing, Radius, Shadows } from '../../../constants/theme';
+import { employerService } from '../../../services/employerService';import { enrollmentService } from '../../../services/enrollmentService';
+import { workshopService } from '../../../services/workshopService';import { EmployerDashboard } from '../../../types/dashboard';
+import { EmployerProfile } from '../../../services/employerService';
+import { Colors, Typography, Spacing, Radius, Shadows } from '../../../constants/theme';
 
 export default function EmployerDashboardScreen() {
   const { user, logout } = useAuth();
@@ -22,15 +23,49 @@ export default function EmployerDashboardScreen() {
   const [profile, setProfile] = useState<EmployerProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [fallbackCounts, setFallbackCounts] = useState({ pendingEnrollments: 0, totalEnrollments: 0, activeWorkshops: 0, totalWorkshops: 0 });
 
   const loadData = useCallback(async () => {
     try {
-      const [dashboardData, profileData] = await Promise.all([
+      const [dashboardResult, profileResult] = await Promise.allSettled([
         employerService.getDashboard(),
         employerService.getProfile(),
       ]);
-      setDashboard(dashboardData);
-      setProfile(profileData);
+
+      if (dashboardResult.status === 'fulfilled') {
+        setDashboard(dashboardResult.value);
+      }
+
+      if (profileResult.status === 'fulfilled') {
+        setProfile(profileResult.value);
+      }
+
+      const dashboardCountsMissing =
+        !dashboardResult ||
+        dashboardResult.status !== 'fulfilled' ||
+        dashboardResult.value == null ||
+        dashboardResult.value.activeWorkshops == null ||
+        dashboardResult.value.totalWorkshops == null ||
+        dashboardResult.value.pendingEnrollments == null ||
+        dashboardResult.value.totalEnrollments == null;
+
+      if (dashboardCountsMissing) {
+        try {
+          const [enrollments, workshops] = await Promise.all([
+            enrollmentService.getEmployerEnrollments(),
+            workshopService.getMyWorkshops(),
+          ]);
+
+          const pendingEnrollments = enrollments.filter((item) => item.status === 'pending').length;
+          const totalEnrollments = enrollments.length;
+          const activeWorkshops = workshops.filter((item) => item.status === 'published').length;
+          const totalWorkshops = workshops.length;
+
+          setFallbackCounts({ pendingEnrollments, totalEnrollments, activeWorkshops, totalWorkshops });
+        } catch (fallbackError) {
+          console.log('Dashboard yedeği yüklenemedi', fallbackError);
+        }
+      }
     } catch (error) {
       console.log('Dashboard yüklenemedi', error);
     } finally {
@@ -102,26 +137,30 @@ export default function EmployerDashboardScreen() {
         <StatCard
           icon="event-available"
           label="Aktif Atölye"
-          value={dashboard?.activeWorkshops ?? 0}
+          value={dashboard?.activeWorkshops ?? fallbackCounts.activeWorkshops ?? 0}
           color={Colors.primary}
+          onPress={() => router.push('/(employer)/workshop?status=published' as any)}
         />
         <StatCard
           icon="library-books"
           label="Toplam Atölye"
-          value={dashboard?.totalWorkshops ?? 0}
+          value={dashboard?.totalWorkshops ?? fallbackCounts.totalWorkshops ?? 0}
           color={Colors.secondary}
+          onPress={() => router.push('/(employer)/workshop' as any)}
         />
         <StatCard
           icon="how-to-reg"
           label="Bekleyen Kayıt"
-          value={dashboard?.pendingEnrollments ?? 0}
+          value={dashboard?.pendingEnrollments ?? fallbackCounts.pendingEnrollments ?? 0}
           color={Colors.amber}
+          onPress={() => router.push('/(employer)/enrollments?status=pending' as any)}
         />
         <StatCard
           icon="groups"
           label="Toplam Kayıt"
-          value={dashboard?.totalEnrollments ?? 0}
+          value={dashboard?.totalEnrollments ?? fallbackCounts.totalEnrollments ?? 0}
           color={Colors.primaryMid}
+          onPress={() => router.push('/(employer)/enrollments' as any)}
         />
       </View>
 
@@ -171,21 +210,33 @@ function StatCard({
   label,
   value,
   color,
+  onPress,
 }: {
   icon: keyof typeof MaterialIcons.glyphMap;
   label: string;
   value: number;
   color: string;
+  onPress?: () => void;
 }) {
-  return (
+  const content = (
     <View style={styles.statCard}>
-      <View style={[styles.statIconWrap, { backgroundColor: color + '1A' }]}>
+      <View style={[styles.statIconWrap, { backgroundColor: color + '1A' }]}> 
         <MaterialIcons name={icon} size={20} color={color} />
       </View>
       <Text style={styles.statValue}>{value}</Text>
       <Text style={styles.statLabel}>{label}</Text>
     </View>
   );
+
+  if (onPress) {
+    return (
+      <TouchableOpacity activeOpacity={0.8} onPress={onPress} style={styles.statCardTouchable}>
+        {content}
+      </TouchableOpacity>
+    );
+  }
+
+  return content;
 }
 
 function ActionButton({
@@ -346,6 +397,10 @@ const styles = StyleSheet.create({
   actionsRow: {
     flexDirection: 'row',
     gap: Spacing.sm,
+  },
+  statCardTouchable: {
+    flexBasis: '47%',
+    flexGrow: 1,
   },
   actionButton: {
     flex: 1,

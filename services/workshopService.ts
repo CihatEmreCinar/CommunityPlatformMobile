@@ -32,8 +32,10 @@ export const workshopService = {
     return data;
   },
 
-  async getMyWorkshops(): Promise<Workshop[]> {
-    const { data } = await apiClient.get<Workshop[]>('/workshops/mine');
+  async getMyWorkshops(status?: string): Promise<Workshop[]> {
+    const { data } = await apiClient.get<Workshop[]>('/workshops/mine', {
+      params: status ? { status } : undefined,
+    });
     return data;
   },
 };

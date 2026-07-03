@@ -11,6 +11,7 @@ export interface EmployerProfile {
   coverImageUrl: string | null;
   profileImageUrl: string | null;
   bio: string | null;
+  city: string | null;
   avgRating: number;
   totalWorkshops: number;
   employerRank: string;
@@ -24,6 +25,7 @@ export interface EmployerProfileRequest {
   coverImageUrl?: string;
   profileImageUrl?: string;
   bio?: string;
+  city?: string;
 }
 
 export interface PublicWorkshopItem {

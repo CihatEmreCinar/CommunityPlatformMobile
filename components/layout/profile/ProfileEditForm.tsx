@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import type { Category } from '../../../../types/category';
+import type { Category } from '../../../types/category';
 
 const ACCENT = '#0F766E';
 
@@ -21,6 +21,10 @@ export type ProfileEditFormProps = {
   bio: string;
   onBioChange: (value: string) => void;
   maxBio?: number;
+
+  // Şehir
+  city: string;
+  onCityChange: (value: string) => void;
 
   // Deneyim
   yearsExperience: string;
@@ -57,6 +61,8 @@ export function ProfileEditForm({
   bio,
   onBioChange,
   maxBio = 300,
+  city,
+  onCityChange,
   yearsExperience,
   onYearsExperienceChange,
   specialization,
@@ -119,6 +125,18 @@ export function ProfileEditForm({
           textAlignVertical="top"
         />
         <Text style={styles.charCount}>{bio.length}/{maxBio}</Text>
+      </View>
+
+      <View style={styles.section}>
+        <Text style={styles.sectionLabel}>Şehir</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="örn. İstanbul"
+          placeholderTextColor="#9CA3AF"
+          value={city}
+          onChangeText={onCityChange}
+          maxLength={60}
+        />
       </View>
 
       {/* Deneyim */}

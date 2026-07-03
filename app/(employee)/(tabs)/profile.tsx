@@ -8,6 +8,7 @@ import {
   ActivityIndicator,
   Alert,
   RefreshControl,
+  Image,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
@@ -28,7 +29,7 @@ function StatBox({ value, label }: { value: number; label: string }) {
 
 export default function EmployeeProfileScreen() {
   const router = useRouter();
-  const { user, logout } = useAuth();
+  const { user, logout, refreshUser } = useAuth();
 
   const [stats, setStats] = useState<UserSocialStats | null>(null);
   const [loadingStats, setLoadingStats] = useState(true);
@@ -53,9 +54,9 @@ export default function EmployeeProfileScreen() {
 
   const refresh = useCallback(async () => {
     setRefreshing(true);
-    await fetchStats();
+    await Promise.all([refreshUser(), fetchStats()]);
     setRefreshing(false);
-  }, [fetchStats]);
+  }, [fetchStats, refreshUser]);
 
   useEffect(() => { fetchStats(); }, []);
 
@@ -67,11 +68,17 @@ export default function EmployeeProfileScreen() {
     >
       {/* Profil üst */}
       <View style={styles.profileTop}>
-        <View style={styles.avatar}>
-          <Text style={styles.avatarInitials}>
-            {user?.firstName?.[0]}{user?.lastName?.[0]}
-          </Text>
-        </View>
+        {user?.avatarUrl ? (
+          <View style={styles.avatarImageWrap}>
+            <Image source={{ uri: user.avatarUrl }} style={styles.avatarImage} />
+          </View>
+        ) : (
+          <View style={styles.avatar}>
+            <Text style={styles.avatarInitials}>
+              {user?.firstName?.[0]}{user?.lastName?.[0]}
+            </Text>
+          </View>
+        )}
         <View style={styles.topActions}>
           <TouchableOpacity
             style={styles.editProfileBtn}
@@ -100,6 +107,13 @@ export default function EmployeeProfileScreen() {
           <Text style={styles.roleText}>Katılımcı</Text>
         </View>
       </View>
+
+      {(user?.city || user?.bio) ? (
+        <View style={styles.summarySection}>
+          {user?.city ? <Text style={styles.cityText}>{user.city}</Text> : null}
+          {user?.bio ? <Text style={styles.bioText}>{user.bio}</Text> : null}
+        </View>
+      ) : null}
 
       {/* Sosyal sayaçlar */}
       {loadingStats ? (
@@ -131,6 +145,24 @@ export default function EmployeeProfileScreen() {
               <Text style={styles.levelText}>Seviye {user?.rankLevel ?? 1}</Text>
             </View>
           </View>
+          {user?.city ? (
+            <>
+              <View style={styles.separator} />
+              <View style={styles.infoRow}>
+                <Ionicons name="location-outline" size={18} color="#6B7280" />
+                <Text style={styles.infoText}>{user.city}</Text>
+              </View>
+            </>
+          ) : null}
+          {user?.employeeProfile ? (
+            <>
+              <View style={styles.separator} />
+              <View style={styles.infoRow}>
+                <Ionicons name="checkmark-circle-outline" size={18} color="#10B981" />
+                <Text style={styles.infoText}>{user.employeeProfile.totalAttendedWorkshops} tamamlanan atölye</Text>
+              </View>
+            </>
+          ) : null}
         </View>
       </View>
 
@@ -168,7 +200,9 @@ const styles = StyleSheet.create({
 
   // ─── Profil üst ────────────────────────────────────────────────────────────
   profileTop: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', padding: 20, paddingBottom: 8, backgroundColor: '#FFFFFF' },
+  avatarImageWrap: { width: 72, height: 72, borderRadius: 36, overflow: 'hidden' },
   avatar: { width: 72, height: 72, borderRadius: 36, backgroundColor: ACCENT, alignItems: 'center', justifyContent: 'center' },
+  avatarImage: { width: 72, height: 72 },
   avatarInitials: { fontSize: 26, fontWeight: '700', color: '#FFFFFF' },
   logoutBtn: { padding: 8, borderWidth: 1, borderColor: '#E5E7EB', borderRadius: 8, marginTop: 4 },
   topActions: { flexDirection: 'column', gap: 8, alignItems: 'flex-end' },
@@ -180,6 +214,9 @@ const styles = StyleSheet.create({
   fullName: { fontSize: 18, fontWeight: '700', color: '#111827' },
   roleBadge: { backgroundColor: '#EEF2FF', borderRadius: 6, paddingHorizontal: 8, paddingVertical: 2 },
   roleText: { fontSize: 11, fontWeight: '600', color: ACCENT },
+  summarySection: { backgroundColor: '#FFFFFF', paddingHorizontal: 20, paddingBottom: 16, gap: 6 },
+  cityText: { fontSize: 13, color: '#6B7280', fontWeight: '600' },
+  bioText: { fontSize: 14, color: '#374151', lineHeight: 20 },
 
   // ─── Stats ─────────────────────────────────────────────────────────────────
   statsRow: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#FFFFFF', paddingVertical: 14, borderTopWidth: StyleSheet.hairlineWidth, borderBottomWidth: StyleSheet.hairlineWidth, borderColor: '#E5E7EB' },

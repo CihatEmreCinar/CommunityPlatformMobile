@@ -42,7 +42,6 @@ export default function PostCreateScreen() {
   const [tagInput, setTagInput] = useState('');
   const [tags, setTags] = useState<string[]>([]);
   const [mediaFiles, setMediaFiles] = useState<LocalMediaItem[]>([]);
-  const [commentsEnabled, setCommentsEnabled] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const tagInputRef = useRef<TextInput>(null);
 
@@ -157,7 +156,6 @@ export default function PostCreateScreen() {
         workshopId: selectedWorkshop.id,
         caption: content.trim(),
         tagSlugs: tags,
-        allowComments: commentsEnabled,
       });
 
       for (let index = 0; index < mediaFiles.length; index += 1) {
@@ -177,7 +175,7 @@ export default function PostCreateScreen() {
     } finally {
       setSubmitting(false);
     }
-  }, [commentsEnabled, content, selectedWorkshop, tags, mediaFiles, router]);
+  }, [content, selectedWorkshop, tags, mediaFiles, router]);
 
   const canSubmit = content.trim().length > 0 && !submitting && !!selectedWorkshop;
 
@@ -274,25 +272,6 @@ export default function PostCreateScreen() {
             <Text style={styles.addMediaText}>Medya Ekle</Text>
           </TouchableOpacity>
           <Text style={styles.sectionHint}>{mediaFiles.length}/{MAX_MEDIA} medya eklendi</Text>
-        </View>
-
-        <View style={styles.divider} />
-
-        <View style={styles.section}>
-          <Text style={styles.sectionLabel}>Yorumlar</Text>
-          <TouchableOpacity
-            style={[styles.commentToggle, commentsEnabled ? styles.commentToggleActive : styles.commentToggleInactive]}
-            onPress={() => setCommentsEnabled((prev) => !prev)}
-            activeOpacity={0.8}
-          >
-            <Ionicons name={commentsEnabled ? 'chatbubble-ellipses' : 'chatbubble-outline'} size={18} color={commentsEnabled ? '#FFFFFF' : '#374151'} />
-            <Text style={[styles.commentToggleText, commentsEnabled && styles.commentToggleTextActive]}>
-              {commentsEnabled ? 'Yorumlara izin ver' : 'Yorumları kapat'}
-            </Text>
-          </TouchableOpacity>
-          <Text style={styles.sectionHint}>
-            Yorum seçeneği, gönderin yayınlandıktan sonra takipçilerinin geri bildirimde bulunmasını sağlar.
-          </Text>
         </View>
 
         <View style={styles.divider} />
