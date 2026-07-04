@@ -1,6 +1,7 @@
 import { Tabs } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
 import { View, Text, StyleSheet } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors, Typography } from '../../../constants/theme';
 import { useUnreadCount } from '../../../hooks/useUnreadCount';
 
@@ -26,6 +27,9 @@ function BadgeIcon({ count, icon, color, size }: {
 
 export default function EmployeeTabsLayout() {
   const { unreadCount } = useUnreadCount(30000);
+  const insets = useSafeAreaInsets();
+  const tabBarHeight = 60 + Math.max(insets.bottom, 0);
+  const tabBarPaddingBottom = Math.max(insets.bottom, 8);
 
   return (
     <Tabs
@@ -37,12 +41,17 @@ export default function EmployeeTabsLayout() {
           backgroundColor: Colors.surfaceContainerLowest,
           borderTopColor: Colors.surfaceVariant,
           borderTopWidth: 1,
-          height: 60,
-          paddingBottom: 8,
+          height: tabBarHeight,
+          paddingBottom: tabBarPaddingBottom,
           paddingTop: 8,
+        },
+        tabBarItemStyle: {
+          paddingTop: 4,
+          paddingBottom: 2,
         },
         tabBarLabelStyle: {
           ...Typography.labelSm,
+          marginTop: 0,
         },
       }}
     >

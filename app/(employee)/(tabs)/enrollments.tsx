@@ -61,21 +61,21 @@ export default function EnrollmentsScreen() {
 
   return (
     <SafeAreaView style={styles.flex} edges={['top']}>
-    <ScrollView
-      style={styles.flex}
-      contentContainerStyle={styles.container}
-      refreshControl={
-        <RefreshControl
-          refreshing={isRefreshing}
-          onRefresh={() => {
-            setIsRefreshing(true);
-            load();
-          }}
-          colors={[Colors.primary]}
-        />
-      }
-    >
-      <Text style={styles.pageTitle}>Kayıtlarım</Text>
+      <ScrollView
+        style={styles.flex}
+        contentContainerStyle={styles.container}
+        refreshControl={
+          <RefreshControl
+            refreshing={isRefreshing}
+            onRefresh={() => {
+              setIsRefreshing(true);
+              load();
+            }}
+            colors={[Colors.primary]}
+          />
+        }
+      >
+        <Text style={styles.pageTitle}>Kayıtlarım</Text>
       <Text style={styles.totalCount}>Toplam Kayıt: {enrollments.length}</Text>
 
       {enrollments.length === 0 ? (
@@ -86,7 +86,9 @@ export default function EnrollmentsScreen() {
       ) : (
         enrollments.map((e) => <EnrollmentCard key={e.id} enrollment={e} onCancel={handleCancel} />)
       )}
-    </ScrollView>    </SafeAreaView>  );
+      </ScrollView>
+    </SafeAreaView>
+  );
 }
 
 function EnrollmentCard({ enrollment: e, onCancel }: { enrollment: Enrollment; onCancel: (id: string) => void }) {

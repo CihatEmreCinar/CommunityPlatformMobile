@@ -98,15 +98,15 @@ export default function MyWorkshopsScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
-    <ScrollView
-      style={styles.flex}
-      contentContainerStyle={styles.container}
-      refreshControl={
-        <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} colors={[Colors.primary]} />
-      }
-    >
-      {/* Header */}
-      <View style={styles.header}>
+      <ScrollView
+        style={styles.flex}
+        contentContainerStyle={styles.container}
+        refreshControl={
+          <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} colors={[Colors.primary]} />
+        }
+      >
+        {/* Header */}
+        <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
           <MaterialIcons name="arrow-back" size={22} color={Colors.onSurface} />
         </TouchableOpacity>
@@ -206,7 +206,9 @@ export default function MyWorkshopsScreen() {
           ))}
         </View>
       )}
-    </ScrollView>    </SafeAreaView>  );
+      </ScrollView>
+    </SafeAreaView>
+  );
 }
 
 const styles = StyleSheet.create({
