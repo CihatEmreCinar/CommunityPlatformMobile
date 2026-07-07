@@ -37,7 +37,6 @@ export default function CafeLayout() {
   return (
     <Stack screenOptions={{ headerShown: false }}>
       <Stack.Screen name="(tabs)" />
-      <Stack.Screen name="edit-profile" />
       <Stack.Screen name="listing/create" />
       <Stack.Screen name="listing/[id]" />
     </Stack>
