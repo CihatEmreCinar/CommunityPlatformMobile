@@ -5,7 +5,8 @@ import * as ImagePicker from 'expo-image-picker';
 import { ScreenContainer } from '../../components/layout/ScreenContainer';
 import { FormHeader } from '../../components/layout/FormHeader';
 import { ProfileEditForm } from '../../components/layout/profile/ProfileEditForm';
-import { cafeService } from '../../services/cafeService';
+import { cafeProfileService } from '../../services/cafeProfileService';
+import type { Category } from '../../types/category';
 import { Colors } from '../../constants/theme';
 
 const ACCENT = '#6366F1';
@@ -25,19 +26,27 @@ export default function EditCafeProfileScreen() {
   const [address, setAddress] = useState('');
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [coverUrl, setCoverUrl] = useState<string | null>(null);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>([]);
 
   useEffect(() => {
-    cafeService.getMyProfile()
-      .then((profile) => {
+    (async () => {
+      try {
+        const [profile, cats] = await Promise.all([cafeProfileService.getMe(), cafeProfileService.getCategories()]);
         setName(profile.name ?? '');
         setBio(profile.bio ?? '');
         setCity(profile.city ?? '');
         setAddress(profile.address ?? '');
         setAvatarUrl(profile.avatarUrl ?? null);
         setCoverUrl(profile.coverImageUrl ?? null);
-      })
-      .catch(() => Alert.alert('Hata', 'Profil yüklenemedi.'))
-      .finally(() => setLoading(false));
+        setCategories(cats);
+        setSelectedCategoryIds(profile.categoryIds ?? []);
+      } catch {
+        Alert.alert('Hata', 'Profil yüklenemedi.');
+      } finally {
+        setLoading(false);
+      }
+    })();
   }, []);
 
   const pickImage = useCallback(async (type: 'avatar' | 'cover') => {
@@ -59,11 +68,11 @@ export default function EditCafeProfileScreen() {
     try {
       if (type === 'avatar') {
         setUploadingPhoto(true);
-        const response = await cafeService.uploadAvatar(result.assets[0].uri);
+        const response = await cafeProfileService.uploadAvatar(result.assets[0].uri);
         setAvatarUrl(response.url);
       } else {
         setUploadingCover(true);
-        const response = await cafeService.uploadCover(result.assets[0].uri);
+        const response = await cafeProfileService.uploadCover(result.assets[0].uri);
         setCoverUrl(response.url);
       }
     } catch {
@@ -82,11 +91,12 @@ export default function EditCafeProfileScreen() {
 
     setSaving(true);
     try {
-      await cafeService.updateProfile({
+      await cafeProfileService.updateMe({
         name: name.trim(),
         bio: bio.trim() || undefined,
         city: city.trim() || undefined,
         address: address.trim() || undefined,
+        categoryIds: selectedCategoryIds.length > 0 ? selectedCategoryIds : undefined,
       });
       router.back();
     } catch {
@@ -140,9 +150,11 @@ export default function EditCafeProfileScreen() {
         onSpecInputChange={() => {}}
         onAddSpecialization={() => {}}
         onRemoveSpecialization={() => {}}
-        categories={[]}
-        selectedCategoryIds={[]}
-        onToggleCategory={() => {}}
+        categories={categories}
+        selectedCategoryIds={selectedCategoryIds}
+        onToggleCategory={(id) => setSelectedCategoryIds((prev) =>
+          prev.includes(id) ? prev.filter((c) => c !== id) : [...prev, id]
+        )}
       />
 
       <View style={styles.section}>

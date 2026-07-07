@@ -198,7 +198,7 @@ export default function EmployerDashboardScreen() {
         <ActionButton
           icon="search"
           label="Mekan Bul"
-          onPress={() => router.push('/(employer)/search')}
+          onPress={() => router.push('/(employer)/(tabs)/search')}
         />
         <ActionButton
           icon="list-alt"

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, ActivityIndicator, Alert, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, ActivityIndicator, Alert, TouchableOpacity, Image } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
 import { ScreenContainer } from '../../../components/layout/ScreenContainer';
@@ -15,7 +15,7 @@ export default function SpaceListingDetailScreen() {
   const [editing, setEditing] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
-  const loadListing = useCallback(async () => {
+  const loadListing = useCallback(async (showLoading = true) => {
     if (!id) {
       console.log('fetching listing: missing id', id);
       return;
@@ -26,14 +26,14 @@ export default function SpaceListingDetailScreen() {
       return;
     }
     try {
-      setLoading(true);
+      if (showLoading) setLoading(true);
       console.log('fetching listing', resolvedId);
       const data = await spaceListingService.getById(resolvedId);
       setListing(data);
     } catch (error) {
       console.log('İlan detay yüklenemedi', error);
     } finally {
-      setLoading(false);
+      if (showLoading) setLoading(false);
     }
   }, [id]);
 
@@ -63,11 +63,11 @@ export default function SpaceListingDetailScreen() {
     if (!id || !listing) return;
     setSubmitting(true);
     try {
-      const updated = await spaceListingService.update(id, request);
+      await spaceListingService.update(id, request);
       for (const uri of newPhotos) {
         await spaceListingService.uploadPhoto(id, uri);
       }
-      setListing(updated);
+      await loadListing(false);
       setEditing(false);
       Alert.alert('Güncellendi', 'İlan başarıyla güncellendi.');
     } catch (error: any) {
@@ -138,6 +138,17 @@ export default function SpaceListingDetailScreen() {
       }
     >
       <ScrollView contentContainerStyle={styles.content}>
+        {listing.photoUrls && listing.photoUrls.length > 0 ? (
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.photoGallery} contentContainerStyle={styles.photoGalleryContent}>
+            {listing.photoUrls.map((uri) => (
+              <Image key={uri} source={{ uri }} style={styles.photoItem} />
+            ))}
+          </ScrollView>
+        ) : (
+          <View style={styles.card}>
+            <Text style={styles.label}>Fotoğraf yok</Text>
+          </View>
+        )}
         <View style={styles.card}>
           <Text style={styles.label}>Açıklama</Text>
           <Text style={styles.value}>{listing.description || 'Açıklama yok.'}</Text>
@@ -172,6 +183,9 @@ const styles = StyleSheet.create({
   iconButton: { padding: Spacing.xs },
   title: { ...Typography.h3, color: Colors.onSurface },
   content: { padding: Spacing.md, gap: Spacing.md },
+  photoGallery: { marginVertical: Spacing.sm },
+  photoGalleryContent: { gap: Spacing.sm, paddingHorizontal: Spacing.sm },
+  photoItem: { width: 260, height: 180, borderRadius: Radius.lg, marginRight: Spacing.sm, backgroundColor: Colors.surfaceContainerLowest },
   card: { backgroundColor: Colors.surfaceContainerLowest, borderRadius: Radius.lg, padding: Spacing.md, gap: Spacing.xs, ...Shadows.sm },
   label: { ...Typography.labelMd, color: Colors.onSurfaceVariant },
   value: { ...Typography.bodyMd, color: Colors.onSurface },
