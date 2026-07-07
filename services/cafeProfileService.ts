@@ -18,6 +18,13 @@ export interface CafeProfile {
   categoryIds?: string[];
 }
 
+export interface CafeDashboardStats {
+  name: string;
+  totalListings: number;
+  activeListings: number;
+  categoryCount: number;
+}
+
 export interface CafeProfileRequest {
   name?: string;
   bio?: string;
@@ -49,6 +56,11 @@ export const cafeProfileService = {
 
   async getCategories(): Promise<Category[]> {
     return categoryService.getAll();
+  },
+
+  async getDashboard(): Promise<CafeDashboardStats> {
+    const { data } = await apiClient.get<CafeDashboardStats>('/cafe-profiles/dashboard');
+    return data;
   },
 
   async uploadAvatar(uri: string): Promise<UploadedFileResponse> {
