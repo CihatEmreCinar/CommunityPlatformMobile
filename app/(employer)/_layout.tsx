@@ -9,6 +9,8 @@ export default function EmployerLayout() {
       <Stack.Screen name="post/[id]" />
       <Stack.Screen name="post/create" />
       <Stack.Screen name="enrollments" />
+      <Stack.Screen name="search" />
+      <Stack.Screen name="space/[id]" />
     </Stack>
   );
 }   

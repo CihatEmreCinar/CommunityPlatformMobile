@@ -3,6 +3,7 @@ import { View, ActivityIndicator, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../contexts/AuthContext';
 import { Colors } from '../constants/theme';
+import { ROLES } from '../constants/roles';
 
 export default function Index() {
   const { user, isLoading } = useAuth();
@@ -18,11 +19,14 @@ export default function Index() {
       }
 
       switch (user.role) {
-        case 'employer':
+        case ROLES.EMPLOYER:
           router.replace('/(employer)/dashboard');
           break;
-        case 'employee':
+        case ROLES.EMPLOYEE:
           router.replace('/(employee)/home');
+          break;
+        case ROLES.CAFE:
+          router.replace('/(cafe)/(tabs)/dashboard');
           break;
         case 'admin':
           router.replace('/(admin)/dashboard');

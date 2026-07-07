@@ -12,6 +12,7 @@ export default function RootLayout() {
           <Stack.Screen name="(auth)" />
           <Stack.Screen name="(employer)" />
           <Stack.Screen name="(employee)" />
+          <Stack.Screen name="(cafe)" />
           <Stack.Screen name="(admin)" />
         </Stack>
       </SafeAreaProvider>

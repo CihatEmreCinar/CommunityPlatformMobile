@@ -16,6 +16,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useAuth } from '../../contexts/AuthContext';
 import { Colors, Typography, Spacing, Radius, Shadows } from '../../constants/theme';
+import { ROLES, type RoleValue } from '../../constants/roles';
 
 export default function RegisterScreen() {
   const [firstName, setFirstName] = useState('');
@@ -23,7 +24,7 @@ export default function RegisterScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [city, setCity] = useState('');
-  const [role, setRole] = useState<'employee' | 'employer'>('employee');
+  const [role, setRole] = useState<RoleValue>(ROLES.EMPLOYEE);
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const { register } = useAuth();
@@ -42,8 +43,10 @@ export default function RegisterScreen() {
     setIsLoading(true);
     try {
       await register({ firstName, lastName, email, password, role, city });
-      if (role === 'employer') {
+      if (role === ROLES.EMPLOYER) {
         router.replace('/(employer)/dashboard');
+      } else if (role === ROLES.CAFE) {
+        router.replace('/(cafe)/(tabs)/dashboard');
       } else {
         router.replace('/(employee)/home');
       }
@@ -78,31 +81,45 @@ export default function RegisterScreen() {
             <Text style={styles.label}>Hesap Türü</Text>
             <View style={styles.roleContainer}>
               <TouchableOpacity
-                style={[styles.roleButton, role === 'employee' && styles.roleButtonActive]}
-                onPress={() => setRole('employee')}
+                style={[styles.roleButton, role === ROLES.EMPLOYEE && styles.roleButtonActive]}
+                onPress={() => setRole(ROLES.EMPLOYEE)}
                 activeOpacity={0.85}
               >
                 <MaterialIcons
                   name="badge"
                   size={18}
-                  color={role === 'employee' ? Colors.onAccent : Colors.onSurfaceVariant}
+                  color={role === ROLES.EMPLOYEE ? Colors.onAccent : Colors.onSurfaceVariant}
                 />
-                <Text style={[styles.roleButtonText, role === 'employee' && styles.roleButtonTextActive]}>
+                <Text style={[styles.roleButtonText, role === ROLES.EMPLOYEE && styles.roleButtonTextActive]}>
                   Katılımcı
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={[styles.roleButton, role === 'employer' && styles.roleButtonActive]}
-                onPress={() => setRole('employer')}
+                style={[styles.roleButton, role === ROLES.EMPLOYER && styles.roleButtonActive]}
+                onPress={() => setRole(ROLES.EMPLOYER)}
                 activeOpacity={0.85}
               >
                 <MaterialIcons
                   name="business"
                   size={18}
-                  color={role === 'employer' ? Colors.onAccent : Colors.onSurfaceVariant}
+                  color={role === ROLES.EMPLOYER ? Colors.onAccent : Colors.onSurfaceVariant}
                 />
-                <Text style={[styles.roleButtonText, role === 'employer' && styles.roleButtonTextActive]}>
+                <Text style={[styles.roleButtonText, role === ROLES.EMPLOYER && styles.roleButtonTextActive]}>
                   Atölyeci
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.roleButton, role === ROLES.CAFE && styles.roleButtonActive]}
+                onPress={() => setRole(ROLES.CAFE)}
+                activeOpacity={0.85}
+              >
+                <MaterialIcons
+                  name="local-cafe"
+                  size={18}
+                  color={role === ROLES.CAFE ? Colors.onAccent : Colors.onSurfaceVariant}
+                />
+                <Text style={[styles.roleButtonText, role === ROLES.CAFE && styles.roleButtonTextActive]}>
+                  Kafeci
                 </Text>
               </TouchableOpacity>
             </View>

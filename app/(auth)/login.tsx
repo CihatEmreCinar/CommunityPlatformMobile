@@ -15,6 +15,7 @@ import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../../contexts/AuthContext';
 import { Colors, Typography, Spacing, Radius, Shadows } from '../../constants/theme';
+import { ROLES } from '../../constants/roles';
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
@@ -33,10 +34,12 @@ export default function LoginScreen() {
     setIsLoading(true);
     try {
       const user = await login({ email, password });
-      if (user.role === 'employer') {
+      if (user.role === ROLES.EMPLOYER) {
         router.replace('/(employer)/dashboard');
-      } else if (user.role === 'employee') {
+      } else if (user.role === ROLES.EMPLOYEE) {
         router.replace('/(employee)/home');
+      } else if (user.role === ROLES.CAFE) {
+        router.replace('/(cafe)/(tabs)/dashboard');
       } else if (user.role === 'admin') {
         router.replace('/(admin)/dashboard');
       }

@@ -231,26 +231,28 @@ export function ProfileEditForm({
       </View>
 
       {/* Kategoriler */}
-      <View style={styles.section}>
-        <Text style={styles.sectionLabel}>Kategoriler</Text>
-        <View style={styles.categoryGrid}>
-          {categories.map((c) => {
-            const selected = selectedCategoryIds.includes(c.id);
-            return (
-              <TouchableOpacity
-                key={c.id}
-                style={[styles.categoryChip, selected && styles.categoryChipSelected]}
-                onPress={() => onToggleCategory(c.id)}
-                activeOpacity={0.7}
-              >
-                <Text style={[styles.categoryChipText, selected && styles.categoryChipTextSelected]}>
-                  {c.name}
-                </Text>
-              </TouchableOpacity>
-            );
-          })}
+      {categories.length > 0 ? (
+        <View style={styles.section}>
+          <Text style={styles.sectionLabel}>Kategoriler</Text>
+          <View style={styles.categoryGrid}>
+            {categories.map((c) => {
+              const selected = selectedCategoryIds.includes(c.id);
+              return (
+                <TouchableOpacity
+                  key={c.id}
+                  style={[styles.categoryChip, selected && styles.categoryChipSelected]}
+                  onPress={() => onToggleCategory(c.id)}
+                  activeOpacity={0.7}
+                >
+                  <Text style={[styles.categoryChipText, selected && styles.categoryChipTextSelected]}>
+                    {c.name}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
         </View>
-      </View>
+      ) : null}
     </>
   );
 }

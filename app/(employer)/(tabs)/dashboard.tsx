@@ -11,27 +11,33 @@ import {
 import { useRouter } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useAuth } from '../../../contexts/AuthContext';
-import { employerService } from '../../../services/employerService';
-import { enrollmentService } from '../../../services/enrollmentService';
-import { workshopService } from '../../../services/workshopService';
-import { EmployerDashboard } from '../../../types/dashboard';
+import { employerService } from '../../../services/employerService';import { enrollmentService } from '../../../services/enrollmentService';
+import { workshopService } from '../../../services/workshopService';import { EmployerDashboard } from '../../../types/dashboard';
+import { EmployerProfile } from '../../../services/employerService';
 import { Colors, Typography, Spacing, Radius, Shadows } from '../../../constants/theme';
-import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function EmployerDashboardScreen() {
   const { user, logout } = useAuth();
   const router = useRouter();
   const [dashboard, setDashboard] = useState<EmployerDashboard | null>(null);
+  const [profile, setProfile] = useState<EmployerProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [fallbackCounts, setFallbackCounts] = useState({ pendingEnrollments: 0, totalEnrollments: 0, activeWorkshops: 0, totalWorkshops: 0 });
 
   const loadData = useCallback(async () => {
     try {
-      const [dashboardResult] = await Promise.allSettled([employerService.getDashboard()]);
+      const [dashboardResult, profileResult] = await Promise.allSettled([
+        employerService.getDashboard(),
+        employerService.getProfile(),
+      ]);
 
       if (dashboardResult.status === 'fulfilled') {
         setDashboard(dashboardResult.value);
+      }
+
+      if (profileResult.status === 'fulfilled') {
+        setProfile(profileResult.value);
       }
 
       const dashboardCountsMissing =
@@ -91,7 +97,6 @@ export default function EmployerDashboardScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={['top']}>
     <ScrollView
       style={styles.flex}
       contentContainerStyle={styles.container}
@@ -104,7 +109,7 @@ export default function EmployerDashboardScreen() {
         <View>
           <Text style={styles.greeting}>Merhaba, {user?.firstName}</Text>
           <Text style={styles.subGreeting}>
-            {user?.employerProfile?.workshopTitle || 'Profilini tamamla'}
+            {profile?.workshopTitle || 'Profilini tamamla'}
           </Text>
         </View>
         <TouchableOpacity onPress={handleLogout} style={styles.logoutButton}>
@@ -191,13 +196,17 @@ export default function EmployerDashboardScreen() {
       </View>
       <View style={styles.actionsRow}>
         <ActionButton
+          icon="search"
+          label="Mekan Bul"
+          onPress={() => router.push('/(employer)/search')}
+        />
+        <ActionButton
           icon="list-alt"
           label="Atölyelerim"
           onPress={() => router.push('/(employer)/workshop')}
         />
       </View>
     </ScrollView>
-    </SafeAreaView>
   );
 }
 
@@ -253,8 +262,7 @@ function ActionButton({
 }
 
 const styles = StyleSheet.create({
-  flex: { flex: 1 },
-  safeArea: { flex: 1, backgroundColor: Colors.background },
+  flex: { flex: 1, backgroundColor: Colors.background },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',

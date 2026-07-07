@@ -1,4 +1,6 @@
-export type UserRole = 'employer' | 'employee' | 'admin';
+import type { RoleValue } from '../constants/roles';
+
+export type UserRole = RoleValue | 'admin';
 
 export interface UserEmployeeProfile {
   interests: string[];
@@ -52,6 +54,6 @@ export interface RegisterRequest {
   password: string;
   firstName: string;
   lastName: string;
-  role: 'employer' | 'employee';
+  role: RoleValue;
   city?: string;
 }
