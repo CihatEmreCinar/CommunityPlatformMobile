@@ -1,20 +1,31 @@
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaView, SafeAreaProvider } from 'react-native-safe-area-context';
-import { AuthProvider } from '../contexts/AuthContext';
+import { AuthProvider, useAuth } from '../contexts/AuthContext';
+import { usePushNotifications } from '../hooks/usePushNotifications';
+
+function RootNavigator() {
+  const { user } = useAuth();
+  // Kullanıcı login olduktan SONRA bir kez push bildirim izni/token kaydı yapılır.
+  usePushNotifications(!!user);
+
+  return (
+    <Stack screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="(auth)" />
+      <Stack.Screen name="(employer)" />
+      <Stack.Screen name="(employee)" />
+      <Stack.Screen name="(cafe)" />
+      <Stack.Screen name="(admin)" />
+    </Stack>
+  );
+}
 
 export default function RootLayout() {
   return (
     <AuthProvider>
       <SafeAreaProvider>
         <StatusBar style="auto" />
-        <Stack screenOptions={{ headerShown: false }}>
-          <Stack.Screen name="(auth)" />
-          <Stack.Screen name="(employer)" />
-          <Stack.Screen name="(employee)" />
-          <Stack.Screen name="(cafe)" />
-          <Stack.Screen name="(admin)" />
-        </Stack>
+        <RootNavigator />
       </SafeAreaProvider>
     </AuthProvider>
 

@@ -14,6 +14,9 @@ import { useAuth } from '../../../contexts/AuthContext';
 import { employerService } from '../../../services/employerService';import { enrollmentService } from '../../../services/enrollmentService';
 import { workshopService } from '../../../services/workshopService';import { EmployerDashboard } from '../../../types/dashboard';
 import { EmployerProfile } from '../../../services/employerService';
+import { calendarService } from '../../../services/calendarService';
+import type { CalendarEvent } from '../../../services/calendarService';
+import { CalendarWidget } from '../../../components/CalendarWidget';
 import { Colors, Typography, Spacing, Radius, Shadows } from '../../../constants/theme';
 
 export default function EmployerDashboardScreen() {
@@ -24,6 +27,8 @@ export default function EmployerDashboardScreen() {
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [fallbackCounts, setFallbackCounts] = useState({ pendingEnrollments: 0, totalEnrollments: 0, activeWorkshops: 0, totalWorkshops: 0 });
+  const [calendarEvents, setCalendarEvents] = useState<CalendarEvent[]>([]);
+  const [calendarLoading, setCalendarLoading] = useState(true);
 
   const loadData = useCallback(async () => {
     try {
@@ -76,7 +81,19 @@ export default function EmployerDashboardScreen() {
 
   useEffect(() => {
     loadData();
+    loadCalendarEvents();
   }, [loadData]);
+
+  async function loadCalendarEvents() {
+    try {
+      const events = await calendarService.getEmployerCalendarEvents();
+      setCalendarEvents(events);
+    } catch (error) {
+      console.log('Takvim etkinlikleri yüklenemedi', error);
+    } finally {
+      setCalendarLoading(false);
+    }
+  }
 
   function onRefresh() {
     setIsRefreshing(true);
@@ -179,6 +196,9 @@ export default function EmployerDashboardScreen() {
           </Text>
         </View>
       </View>
+
+   {/* Takvim */}
+      <CalendarWidget events={calendarEvents} loading={calendarLoading} />
 
    {/* Quick Actions */}
       <Text style={styles.sectionTitle}>Hızlı İşlemler</Text>
