@@ -27,6 +27,14 @@ export function getNotificationRoute(notification: Notification): string | null 
     return `/(employee)/workshop/${meta.workshopId}`;
   }
 
+  if (notification.type === 'BookingRequested') {
+    return '/(cafe)/(tabs)/bookings';
+  }
+
+  if (notification.type === 'BookingApproved' || notification.type === 'BookingRejected') {
+    return '/(employer)/bookings';
+  }
+
   return null;
 }
 
@@ -105,6 +113,22 @@ const NOTIFICATION_CONFIG: Record<NotificationType, NotificationConfig> = {
     icon: 'share-social-outline',
     color: '#14B8A6',
     label: 'Gönderi Paylaşıldı',
+  },
+  // ─── Rezervasyon ────────────────────────────────────────────────────────────
+  BookingRequested: {
+    icon: 'calendar-outline',
+    color: '#8B5CF6',
+    label: 'Yeni Rezervasyon Talebi',
+  },
+  BookingApproved: {
+    icon: 'checkmark-done-outline',
+    color: '#10B981',
+    label: 'Rezervasyon Onaylandı',
+  },
+  BookingRejected: {
+    icon: 'close-circle-outline',
+    color: '#EF4444',
+    label: 'Rezervasyon Reddedildi',
   },
 };
 

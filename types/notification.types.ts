@@ -15,12 +15,18 @@ export type NotificationType =
   | 'NewFollower'
   | 'PostLiked'
   | 'PostCommented'
-  | 'PostShared';
+  | 'PostShared'
+  // Rezervasyon (space booking)
+  | 'BookingRequested'
+  | 'BookingApproved'
+  | 'BookingRejected';
 
 export type NotificationChannel = 'in_app' | 'push' | 'email';
 
 export interface NotificationMetadata {
   workshopId?: string;
+  bookingId?: string;
+  spaceListingId?: string;
   postId?: string;
   actorId?: string;
   actorName?: string;

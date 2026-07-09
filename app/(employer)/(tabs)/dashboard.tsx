@@ -206,6 +206,13 @@ export default function EmployerDashboardScreen() {
           onPress={() => router.push('/(employer)/workshop')}
         />
       </View>
+      <View style={styles.actionsRow}>
+        <ActionButton
+          icon="event-available"
+          label="Rezervasyonlarım"
+          onPress={() => router.push('/(employer)/bookings')}
+        />
+      </View>
     </ScrollView>
   );
 }
