@@ -11,30 +11,30 @@ import {
 import { useRouter } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useAuth } from '../../../contexts/AuthContext';
-import { employerService } from '../../../services/employerService';import { enrollmentService } from '../../../services/enrollmentService';
-import { workshopService } from '../../../services/workshopService';import { EmployerDashboard } from '../../../types/dashboard';
-import { EmployerProfile } from '../../../services/employerService';
+import { cafeProfileService, type CafeProfile, type CafeDashboardStats } from '../../../services/cafeProfileService';
+import { spaceBookingService } from '../../../services/spaceBookingService';
 import { calendarService } from '../../../services/calendarService';
 import type { CalendarEvent } from '../../../services/calendarService';
 import { CalendarWidget } from '../../../components/CalendarWidget';
 import { Colors, Typography, Spacing, Radius, Shadows } from '../../../constants/theme';
 
-export default function EmployerDashboardScreen() {
+export default function CafeDashboardScreen() {
   const { user, logout } = useAuth();
   const router = useRouter();
-  const [dashboard, setDashboard] = useState<EmployerDashboard | null>(null);
-  const [profile, setProfile] = useState<EmployerProfile | null>(null);
+  const [dashboard, setDashboard] = useState<CafeDashboardStats | null>(null);
+  const [profile, setProfile] = useState<CafeProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [fallbackCounts, setFallbackCounts] = useState({ pendingEnrollments: 0, totalEnrollments: 0, activeWorkshops: 0, totalWorkshops: 0 });
+  const [bookingCounts, setBookingCounts] = useState({ pendingBookings: 0, totalBookings: 0 });
   const [calendarEvents, setCalendarEvents] = useState<CalendarEvent[]>([]);
   const [calendarLoading, setCalendarLoading] = useState(true);
 
   const loadData = useCallback(async () => {
     try {
-      const [dashboardResult, profileResult] = await Promise.allSettled([
-        employerService.getDashboard(),
-        employerService.getProfile(),
+      const [dashboardResult, profileResult, bookingsResult] = await Promise.allSettled([
+        cafeProfileService.getDashboard(),
+        cafeProfileService.getMe(),
+        spaceBookingService.getIncoming(),
       ]);
 
       if (dashboardResult.status === 'fulfilled') {
@@ -45,31 +45,12 @@ export default function EmployerDashboardScreen() {
         setProfile(profileResult.value);
       }
 
-      const dashboardCountsMissing =
-        !dashboardResult ||
-        dashboardResult.status !== 'fulfilled' ||
-        dashboardResult.value == null ||
-        dashboardResult.value.activeWorkshops == null ||
-        dashboardResult.value.totalWorkshops == null ||
-        dashboardResult.value.pendingEnrollments == null ||
-        dashboardResult.value.totalEnrollments == null;
-
-      if (dashboardCountsMissing) {
-        try {
-          const [enrollments, workshops] = await Promise.all([
-            enrollmentService.getEmployerEnrollments(),
-            workshopService.getMyWorkshops(),
-          ]);
-
-          const pendingEnrollments = enrollments.filter((item) => item.status === 'pending').length;
-          const totalEnrollments = enrollments.length;
-          const activeWorkshops = workshops.filter((item) => item.status === 'published').length;
-          const totalWorkshops = workshops.length;
-
-          setFallbackCounts({ pendingEnrollments, totalEnrollments, activeWorkshops, totalWorkshops });
-        } catch (fallbackError) {
-          console.log('Dashboard yedeği yüklenemedi', fallbackError);
-        }
+      if (bookingsResult.status === 'fulfilled') {
+        const bookings = bookingsResult.value;
+        setBookingCounts({
+          pendingBookings: bookings.filter((b) => b.status === 'Pending').length,
+          totalBookings: bookings.length,
+        });
       }
     } catch (error) {
       console.log('Dashboard yüklenemedi', error);
@@ -86,7 +67,7 @@ export default function EmployerDashboardScreen() {
 
   async function loadCalendarEvents() {
     try {
-      const events = await calendarService.getEmployerCalendarEvents();
+      const events = await calendarService.getCafeCalendarEvents();
       setCalendarEvents(events);
     } catch (error) {
       console.log('Takvim etkinlikleri yüklenemedi', error);
@@ -126,7 +107,7 @@ export default function EmployerDashboardScreen() {
         <View>
           <Text style={styles.greeting}>Merhaba, {user?.firstName}</Text>
           <Text style={styles.subGreeting}>
-            {profile?.workshopTitle || 'Profilini tamamla'}
+            {profile?.name || 'Profilini tamamla'}
           </Text>
         </View>
         <TouchableOpacity onPress={handleLogout} style={styles.logoutButton}>
@@ -134,103 +115,65 @@ export default function EmployerDashboardScreen() {
         </TouchableOpacity>
       </View>
 
-      {/* Rank Card */}
-      <View style={styles.rankCard}>
-        <View style={styles.rankBadge}>
-          <MaterialIcons name="workspace-premium" size={28} color={Colors.onPrimary} />
-        </View>
-        <View style={styles.rankInfo}>
-          <Text style={styles.rankLabel}>Atölyeci Seviyesi</Text>
-          <Text style={styles.rankValue}>{dashboard?.employerRank}</Text>
-        </View>
-        <View style={styles.xpContainer}>
-          <Text style={styles.xpValue}>{dashboard?.xpPoints}</Text>
-          <Text style={styles.xpLabel}>XP</Text>
-        </View>
-      </View>
-
       {/* Stats Grid */}
       <View style={styles.statsGrid}>
         <StatCard
           icon="event-available"
-          label="Aktif Atölye"
-          value={dashboard?.activeWorkshops ?? fallbackCounts.activeWorkshops ?? 0}
+          label="Aktif İlan"
+          value={dashboard?.activeListings ?? 0}
           color={Colors.primary}
-          onPress={() => router.push('/(employer)/workshop?status=published' as any)}
+          onPress={() => router.push('/(cafe)/(tabs)/listings' as any)}
         />
         <StatCard
           icon="library-books"
-          label="Toplam Atölye"
-          value={dashboard?.totalWorkshops ?? fallbackCounts.totalWorkshops ?? 0}
+          label="Toplam İlan"
+          value={dashboard?.totalListings ?? 0}
           color={Colors.secondary}
-          onPress={() => router.push('/(employer)/workshop' as any)}
+          onPress={() => router.push('/(cafe)/(tabs)/listings' as any)}
         />
         <StatCard
           icon="how-to-reg"
-          label="Bekleyen Kayıt"
-          value={dashboard?.pendingEnrollments ?? fallbackCounts.pendingEnrollments ?? 0}
+          label="Bekleyen Rezervasyon"
+          value={bookingCounts.pendingBookings}
           color={Colors.amber}
-          onPress={() => router.push('/(employer)/enrollments?status=pending' as any)}
+          onPress={() => router.push('/(cafe)/(tabs)/bookings' as any)}
         />
         <StatCard
           icon="groups"
-          label="Toplam Kayıt"
-          value={dashboard?.totalEnrollments ?? fallbackCounts.totalEnrollments ?? 0}
+          label="Toplam Rezervasyon"
+          value={bookingCounts.totalBookings}
           color={Colors.primaryMid}
-          onPress={() => router.push('/(employer)/enrollments' as any)}
+          onPress={() => router.push('/(cafe)/(tabs)/bookings' as any)}
         />
       </View>
 
-      {/* Rating Card */}
-      <View style={styles.ratingCard}>
-        <View style={styles.ratingLeft}>
-          <Text style={styles.ratingTitle}>Ortalama Puanın</Text>
-          <Text style={styles.ratingSubtitle}>
-            {dashboard?.reviewCount ?? 0} değerlendirme
-          </Text>
-        </View>
-        <View style={styles.ratingRight}>
-          <MaterialIcons name="star" size={22} color={Colors.amber} />
-          <Text style={styles.ratingValue}>
-            {dashboard?.avgRating ? dashboard.avgRating.toFixed(1) : '—'}
-          </Text>
-        </View>
-      </View>
-
-   {/* Takvim */}
+      {/* Takvim */}
       <CalendarWidget events={calendarEvents} loading={calendarLoading} />
 
-   {/* Quick Actions */}
+      {/* Quick Actions */}
       <Text style={styles.sectionTitle}>Hızlı İşlemler</Text>
       <View style={styles.actionsRow}>
         <ActionButton
           icon="add-circle-outline"
-          label="Atölye Oluştur"
-          onPress={() => router.push('/(employer)/workshop/create')}
+          label="İlan Oluştur"
+          onPress={() => router.push('/(cafe)/listing/create' as any)}
         />
         <ActionButton
           icon="edit"
           label="Profili Düzenle"
-          onPress={() => router.push('/(employer)/profile')}
+          onPress={() => router.push('/(cafe)/(tabs)/profile' as any)}
         />
       </View>
       <View style={styles.actionsRow}>
-        <ActionButton
-          icon="search"
-          label="Mekan Bul"
-          onPress={() => router.push('/(employer)/(tabs)/search')}
-        />
         <ActionButton
           icon="list-alt"
-          label="Atölyelerim"
-          onPress={() => router.push('/(employer)/workshop')}
+          label="İlanlarım"
+          onPress={() => router.push('/(cafe)/(tabs)/listings' as any)}
         />
-      </View>
-      <View style={styles.actionsRow}>
         <ActionButton
           icon="event-available"
-          label="Rezervasyonlarım"
-          onPress={() => router.push('/(employer)/bookings')}
+          label="Rezervasyonlar"
+          onPress={() => router.push('/(cafe)/(tabs)/bookings' as any)}
         />
       </View>
     </ScrollView>
@@ -323,42 +266,6 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.surfaceContainerLowest,
     ...Shadows.sm,
   },
-  rankCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Colors.primary,
-    borderRadius: Radius.xl,
-    padding: Spacing.md,
-    gap: Spacing.sm,
-    ...Shadows.card,
-  },
-  rankBadge: {
-    width: 48,
-    height: 48,
-    borderRadius: Radius.full,
-    backgroundColor: 'rgba(255,255,255,0.18)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  rankInfo: { flex: 1 },
-  rankLabel: {
-    ...Typography.labelSm,
-    color: 'rgba(255,255,255,0.8)',
-  },
-  rankValue: {
-    ...Typography.h2,
-    color: Colors.onPrimary,
-    marginTop: 2,
-  },
-  xpContainer: { alignItems: 'flex-end' },
-  xpValue: {
-    ...Typography.h2,
-    color: Colors.onPrimary,
-  },
-  xpLabel: {
-    ...Typography.labelSm,
-    color: 'rgba(255,255,255,0.8)',
-  },
   statsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -390,36 +297,6 @@ const styles = StyleSheet.create({
     ...Typography.bodyMd,
     color: Colors.onSurfaceVariant,
     marginTop: 2,
-  },
-  ratingCard: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    backgroundColor: Colors.surfaceContainerLowest,
-    borderRadius: Radius.lg,
-    borderWidth: 1,
-    borderColor: Colors.surfaceVariant,
-    padding: Spacing.md,
-    ...Shadows.sm,
-  },
-  ratingLeft: {},
-  ratingTitle: {
-    ...Typography.labelMd,
-    color: Colors.onSurface,
-  },
-  ratingSubtitle: {
-    ...Typography.bodyMd,
-    color: Colors.onSurfaceVariant,
-    marginTop: 2,
-  },
-  ratingRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  ratingValue: {
-    ...Typography.h2,
-    color: Colors.onSurface,
   },
   sectionTitle: {
     ...Typography.h3,
