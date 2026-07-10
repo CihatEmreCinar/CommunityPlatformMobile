@@ -4,6 +4,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { Calendar, type DateData } from 'react-native-calendars';
 import { Colors, Typography, Spacing, Radius, Shadows } from '../constants/theme';
 import type { CalendarEvent } from '../services/calendarService';
+import { CALENDAR_EVENT_COLORS } from '../services/calendarService';
 
 function toDateKey(iso: string): string {
   const d = new Date(iso);
@@ -22,6 +23,7 @@ function formatTimeRange(startAt: string, endAt: string): string {
 const TYPE_LABELS: Record<CalendarEvent['type'], string> = {
   workshop: 'Atölye',
   booking: 'Rezervasyon',
+  'booking-pending': 'Bekleyen Rezervasyon',
 };
 
 interface CalendarWidgetProps {
@@ -70,6 +72,12 @@ export function CalendarWidget({ events, loading }: CalendarWidgetProps) {
   const todayEvents = eventsByDate[todayKey] ?? [];
   const selectedEvents = eventsByDate[selectedDate] ?? [];
 
+  const legendTypes = useMemo(() => {
+    const seen = new Set<CalendarEvent['type']>();
+    for (const e of events) seen.add(e.type);
+    return Array.from(seen);
+  }, [events]);
+
   const todayLabel = new Date().toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' });
   const selectedLabel = new Date(selectedDate).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric', weekday: 'long' });
 
@@ -116,14 +124,12 @@ export function CalendarWidget({ events, loading }: CalendarWidgetProps) {
               />
 
               <View style={styles.legendRow}>
-                <View style={styles.legendItem}>
-                  <View style={[styles.legendDot, { backgroundColor: '#3B82F6' }]} />
-                  <Text style={styles.legendText}>Atölye</Text>
-                </View>
-                <View style={styles.legendItem}>
-                  <View style={[styles.legendDot, { backgroundColor: '#8B5CF6' }]} />
-                  <Text style={styles.legendText}>Rezervasyon</Text>
-                </View>
+                {legendTypes.map((type) => (
+                  <View key={type} style={styles.legendItem}>
+                    <View style={[styles.legendDot, { backgroundColor: CALENDAR_EVENT_COLORS[type] }]} />
+                    <Text style={styles.legendText}>{TYPE_LABELS[type]}</Text>
+                  </View>
+                ))}
               </View>
 
               <Text style={styles.selectedDateLabel}>{selectedLabel}</Text>

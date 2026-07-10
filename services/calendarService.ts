@@ -1,7 +1,7 @@
 import { workshopService } from './workshopService';
 import { spaceBookingService } from './spaceBookingService';
 
-export type CalendarEventType = 'workshop' | 'booking';
+export type CalendarEventType = 'workshop' | 'booking' | 'booking-pending';
 
 export interface CalendarEvent {
   id: string;
@@ -12,14 +12,13 @@ export interface CalendarEvent {
   color: string;
 }
 
-// Sabit renkler: workshop mavi, booking mor.
 export const CALENDAR_EVENT_COLORS: Record<CalendarEventType, string> = {
   workshop: '#3B82F6',
   booking: '#8B5CF6',
+  'booking-pending': '#F59E0B',
 };
 
 export const calendarService = {
-  // Employer: kendi workshopları (iptal edilenler hariç) + onaylanmış rezervasyonları.
   async getEmployerCalendarEvents(): Promise<CalendarEvent[]> {
     const [workshops, bookings] = await Promise.all([
       workshopService.getMyWorkshops(),
@@ -51,19 +50,19 @@ export const calendarService = {
     return [...workshopEvents, ...bookingEvents];
   },
 
-  // Cafe: sadece kendi ilanlarına gelen onaylanmış rezervasyonlar.
+  // Cafe: kendi ilanlarına gelen rezervasyonlar (onaylı + onay bekleyen).
   async getCafeCalendarEvents(): Promise<CalendarEvent[]> {
     const bookings = await spaceBookingService.getIncoming();
 
     return bookings
-      .filter((b) => b.status === 'Approved')
+      .filter((b) => b.status === 'Approved' || b.status === 'Pending')
       .map((b) => ({
         id: `booking-${b.id}`,
         title: b.employerWorkshopTitle ?? b.employerFullName ?? 'Rezervasyon',
         startAt: b.startDateTime,
         endAt: b.endDateTime,
-        type: 'booking' as const,
-        color: CALENDAR_EVENT_COLORS.booking,
+        type: b.status === 'Pending' ? ('booking-pending' as const) : ('booking' as const),
+        color: b.status === 'Pending' ? CALENDAR_EVENT_COLORS['booking-pending'] : CALENDAR_EVENT_COLORS.booking,
       }));
   },
 };
