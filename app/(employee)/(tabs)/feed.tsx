@@ -111,8 +111,17 @@ function CommentsModal({ visible, post, onClose }: { visible: boolean; post: Fee
 }
 
 // ─── Post Card ────────────────────────────────────────────────────────────────
-// NOT: Feed'deki her post bir employer'a ait (backend kuralı) — authorRole/roleLabel
-// belirsizliği yok, her zaman "Eğitmen" gösterilir. Kendi postuna da rozet eklendi.
+// NOT: Feed'deki her post bir Employer'a VEYA bir Cafe'ye ait olabilir
+// (authorType alanı belirler). Cafe post'larında workshop yok. Backend
+// EmployersOnly (Cafe) post'ları employee'nin feed'ine zaten dahil etmiyor,
+// ama defansif olarak burada da doğru/crashsiz render ediliyor.
+
+function isOwnPost(post: FeedPost, currentUserId: string | null): boolean {
+  if (!currentUserId) return false;
+  return post.authorType === 'Cafe'
+    ? post.cafeId === currentUserId
+    : post.employerId === currentUserId;
+}
 
 function PostCard({ post, onLike, onComment, onShare, isMine }: {
   post: FeedPost;
@@ -121,21 +130,25 @@ function PostCard({ post, onLike, onComment, onShare, isMine }: {
   onShare: (post: FeedPost) => void;
   isMine: boolean;
 }) {
+  const isCafe = post.authorType === 'Cafe';
+  const authorName = isCafe ? (post.cafeName ?? 'Kafe') : (post.employerName ?? 'Eğitmen');
+  const authorAvatarUrl = isCafe ? post.cafeAvatarUrl : post.employerAvatarUrl;
+
   return (
     <View style={styles.card}>
       <View style={styles.cardHeader}>
         <View style={styles.authorRow}>
-          <Avatar url={post.employerAvatarUrl} name={post.employerName} size={40} />
+          <Avatar url={authorAvatarUrl} name={authorName} size={40} />
           <View style={styles.authorInfo}>
             <View style={styles.authorNameRow}>
-              <Text style={styles.authorName}>{post.employerName}</Text>
+              <Text style={styles.authorName}>{authorName}</Text>
               {isMine && (
                 <View style={styles.mineChip}><Text style={styles.mineChipText}>Sen</Text></View>
               )}
             </View>
             <View style={styles.authorMeta}>
-              <View style={styles.roleChip}><Text style={styles.roleText}>Eğitmen</Text></View>
-              {post.workshopTitle ? (
+              <View style={styles.roleChip}><Text style={styles.roleText}>{isCafe ? 'Kafe' : 'Eğitmen'}</Text></View>
+              {!isCafe && post.workshopTitle ? (
                 <Text style={styles.workshopTitle} numberOfLines={1}>{post.workshopTitle}</Text>
               ) : null}
               <Text style={styles.postTime}>{formatNotificationTime(post.publishedAt ?? '')}</Text>
@@ -191,7 +204,7 @@ export default function EmployerFeedScreen() {
   const { getShareUrl } = useShare();
   const [commentPost, setCommentPost] = useState<FeedPost | null>(null);
 
-  const currentEmployerId = user?.role === 'employer' ? user.id : null;
+  const currentUserId = user?.id ?? null;
 
   useEffect(() => { refresh(); }, []);
 
@@ -206,9 +219,9 @@ export default function EmployerFeedScreen() {
       onLike={toggleLike}
       onComment={setCommentPost}
       onShare={handleShare}
-      isMine={currentEmployerId === item.employerId}
+      isMine={isOwnPost(item, currentUserId)}
     />
-  ), [toggleLike, handleShare, currentEmployerId]);
+  ), [toggleLike, handleShare, currentUserId]);
 
   if (loading) return <View style={styles.centered}><ActivityIndicator size="large" color={ACCENT} /></View>;
 

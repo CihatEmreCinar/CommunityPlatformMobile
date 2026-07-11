@@ -10,14 +10,23 @@ export interface PostMediaItem {
 }
 
 // ─── Post (backend PostResponse ile eşleşiyor) ───────────────────────────────
+// NOT: Post artık Employer VEYA Cafe'ye ait olabilir (authorType/Visibility).
+// Employer alanları (employerId/Name, workshopId/Title) Cafe post'larında yok;
+// Cafe alanları (cafeId/Name/AvatarUrl) Employer post'larında yok. Bu yüzden
+// employer/workshop alanları optional.
 
 export interface Post {
   id: string;
-  employerId: string;
-  employerName: string;
+  authorType: 'Employer' | 'Cafe';
+  visibility: 'Public' | 'EmployersOnly';
+  employerId?: string;
+  employerName?: string;
   employerAvatarUrl: string | null;
-  workshopId: string;
-  workshopTitle: string;
+  cafeId?: string;
+  cafeName?: string;
+  cafeAvatarUrl: string | null;
+  workshopId?: string;
+  workshopTitle?: string;
   caption: string | null;    // backend: Caption nullable
   likeCount: number;
   commentCount: number;
@@ -33,7 +42,7 @@ export interface Post {
 // ─── Create / Update ─────────────────────────────────────────────────────────
 
 export interface CreatePostRequest {
-  workshopId: string;        // backend zorunlu
+  workshopId?: string;       // Cafe post'unda gönderilmez — backend artık nullable kabul ediyor
   caption: string | null;    // backend: Caption
   tagSlugs?: string[];       // backend: TagSlugs
 }

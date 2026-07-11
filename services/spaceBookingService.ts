@@ -19,6 +19,9 @@ export interface SpaceBookingResponse {
   cafeCity?: string | null;
   employerWorkshopTitle?: string | null;
   employerFullName?: string | null;
+  // NOT: Backend'de henüz yoksa eklenmeli — bu booking için employer tarafından
+  // zaten bir cafe review'ı yazılmış mı? Yazılmışsa "Değerlendir" butonu gizlenir.
+  hasReview?: boolean;
 }
 
 export interface SpaceBooking {
@@ -38,6 +41,7 @@ export interface SpaceBooking {
   cafeCity: string | null;
   employerWorkshopTitle: string | null;
   employerFullName: string | null;
+  hasReview: boolean;
 }
 
 export interface CreateSpaceBookingRequest {
@@ -65,6 +69,7 @@ function mapResponse(response: SpaceBookingResponse): SpaceBooking {
     cafeCity: response.cafeCity ?? null,
     employerWorkshopTitle: response.employerWorkshopTitle ?? null,
     employerFullName: response.employerFullName ?? null,
+    hasReview: response.hasReview ?? false,
   };
 }
 

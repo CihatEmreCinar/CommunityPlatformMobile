@@ -19,6 +19,13 @@ export default function CafeTabsLayout() {
         }}
       />
       <Tabs.Screen
+        name="feed"
+        options={{
+          title: 'Akış',
+          tabBarIcon: ({ color, size }) => <MaterialIcons name="dynamic-feed" size={size} color={color} />,
+        }}
+      />
+      <Tabs.Screen
         name="listings"
         options={{
           title: 'İlanlar',

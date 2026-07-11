@@ -6,10 +6,12 @@ import { ScreenContainer } from '../../../components/layout/ScreenContainer';
 import { FormHeader } from '../../../components/layout/FormHeader';
 import { ProfileEditForm } from '../../../components/layout/profile/ProfileEditForm';
 import { cafeProfileService, type CafeProfile } from '../../../services/cafeProfileService';
+import { spaceBookingReviewService } from '../../../services/spaceBookingReviewService';
+import type { SpaceBookingReview } from '../../../types/spaceBookingReview';
 import { Colors, Typography, Spacing, Radius, Shadows } from '../../../constants/theme';
 import { Image } from 'react-native';
 import { useAuth } from '../../../contexts/AuthContext';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import type { Category } from '../../../types/category';
 
 export default function CafeProfileScreen() {
@@ -30,6 +32,8 @@ export default function CafeProfileScreen() {
   const [uploadingCoverImage, setUploadingCoverImage] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
   const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>([]);
+  const [reviews, setReviews] = useState<SpaceBookingReview[]>([]);
+  const [reviewsLoading, setReviewsLoading] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -44,6 +48,7 @@ export default function CafeProfileScreen() {
         setCoverImageUrl(p.coverImageUrl ?? null);
         setCategories(cats);
         setSelectedCategoryIds(p.categoryIds ?? []);
+        loadReviews(p.id);
       } catch (err) {
         console.log('cafe profile load failed', err);
         Alert.alert('Hata', 'Profil yüklenemedi.');
@@ -52,6 +57,18 @@ export default function CafeProfileScreen() {
       }
     })();
   }, []);
+
+  async function loadReviews(cafeProfileId: string) {
+    setReviewsLoading(true);
+    try {
+      const data = await spaceBookingReviewService.getByCafeProfile(cafeProfileId);
+      setReviews(data);
+    } catch (err) {
+      console.log('cafe reviews load failed', err);
+    } finally {
+      setReviewsLoading(false);
+    }
+  }
 
   const handlePickAvatar = useCallback(async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -187,6 +204,14 @@ export default function CafeProfileScreen() {
             {profile?.avatarUrl ? <Image source={{ uri: profile.avatarUrl }} style={styles.avatar} /> : null}
             <View style={{ flex: 1 }}>
               <Text style={styles.name}>{profile?.name}</Text>
+              {!!profile?.avgRating && profile.avgRating > 0 && (
+                <View style={styles.ratingRow}>
+                  <MaterialIcons name="star" size={16} color={Colors.amber} />
+                  <Text style={styles.ratingText}>
+                    {profile.avgRating.toFixed(1)} ({profile.reviewCount ?? 0} değerlendirme)
+                  </Text>
+                </View>
+              )}
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.sm }}>
                 <TouchableOpacity onPress={() => setEditing(true)} style={styles.editBtn}><Text style={styles.editText}>Düzenle</Text></TouchableOpacity>
                 <TouchableOpacity
@@ -216,6 +241,36 @@ export default function CafeProfileScreen() {
             <Text style={styles.label}>Adres</Text>
             <Text style={styles.value}>{profile?.address || '—'}</Text>
           </View>
+
+          <View style={styles.reviewsSection}>
+            <Text style={styles.sectionTitle}>
+              Değerlendirmeler {reviews.length > 0 ? `(${reviews.length})` : ''}
+            </Text>
+            {reviewsLoading ? (
+              <ActivityIndicator color={Colors.primary} />
+            ) : reviews.length === 0 ? (
+              <Text style={styles.value}>Henüz değerlendirme yok.</Text>
+            ) : (
+              reviews.map((r) => (
+                <View key={r.id} style={styles.reviewCard}>
+                  <View style={styles.reviewHeader}>
+                    <Text style={styles.reviewUserName}>{r.userName}</Text>
+                    <View style={{ flexDirection: 'row' }}>
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <MaterialIcons
+                          key={star}
+                          name={star <= r.rating ? 'star' : 'star-border'}
+                          size={14}
+                          color={Colors.amber}
+                        />
+                      ))}
+                    </View>
+                  </View>
+                  {r.comment && <Text style={styles.reviewComment}>{r.comment}</Text>}
+                </View>
+              ))
+            )}
+          </View>
         </View>
       )}
     </ScreenContainer>
@@ -234,4 +289,19 @@ const styles = StyleSheet.create({
   value: { ...Typography.bodyMd, color: Colors.onSurface },
   coverImage: { width: '100%', height: 140, borderRadius: Radius.lg, marginBottom: Spacing.sm, backgroundColor: Colors.surfaceContainer },
   avatar: { width: 72, height: 72, borderRadius: 36, marginRight: Spacing.md, backgroundColor: Colors.surfaceContainer },
+  ratingRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2 },
+  ratingText: { ...Typography.bodyMd, color: Colors.onSurfaceVariant },
+  reviewsSection: { gap: Spacing.sm },
+  sectionTitle: { ...Typography.h3, color: Colors.onSurface },
+  reviewCard: {
+    backgroundColor: Colors.surfaceContainerLowest,
+    borderRadius: Radius.lg,
+    borderWidth: 1,
+    borderColor: Colors.surfaceVariant,
+    padding: Spacing.sm,
+    gap: 4,
+  },
+  reviewHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  reviewUserName: { ...Typography.labelMd, fontSize: 14, color: Colors.onSurface },
+  reviewComment: { ...Typography.bodyMd, color: Colors.onSurfaceVariant },
 });

@@ -10,14 +10,22 @@ export interface FeedPostMedia {
 }
 
 // ─── Feed Post ───────────────────────────────────────────────────────────────
+// NOT: Post artık Employer VEYA Cafe'ye ait olabilir (authorType/Visibility).
+// Employer alanları (employerId/Name, workshopId/Title) Cafe post'larında yok;
+// Cafe alanları (cafeId/Name/AvatarUrl) Employer post'larında yok.
 
 export interface FeedPost {
   id: string;
-  employerId: string;
-  employerName: string;
+  authorType: 'Employer' | 'Cafe';
+  visibility: 'Public' | 'EmployersOnly';
+  employerId?: string;
+  employerName?: string;
   employerAvatarUrl: string | null;
-  workshopId: string;
-  workshopTitle: string;
+  cafeId?: string;
+  cafeName?: string;
+  cafeAvatarUrl: string | null;
+  workshopId?: string;
+  workshopTitle?: string;
   caption: string | null;    // backend: Caption nullable
   likeCount: number;
   commentCount: number;

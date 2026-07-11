@@ -10,11 +10,16 @@ export interface PostMediaItemDto {
 
 export interface PostDto {
   id: string;
-  employerId: string;
-  employerName: string;
-  employerAvatarUrl: string | null;
-  workshopId: string;
-  workshopTitle: string;
+  authorType: 'Employer' | 'Cafe';
+  visibility: 'Public' | 'EmployersOnly';
+  employerId?: string | null;
+  employerName?: string | null;
+  employerAvatarUrl?: string | null;
+  cafeId?: string | null;
+  cafeName?: string | null;
+  cafeAvatarUrl?: string | null;
+  workshopId?: string | null;
+  workshopTitle?: string | null;
   caption: string | null;
   likeCount: number;
   commentCount: number;

@@ -16,6 +16,8 @@ export interface CafeProfile {
   coverImageUrl: string | null;
   categoryNames?: string[];
   categoryIds?: string[];
+  avgRating?: number;
+  reviewCount?: number;
 }
 
 export interface CafeDashboardStats {

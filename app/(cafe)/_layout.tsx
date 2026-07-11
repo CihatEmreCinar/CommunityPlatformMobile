@@ -39,6 +39,7 @@ export default function CafeLayout() {
       <Stack.Screen name="(tabs)" />
       <Stack.Screen name="listing/create" />
       <Stack.Screen name="listing/[id]" />
+      <Stack.Screen name="post/create" />
     </Stack>
   );
 }

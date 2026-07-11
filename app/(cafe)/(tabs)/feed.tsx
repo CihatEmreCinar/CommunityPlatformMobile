@@ -193,10 +193,10 @@ function PostCard({ post, onLike, onComment, onShare, isMine }: {
 
 // ─── Ana ekran ────────────────────────────────────────────────────────────────
 
-export default function EmployerFeedScreen() {
+export default function CafeFeedScreen() {
   const router = useRouter();
   const { user } = useAuth();
-  // employer kendi feed'inde herkesi görmeli → explore mode
+  // cafe kendi feed'inde herkesi görmeli → explore mode (backend zaten role'e göre filtreliyor)
   const { posts, loading, loadingMore, refreshing, error, hasMore, refresh, loadMore, toggleLike } =
     useFeed(20, { mode: 'explore' });
   const { getShareUrl } = useShare();
@@ -237,7 +237,7 @@ export default function EmployerFeedScreen() {
     <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Akış</Text>
-        <TouchableOpacity style={styles.createBtn} onPress={() => router.push('/(employer)/post/create' as any)}>
+        <TouchableOpacity style={styles.createBtn} onPress={() => router.push('/(cafe)/post/create' as any)}>
           <Ionicons name="add" size={20} color="#FFFFFF" />
           <Text style={styles.createBtnText}>Paylaş</Text>
         </TouchableOpacity>

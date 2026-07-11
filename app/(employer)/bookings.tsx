@@ -8,10 +8,15 @@ import {
   ActivityIndicator,
   TouchableOpacity,
   Alert,
+  Modal,
+  TextInput,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
 import { spaceBookingService, type SpaceBooking, type SpaceBookingStatus } from '../../services/spaceBookingService';
+import { spaceBookingReviewService } from '../../services/spaceBookingReviewService';
 import { Colors, Typography, Spacing, Radius, Shadows } from '../../constants/theme';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -23,12 +28,24 @@ const STATUS_LABELS: Record<SpaceBookingStatus, { label: string; color: string; 
   Completed: { label: 'Tamamlandı', color: '#0F766E', bg: '#CCFBF1' },
 };
 
+// Approved + süresi geçmiş, ya da doğrudan Completed olan ve henüz review'ı olmayan
+// rezervasyonlar değerlendirilebilir.
+function canReview(booking: SpaceBooking): boolean {
+  if (booking.hasReview) return false;
+  if (booking.status === 'Completed') return true;
+  if (booking.status === 'Approved') {
+    return new Date(booking.endDateTime).getTime() < Date.now();
+  }
+  return false;
+}
+
 export default function EmployerBookingsScreen() {
   const router = useRouter();
   const [bookings, setBookings] = useState<SpaceBooking[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [actionId, setActionId] = useState<string | null>(null);
+  const [reviewTarget, setReviewTarget] = useState<SpaceBooking | null>(null);
 
   const loadBookings = useCallback(async () => {
     try {
@@ -62,6 +79,15 @@ export default function EmployerBookingsScreen() {
   function onRefresh() {
     setIsRefreshing(true);
     loadBookings();
+  }
+
+  function handleReviewed(bookingId: string) {
+    // Optimistic güncelleme: "Değerlendir" butonu backend'in hasReview alanı
+    // olmadan da anında kaybolsun diye.
+    setBookings((prev) =>
+      prev.map((item) => (item.id === bookingId ? { ...item, hasReview: true } : item))
+    );
+    setReviewTarget(null);
   }
 
   if (isLoading) {
@@ -137,12 +163,136 @@ export default function EmployerBookingsScreen() {
                     </TouchableOpacity>
                   </View>
                 ) : null}
+
+                {canReview(item) ? (
+                  <View style={styles.cardActions}>
+                    <TouchableOpacity
+                      style={[styles.actionButton, styles.reviewButton]}
+                      onPress={() => setReviewTarget(item)}
+                    >
+                      <MaterialIcons name="star-rate" size={16} color={Colors.onPrimary} />
+                      <Text style={styles.actionText}>Değerlendir</Text>
+                    </TouchableOpacity>
+                  </View>
+                ) : null}
               </View>
             );
           })
         )}
       </ScrollView>
+
+      <SpaceBookingReviewModal
+        booking={reviewTarget}
+        onClose={() => setReviewTarget(null)}
+        onSubmitted={handleReviewed}
+      />
     </SafeAreaView>
+  );
+}
+
+// ─── Cafe Review Modal ─────────────────────────────────────────────────────
+
+function SpaceBookingReviewModal({
+  booking,
+  onClose,
+  onSubmitted,
+}: {
+  booking: SpaceBooking | null;
+  onClose: () => void;
+  onSubmitted: (bookingId: string) => void;
+}) {
+  const [rating, setRating] = useState(0);
+  const [comment, setComment] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (booking) {
+      setRating(0);
+      setComment('');
+    }
+  }, [booking?.id]);
+
+  async function handleSubmit() {
+    if (!booking) return;
+    if (rating === 0) {
+      Alert.alert('Hata', 'Lütfen bir puan seçin.');
+      return;
+    }
+    setSubmitting(true);
+    try {
+      await spaceBookingReviewService.create(booking.id, {
+        rating,
+        comment: comment.trim() || undefined,
+      });
+      Alert.alert('Başarılı', 'Değerlendirmen kaydedildi.');
+      onSubmitted(booking.id);
+    } catch (error: any) {
+      const message = error?.response?.data?.message || 'Değerlendirme gönderilemedi.';
+      Alert.alert('Hata', message);
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  return (
+    <Modal
+      visible={!!booking}
+      animationType="slide"
+      presentationStyle="pageSheet"
+      onRequestClose={onClose}
+    >
+      <KeyboardAvoidingView
+        style={styles.modalContainer}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      >
+        <View style={styles.modalHeader}>
+          <Text style={styles.modalTitle}>Kafeyi Değerlendir</Text>
+          <TouchableOpacity onPress={onClose}>
+            <MaterialIcons name="close" size={22} color={Colors.onSurface} />
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.modalBody}>
+          <Text style={styles.modalCafeName}>{booking?.cafeName ?? 'Kafe'}</Text>
+          <Text style={styles.modalListingTitle}>{booking?.spaceListingTitle ?? ''}</Text>
+
+          <View style={styles.starRow}>
+            {[1, 2, 3, 4, 5].map((star) => (
+              <TouchableOpacity key={star} onPress={() => setRating(star)}>
+                <MaterialIcons
+                  name={star <= rating ? 'star' : 'star-border'}
+                  size={36}
+                  color={Colors.amber}
+                />
+              </TouchableOpacity>
+            ))}
+          </View>
+
+          <TextInput
+            style={styles.reviewInput}
+            placeholder="Yorumunu yaz (opsiyonel)"
+            placeholderTextColor={Colors.outlineVariant}
+            value={comment}
+            onChangeText={setComment}
+            multiline
+            numberOfLines={4}
+          />
+
+          <TouchableOpacity
+            style={[styles.submitReviewButton, submitting && styles.enrollButtonDisabled]}
+            onPress={handleSubmit}
+            disabled={submitting}
+            activeOpacity={0.85}
+          >
+            {submitting ? (
+              <ActivityIndicator color={Colors.onPrimary} />
+            ) : (
+              <Text style={styles.submitReviewButtonText}>Yorumu Gönder</Text>
+            )}
+          </TouchableOpacity>
+        </View>
+      </KeyboardAvoidingView>
+    </Modal>
   );
 }
 
@@ -199,5 +349,47 @@ const styles = StyleSheet.create({
   cancelButton: {
     backgroundColor: Colors.error,
   },
+  reviewButton: {
+    backgroundColor: Colors.primary,
+    flexDirection: 'row',
+    gap: 6,
+  },
   actionText: { ...Typography.labelMd, color: '#FFFFFF' },
+
+  // Review modal
+  modalContainer: { flex: 1, backgroundColor: Colors.background },
+  modalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: Spacing.containerMargin,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.surfaceVariant,
+  },
+  modalTitle: { ...Typography.h3, color: Colors.onSurface },
+  modalBody: { padding: Spacing.containerMargin, gap: Spacing.sm },
+  modalCafeName: { ...Typography.h2, color: Colors.onSurface },
+  modalListingTitle: { ...Typography.bodyMd, color: Colors.onSurfaceVariant, marginBottom: Spacing.sm },
+  starRow: { flexDirection: 'row', gap: Spacing.xs },
+  reviewInput: {
+    ...Typography.bodyMd,
+    color: Colors.onSurface,
+    backgroundColor: Colors.surfaceContainerLow,
+    borderWidth: 1,
+    borderColor: Colors.surfaceVariant,
+    borderRadius: Radius.md,
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: Spacing.sm,
+    minHeight: 90,
+    textAlignVertical: 'top',
+  },
+  submitReviewButton: {
+    backgroundColor: Colors.primary,
+    borderRadius: Radius.md,
+    paddingVertical: Spacing.sm,
+    alignItems: 'center',
+    marginTop: Spacing.sm,
+  },
+  submitReviewButtonText: { ...Typography.labelMd, color: Colors.onPrimary },
+  enrollButtonDisabled: { backgroundColor: Colors.outline },
 });
