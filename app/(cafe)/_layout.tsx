@@ -40,6 +40,8 @@ export default function CafeLayout() {
       <Stack.Screen name="listing/create" />
       <Stack.Screen name="listing/[id]" />
       <Stack.Screen name="post/create" />
+      <Stack.Screen name="employer/[id]" />
+      <Stack.Screen name="cafe/[id]" />
     </Stack>
   );
 }

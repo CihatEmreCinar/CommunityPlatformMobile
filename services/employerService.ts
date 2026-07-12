@@ -48,6 +48,8 @@ export interface EmployerPublicProfile {
   bio: string | null;
   city: string | null;
   profileImageUrl: string | null;
+  /** NOT: Backend şu an bu alanı döndürmüyor — eklenince otomatik çalışır. */
+  coverImageUrl?: string | null;
   specialization: string[];
   categoryNames: string[];
   yearsExperience: number | null;
@@ -69,6 +71,7 @@ function normalizeEmployerPublicProfile(profile: EmployerPublicProfile): Employe
   return {
     ...profile,
     profileImageUrl: normalizeApiMediaUrl(profile.profileImageUrl),
+    coverImageUrl: normalizeApiMediaUrl(profile.coverImageUrl),
   };
 }
 

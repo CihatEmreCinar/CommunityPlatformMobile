@@ -2,7 +2,7 @@ import React from 'react';
 import { useLocalSearchParams } from 'expo-router';
 import { EmployerPublicProfileScreen } from '../../../components/profile/EmployerPublicProfileScreen';
 
-export default function EmployeeViewEmployerProfileScreen() {
+export default function CafeViewEmployerProfileScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   return <EmployerPublicProfileScreen employerId={id} />;
 }

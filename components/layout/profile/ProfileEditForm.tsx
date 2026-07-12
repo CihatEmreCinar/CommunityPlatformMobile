@@ -1,21 +1,11 @@
 import React from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image, ActivityIndicator } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import type { Category } from '../../../types/category';
 
 const ACCENT = '#0F766E';
 
 export type ProfileEditFormProps = {
-  // Fotoğraf
-  photoUrl: string | null;
-  onPickPhoto: () => void;
-  uploadingPhoto?: boolean;
-
-  // Cover
-  coverImageUrl?: string | null;
-  onPickCoverImage?: () => void;
-  uploadingCoverImage?: boolean;
-
   // Unvan
   titleLabel?: string;
   titlePlaceholder?: string;
@@ -56,12 +46,6 @@ export type ProfileEditFormProps = {
  * böylece iki taraf aynı UI'ı, farklı veri kaynaklarıyla besleyebilir.
  */
 export function ProfileEditForm({
-  photoUrl,
-  onPickPhoto,
-  uploadingPhoto,
-  coverImageUrl,
-  onPickCoverImage,
-  uploadingCoverImage,
   titleLabel = 'Unvan',
   titlePlaceholder = 'örn. Resim Eğitmeni',
   title,
@@ -85,55 +69,6 @@ export function ProfileEditForm({
 }: ProfileEditFormProps) {
   return (
     <>
-      {/* Fotoğraf */}
-      <View style={styles.photoSection}>
-        <TouchableOpacity onPress={onPickPhoto} disabled={uploadingPhoto} style={styles.avatarWrap}>
-          {photoUrl ? (
-            <Image source={{ uri: photoUrl }} style={styles.avatarImage} />
-          ) : (
-            <View style={styles.avatarPlaceholder}>
-              <Ionicons name="person" size={32} color="#9CA3AF" />
-            </View>
-          )}
-          <View style={styles.avatarEditBadge}>
-            {uploadingPhoto ? (
-              <ActivityIndicator size="small" color="#FFFFFF" />
-            ) : (
-              <Ionicons name="camera" size={14} color="#FFFFFF" />
-            )}
-          </View>
-        </TouchableOpacity>
-        <Text style={styles.photoHint}>Fotoğrafı değiştirmek için dokun</Text>
-      </View>
-
-      {onPickCoverImage ? (
-        <View style={styles.section}>
-          <Text style={styles.sectionLabel}>Kapak Görseli</Text>
-          <TouchableOpacity
-            onPress={onPickCoverImage}
-            disabled={uploadingCoverImage}
-            style={styles.coverWrap}
-            activeOpacity={0.85}
-          >
-            {coverImageUrl ? (
-              <Image source={{ uri: coverImageUrl }} style={styles.coverImage} />
-            ) : (
-              <View style={styles.coverPlaceholder}>
-                <Ionicons name="image-outline" size={28} color="#9CA3AF" />
-                <Text style={styles.coverPlaceholderText}>Kapak görseli seç</Text>
-              </View>
-            )}
-            <View style={styles.coverEditBadge}>
-              {uploadingCoverImage ? (
-                <ActivityIndicator size="small" color="#FFFFFF" />
-              ) : (
-                <Ionicons name="images" size={14} color="#FFFFFF" />
-              )}
-            </View>
-          </TouchableOpacity>
-        </View>
-      ) : null}
-
       {/* Unvan */}
       <View style={styles.section}>
         <Text style={styles.sectionLabel}>{titleLabel}</Text>
@@ -258,19 +193,8 @@ export function ProfileEditForm({
 }
 
 const styles = StyleSheet.create({
-  photoSection: { alignItems: 'center', paddingVertical: 24, gap: 8 },
-  avatarWrap: { position: 'relative' },
-  avatarImage: { width: 96, height: 96, borderRadius: 48 },
-  avatarPlaceholder: { width: 96, height: 96, borderRadius: 48, backgroundColor: '#F3F4F6', alignItems: 'center', justifyContent: 'center' },
-  avatarEditBadge: { position: 'absolute', bottom: 0, right: 0, width: 28, height: 28, borderRadius: 14, backgroundColor: ACCENT, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: '#FFFFFF' },
-  photoHint: { fontSize: 12, color: '#9CA3AF' },
   section: { paddingHorizontal: 16, paddingVertical: 12 },
   sectionLabel: { fontSize: 13, fontWeight: '600', color: '#374151', marginBottom: 8 },
-  coverWrap: { borderRadius: 16, overflow: 'hidden', backgroundColor: '#F9FAFB', position: 'relative' },
-  coverImage: { width: '100%', height: 150, borderRadius: 16 },
-  coverPlaceholder: { height: 150, borderRadius: 16, borderWidth: 1, borderColor: '#E5E7EB', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: '#F9FAFB' },
-  coverPlaceholderText: { fontSize: 13, color: '#6B7280' },
-  coverEditBadge: { position: 'absolute', right: 10, bottom: 10, width: 28, height: 28, borderRadius: 14, backgroundColor: ACCENT, alignItems: 'center', justifyContent: 'center' },
   input: { backgroundColor: '#F9FAFB', borderWidth: 1, borderColor: '#E5E7EB', borderRadius: 10, paddingHorizontal: 14, paddingVertical: 10, fontSize: 14, color: '#111827' },
   bioInput: { backgroundColor: '#F9FAFB', borderWidth: 1, borderColor: '#E5E7EB', borderRadius: 10, paddingHorizontal: 14, paddingVertical: 10, fontSize: 14, color: '#111827', minHeight: 90 },
   charCount: { fontSize: 12, color: '#9CA3AF', textAlign: 'right', marginTop: 6 },

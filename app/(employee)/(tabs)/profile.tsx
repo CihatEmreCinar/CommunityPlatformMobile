@@ -9,6 +9,7 @@ import {
   Alert,
   RefreshControl,
   Image,
+  Share,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
@@ -16,17 +17,9 @@ import { useAuth } from '../../../contexts/AuthContext';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { postService } from '../../../services/postService';
 import type { UserSocialStats } from '../../../types/post.types';
+import { ProfileHeader } from '../../../components/profile/ProfileHeader';
 
 const ACCENT = '#6366F1';
-
-function StatBox({ value, label }: { value: number; label: string }) {
-  return (
-    <View style={styles.statBox}>
-      <Text style={styles.statValue}>{value}</Text>
-      <Text style={styles.statLabel}>{label}</Text>
-    </View>
-  );
-}
 
 export default function EmployeeProfileScreen() {
   const router = useRouter();
@@ -53,6 +46,11 @@ export default function EmployeeProfileScreen() {
     router.replace('/(auth)/login');
   }
 
+  const handleShare = useCallback(() => {
+    const name = `${user?.firstName ?? ''} ${user?.lastName ?? ''}`.trim();
+    Share.share({ message: `${name || 'Bu profili'} Atolium'da keşfet!` });
+  }, [user?.firstName, user?.lastName]);
+
   const refresh = useCallback(async () => {
     setRefreshing(true);
     await Promise.all([refreshUser(), fetchStats()]);
@@ -69,66 +67,39 @@ export default function EmployeeProfileScreen() {
       showsVerticalScrollIndicator={false}
     >
       {/* Profil üst */}
-      <View style={styles.profileTop}>
-        {user?.avatarUrl ? (
-          <View style={styles.avatarImageWrap}>
-            <Image source={{ uri: user.avatarUrl }} style={styles.avatarImage} />
-          </View>
-        ) : (
-          <View style={styles.avatar}>
-            <Text style={styles.avatarInitials}>
-              {user?.firstName?.[0]}{user?.lastName?.[0]}
-            </Text>
-          </View>
-        )}
-        <View style={styles.topActions}>
-          <TouchableOpacity
-            style={styles.editProfileBtn}
-            onPress={() => router.push('/(employee)/edit-profile' as any)}
-          >
-            <Text style={styles.editProfileText}>Profili Düzenle</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.logoutBtn}
-            onPress={() =>
-              Alert.alert('Çıkış', 'Çıkış yapmak istiyor musun?', [
-                { text: 'İptal', style: 'cancel' },
-                { text: 'Çıkış', style: 'destructive', onPress: handleLogout },
-              ])
-            }
-          >
-            <Ionicons name="log-out-outline" size={20} color="#6B7280" />
-          </TouchableOpacity>
-        </View>
+      <ProfileHeader
+        coverUrl={null}
+        avatarUrl={user?.avatarUrl}
+        fullName={`${user?.firstName ?? ''} ${user?.lastName ?? ''}`.trim()}
+        roleLabel="Katılımcı"
+        bio={user?.bio}
+        city={user?.city}
+        stats={[
+          { label: 'Gönderi', value: stats?.postCount ?? 0 },
+          { label: 'Takipçi', value: stats?.followerCount ?? 0 },
+          { label: 'Takip', value: stats?.followingCount ?? 0 },
+        ]}
+        actions={{
+          variant: 'own',
+          onEditProfile: () => router.push('/(employee)/edit-profile' as any),
+          onShareProfile: handleShare,
+        }}
+      />
+
+      <View style={styles.logoutRow}>
+        <TouchableOpacity
+          style={styles.logoutBtn}
+          onPress={() =>
+            Alert.alert('Çıkış', 'Çıkış yapmak istiyor musun?', [
+              { text: 'İptal', style: 'cancel' },
+              { text: 'Çıkış', style: 'destructive', onPress: handleLogout },
+            ])
+          }
+        >
+          <Ionicons name="log-out-outline" size={16} color="#6B7280" />
+          <Text style={styles.logoutText}>Çıkış Yap</Text>
+        </TouchableOpacity>
       </View>
-
-      {/* İsim */}
-      <View style={styles.nameSection}>
-        <Text style={styles.fullName}>{user?.firstName} {user?.lastName}</Text>
-        <View style={styles.roleBadge}>
-          <Text style={styles.roleText}>Katılımcı</Text>
-        </View>
-      </View>
-
-      {(user?.city || user?.bio) ? (
-        <View style={styles.summarySection}>
-          {user?.city ? <Text style={styles.cityText}>{user.city}</Text> : null}
-          {user?.bio ? <Text style={styles.bioText}>{user.bio}</Text> : null}
-        </View>
-      ) : null}
-
-      {/* Sosyal sayaçlar */}
-      {loadingStats ? (
-        <ActivityIndicator color={ACCENT} style={{ marginVertical: 16 }} />
-      ) : (
-        <View style={styles.statsRow}>
-          <StatBox value={stats?.postCount ?? 0} label="Gönderi" />
-          <View style={styles.statDivider} />
-          <StatBox value={stats?.followerCount ?? 0} label="Takipçi" />
-          <View style={styles.statDivider} />
-          <StatBox value={stats?.followingCount ?? 0} label="Takip" />
-        </View>
-      )}
 
       {/* Bilgiler */}
       <View style={styles.section}>
@@ -202,32 +173,10 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F9FAFB' },
   safeArea: { flex: 1, backgroundColor: '#F9FAFB' },
 
-  // ─── Profil üst ────────────────────────────────────────────────────────────
-  profileTop: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', padding: 20, paddingBottom: 8, backgroundColor: '#FFFFFF' },
-  avatarImageWrap: { width: 72, height: 72, borderRadius: 36, overflow: 'hidden' },
-  avatar: { width: 72, height: 72, borderRadius: 36, backgroundColor: ACCENT, alignItems: 'center', justifyContent: 'center' },
-  avatarImage: { width: 72, height: 72 },
-  avatarInitials: { fontSize: 26, fontWeight: '700', color: '#FFFFFF' },
-  logoutBtn: { padding: 8, borderWidth: 1, borderColor: '#E5E7EB', borderRadius: 8, marginTop: 4 },
-  topActions: { flexDirection: 'column', gap: 8, alignItems: 'flex-end' },
-  editProfileBtn: { borderWidth: 1, borderColor: '#E5E7EB', borderRadius: 8, paddingHorizontal: 14, paddingVertical: 7, backgroundColor: '#FFFFFF' },
-  editProfileText: { fontSize: 13, fontWeight: '600', color: ACCENT },
-
-  // ─── İsim ──────────────────────────────────────────────────────────────────
-  nameSection: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 20, paddingBottom: 14, backgroundColor: '#FFFFFF' },
-  fullName: { fontSize: 18, fontWeight: '700', color: '#111827' },
-  roleBadge: { backgroundColor: '#EEF2FF', borderRadius: 6, paddingHorizontal: 8, paddingVertical: 2 },
-  roleText: { fontSize: 11, fontWeight: '600', color: ACCENT },
-  summarySection: { backgroundColor: '#FFFFFF', paddingHorizontal: 20, paddingBottom: 16, gap: 6 },
-  cityText: { fontSize: 13, color: '#6B7280', fontWeight: '600' },
-  bioText: { fontSize: 14, color: '#374151', lineHeight: 20 },
-
-  // ─── Stats ─────────────────────────────────────────────────────────────────
-  statsRow: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#FFFFFF', paddingVertical: 14, borderTopWidth: StyleSheet.hairlineWidth, borderBottomWidth: StyleSheet.hairlineWidth, borderColor: '#E5E7EB' },
-  statBox: { flex: 1, alignItems: 'center', gap: 2 },
-  statValue: { fontSize: 18, fontWeight: '700', color: '#111827' },
-  statLabel: { fontSize: 12, color: '#6B7280' },
-  statDivider: { width: StyleSheet.hairlineWidth, height: 32, backgroundColor: '#E5E7EB' },
+  // ─── Çıkış ─────────────────────────────────────────────────────────────────
+  logoutRow: { backgroundColor: '#FFFFFF', paddingHorizontal: 20, paddingBottom: 16 },
+  logoutBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'flex-start', borderWidth: 1, borderColor: '#E5E7EB', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 7 },
+  logoutText: { fontSize: 13, fontWeight: '600', color: '#6B7280' },
 
   // ─── Section ───────────────────────────────────────────────────────────────
   section: { padding: 16, gap: 8 },

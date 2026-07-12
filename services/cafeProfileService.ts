@@ -27,6 +27,20 @@ export interface CafeDashboardStats {
   categoryCount: number;
 }
 
+/** Başka birinin görüntülediği kafe profili (kendi profilinden farklı olarak reviewCount/avgRating öne çıkar). */
+export interface CafePublicProfile {
+  id: string;
+  name: string;
+  bio: string | null;
+  city: string | null;
+  address: string | null;
+  avatarUrl: string | null;
+  coverImageUrl: string | null;
+  categoryNames?: string[];
+  avgRating?: number;
+  reviewCount?: number;
+}
+
 export interface CafeProfileRequest {
   name?: string;
   bio?: string;
@@ -36,6 +50,14 @@ export interface CafeProfileRequest {
 }
 
 function normalizeCafeProfile(profile: CafeProfile): CafeProfile {
+  return {
+    ...profile,
+    avatarUrl: normalizeApiMediaUrl(profile.avatarUrl),
+    coverImageUrl: normalizeApiMediaUrl(profile.coverImageUrl),
+  };
+}
+
+function normalizeCafePublicProfile(profile: CafePublicProfile): CafePublicProfile {
   return {
     ...profile,
     avatarUrl: normalizeApiMediaUrl(profile.avatarUrl),
@@ -63,6 +85,16 @@ export const cafeProfileService = {
   async getDashboard(): Promise<CafeDashboardStats> {
     const { data } = await apiClient.get<CafeDashboardStats>('/cafe-profiles/dashboard');
     return data;
+  },
+
+  /**
+   * NOT: Bu endpoint backend'de henüz yok — employerService.getPublicProfile ile
+   * aynı REST konvansiyonu varsayılarak yazıldı (GET /cafe-profiles/{id}).
+   * Backend eklenince ek bir frontend değişikliği gerekmeden çalışır.
+   */
+  async getPublicProfile(id: string): Promise<CafePublicProfile> {
+    const { data } = await apiClient.get<CafePublicProfile>(`/cafe-profiles/${id}`);
+    return normalizeCafePublicProfile(data);
   },
 
   async uploadAvatar(uri: string): Promise<UploadedFileResponse> {

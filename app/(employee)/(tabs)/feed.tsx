@@ -123,21 +123,26 @@ function isOwnPost(post: FeedPost, currentUserId: string | null): boolean {
     : post.employerId === currentUserId;
 }
 
-function PostCard({ post, onLike, onComment, onShare, isMine }: {
+function PostCard({ post, onLike, onComment, onShare, isMine, onPressAuthor }: {
   post: FeedPost;
   onLike: (id: string) => void;
   onComment: (post: FeedPost) => void;
   onShare: (post: FeedPost) => void;
   isMine: boolean;
+  onPressAuthor?: () => void;
 }) {
   const isCafe = post.authorType === 'Cafe';
   const authorName = isCafe ? (post.cafeName ?? 'Kafe') : (post.employerName ?? 'Eğitmen');
   const authorAvatarUrl = isCafe ? post.cafeAvatarUrl : post.employerAvatarUrl;
+  const AuthorWrapper = onPressAuthor ? TouchableOpacity : View;
 
   return (
     <View style={styles.card}>
       <View style={styles.cardHeader}>
-        <View style={styles.authorRow}>
+        <AuthorWrapper
+          style={styles.authorRow}
+          {...(onPressAuthor ? { onPress: onPressAuthor, activeOpacity: 0.7 } : {})}
+        >
           <Avatar url={authorAvatarUrl} name={authorName} size={40} />
           <View style={styles.authorInfo}>
             <View style={styles.authorNameRow}>
@@ -154,7 +159,7 @@ function PostCard({ post, onLike, onComment, onShare, isMine }: {
               <Text style={styles.postTime}>{formatNotificationTime(post.publishedAt ?? '')}</Text>
             </View>
           </View>
-        </View>
+        </AuthorWrapper>
       </View>
 
       <Text style={styles.cardContent}>{post.caption}</Text>
@@ -206,6 +211,15 @@ export default function EmployerFeedScreen() {
 
   const currentUserId = user?.id ?? null;
 
+  // NOT: Employee'nin feed'inde authorType her zaman 'Employer' olmalı (Cafe
+  // postları backend tarafından zaten filtreleniyor). Yine de savunma amaçlı:
+  // Cafe için employee grubunda henüz bir profil ekranı yok, bu yüzden null
+  // dönülür ve o durumda yazar alanı tıklanamaz hale gelir (crash yok).
+  const resolveAuthorRoute = useCallback((post: FeedPost): string | null => {
+    if (post.authorType === 'Cafe') return null;
+    return post.employerId ? `/(employee)/employer/${post.employerId}` : null;
+  }, []);
+
   useEffect(() => { refresh(); }, []);
 
   const handleShare = useCallback(async (post: FeedPost) => {
@@ -213,15 +227,19 @@ export default function EmployerFeedScreen() {
     await Share.share({ message: url ?? post.caption?.slice(0, 80) ?? 'Atolium paylaşımı', title: 'Atolium' });
   }, [getShareUrl]);
 
-  const renderItem = useCallback(({ item }: { item: FeedPost }) => (
-    <PostCard
-      post={item}
-      onLike={toggleLike}
-      onComment={setCommentPost}
-      onShare={handleShare}
-      isMine={isOwnPost(item, currentUserId)}
-    />
-  ), [toggleLike, handleShare, currentUserId]);
+  const renderItem = useCallback(({ item }: { item: FeedPost }) => {
+    const authorRoute = resolveAuthorRoute(item);
+    return (
+      <PostCard
+        post={item}
+        onLike={toggleLike}
+        onComment={setCommentPost}
+        onShare={handleShare}
+        isMine={isOwnPost(item, currentUserId)}
+        onPressAuthor={authorRoute ? () => router.push(authorRoute as any) : undefined}
+      />
+    );
+  }, [toggleLike, handleShare, currentUserId, resolveAuthorRoute, router]);
 
   if (loading) return <View style={styles.centered}><ActivityIndicator size="large" color={ACCENT} /></View>;
 

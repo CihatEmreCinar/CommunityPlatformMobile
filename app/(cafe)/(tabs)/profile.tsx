@@ -1,27 +1,30 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { View, Text, ActivityIndicator, Alert, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, ActivityIndicator, Alert, StyleSheet, TouchableOpacity, Share } from 'react-native';
 import { useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import { ScreenContainer } from '../../../components/layout/ScreenContainer';
 import { FormHeader } from '../../../components/layout/FormHeader';
 import { ProfileEditForm } from '../../../components/layout/profile/ProfileEditForm';
+import { ProfileHeader } from '../../../components/profile/ProfileHeader';
 import { cafeProfileService, type CafeProfile } from '../../../services/cafeProfileService';
 import { spaceBookingReviewService } from '../../../services/spaceBookingReviewService';
+import { postService } from '../../../services/postService';
 import type { SpaceBookingReview } from '../../../types/spaceBookingReview';
+import type { UserSocialStats } from '../../../types/post.types';
 import { Colors, Typography, Spacing, Radius, Shadows } from '../../../constants/theme';
-import { Image } from 'react-native';
 import { useAuth } from '../../../contexts/AuthContext';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import type { Category } from '../../../types/category';
 
 export default function CafeProfileScreen() {
   const router = useRouter();
-  const { logout } = useAuth();
+  const { logout, user } = useAuth();
   const [profile, setProfile] = useState<CafeProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [socialStats, setSocialStats] = useState<UserSocialStats | null>(null);
 
   const [name, setName] = useState('');
   const [bio, setBio] = useState('');
@@ -57,6 +60,11 @@ export default function CafeProfileScreen() {
       }
     })();
   }, []);
+
+  useEffect(() => {
+    if (!user) return;
+    postService.getSocialStats(user.id).then(setSocialStats).catch(() => {});
+  }, [user?.id]);
 
   async function loadReviews(cafeProfileId: string) {
     setReviewsLoading(true);
@@ -118,6 +126,10 @@ export default function CafeProfileScreen() {
     }
   }, []);
 
+  const handleShare = useCallback(() => {
+    Share.share({ message: `${name || 'Bu kafeyi'} Atolium'da keşfet!` });
+  }, [name]);
+
   async function handleLogout() {
     try {
       await logout();
@@ -167,111 +179,118 @@ export default function CafeProfileScreen() {
       )}
 
       {editing ? (
-        <ProfileEditForm
-          photoUrl={avatarUrl}
-          onPickPhoto={handlePickAvatar}
-          uploadingPhoto={uploadingPhoto}
-          coverImageUrl={coverImageUrl}
-          onPickCoverImage={handlePickCover}
-          uploadingCoverImage={uploadingCoverImage}
-          titleLabel="Kafe Adı"
-          titlePlaceholder="Örn. Caffe Verde"
-          title={name}
-          onTitleChange={setName}
-          bio={bio}
-          onBioChange={setBio}
-          city={city}
-          onCityChange={setCity}
-          yearsExperience={''}
-          onYearsExperienceChange={() => {}}
-          specialization={[]}
-          specInput={''}
-          onSpecInputChange={() => {}}
-          onAddSpecialization={() => {}}
-          onRemoveSpecialization={() => {}}
-          categories={categories}
-          selectedCategoryIds={selectedCategoryIds}
-          onToggleCategory={(id) => setSelectedCategoryIds((prev) =>
-            prev.includes(id) ? prev.filter((c) => c !== id) : [...prev, id]
-          )}
-        />
+        <>
+          <ProfileHeader
+            editable
+            coverUrl={coverImageUrl}
+            avatarUrl={avatarUrl}
+            fullName={name || 'Kafe'}
+            roleLabel="Kafe"
+            onPickCover={handlePickCover}
+            onPickAvatar={handlePickAvatar}
+            uploadingCover={uploadingCoverImage}
+            uploadingAvatar={uploadingPhoto}
+          />
+          <ProfileEditForm
+            titleLabel="Kafe Adı"
+            titlePlaceholder="Örn. Caffe Verde"
+            title={name}
+            onTitleChange={setName}
+            bio={bio}
+            onBioChange={setBio}
+            city={city}
+            onCityChange={setCity}
+            yearsExperience={''}
+            onYearsExperienceChange={() => {}}
+            specialization={[]}
+            specInput={''}
+            onSpecInputChange={() => {}}
+            onAddSpecialization={() => {}}
+            onRemoveSpecialization={() => {}}
+            categories={categories}
+            selectedCategoryIds={selectedCategoryIds}
+            onToggleCategory={(id) => setSelectedCategoryIds((prev) =>
+              prev.includes(id) ? prev.filter((c) => c !== id) : [...prev, id]
+            )}
+          />
+        </>
       ) : (
-        <View style={styles.content}>
-          {profile?.coverImageUrl ? (
-            <Image source={{ uri: profile.coverImageUrl }} style={styles.coverImage} />
-          ) : null}
-          <View style={styles.headerRow}>
-            {profile?.avatarUrl ? <Image source={{ uri: profile.avatarUrl }} style={styles.avatar} /> : null}
-            <View style={{ flex: 1 }}>
-              <Text style={styles.name}>{profile?.name}</Text>
-              {!!profile?.avgRating && profile.avgRating > 0 && (
+        <>
+          <ProfileHeader
+            coverUrl={profile?.coverImageUrl}
+            avatarUrl={profile?.avatarUrl}
+            fullName={profile?.name ?? ''}
+            roleLabel="Kafe"
+            bio={profile?.bio}
+            city={profile?.city}
+            stats={[
+              { label: 'Gönderi', value: socialStats?.postCount ?? 0 },
+              { label: 'Takipçi', value: socialStats?.followerCount ?? 0 },
+              { label: 'Takip', value: socialStats?.followingCount ?? 0 },
+            ]}
+            actions={{ variant: 'own', onEditProfile: () => setEditing(true), onShareProfile: handleShare }}
+            extra={
+              !!profile?.avgRating && profile.avgRating > 0 ? (
                 <View style={styles.ratingRow}>
                   <MaterialIcons name="star" size={16} color={Colors.amber} />
                   <Text style={styles.ratingText}>
                     {profile.avgRating.toFixed(1)} ({profile.reviewCount ?? 0} değerlendirme)
                   </Text>
                 </View>
+              ) : null
+            }
+          />
+
+          <View style={styles.content}>
+            <TouchableOpacity
+              style={styles.logoutRow}
+              onPress={() =>
+                Alert.alert('Çıkış Yap', 'Çıkış yapmak istediğinize emin misiniz?', [
+                  { text: 'İptal', style: 'cancel' },
+                  { text: 'Çıkış Yap', style: 'destructive', onPress: handleLogout },
+                ])
+              }
+            >
+              <Ionicons name="log-out-outline" size={16} color={Colors.onSurfaceVariant} />
+              <Text style={styles.logoutText}>Çıkış Yap</Text>
+            </TouchableOpacity>
+
+            <View style={styles.card}>
+              <Text style={styles.label}>Adres</Text>
+              <Text style={styles.value}>{profile?.address || '—'}</Text>
+            </View>
+
+            <View style={styles.reviewsSection}>
+              <Text style={styles.sectionTitle}>
+                Değerlendirmeler {reviews.length > 0 ? `(${reviews.length})` : ''}
+              </Text>
+              {reviewsLoading ? (
+                <ActivityIndicator color={Colors.primary} />
+              ) : reviews.length === 0 ? (
+                <Text style={styles.value}>Henüz değerlendirme yok.</Text>
+              ) : (
+                reviews.map((r) => (
+                  <View key={r.id} style={styles.reviewCard}>
+                    <View style={styles.reviewHeader}>
+                      <Text style={styles.reviewUserName}>{r.userName}</Text>
+                      <View style={{ flexDirection: 'row' }}>
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <MaterialIcons
+                            key={star}
+                            name={star <= r.rating ? 'star' : 'star-border'}
+                            size={14}
+                            color={Colors.amber}
+                          />
+                        ))}
+                      </View>
+                    </View>
+                    {r.comment && <Text style={styles.reviewComment}>{r.comment}</Text>}
+                  </View>
+                ))
               )}
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.sm }}>
-                <TouchableOpacity onPress={() => setEditing(true)} style={styles.editBtn}><Text style={styles.editText}>Düzenle</Text></TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.logoutBtn}
-                  onPress={() =>
-                    Alert.alert('Çıkış Yap', 'Çıkış yapmak istediğinize emin misiniz?', [
-                      { text: 'İptal', style: 'cancel' },
-                      { text: 'Çıkış Yap', style: 'destructive', onPress: handleLogout },
-                    ])
-                  }
-                >
-                  <Ionicons name="log-out-outline" size={18} color={Colors.onSurfaceVariant} />
-                </TouchableOpacity>
-              </View>
             </View>
           </View>
-
-          <View style={styles.card}>
-            <Text style={styles.label}>Hakkında</Text>
-            <Text style={styles.value}>{profile?.bio || '—'}</Text>
-          </View>
-          <View style={styles.card}>
-            <Text style={styles.label}>Şehir</Text>
-            <Text style={styles.value}>{profile?.city || '—'}</Text>
-          </View>
-          <View style={styles.card}>
-            <Text style={styles.label}>Adres</Text>
-            <Text style={styles.value}>{profile?.address || '—'}</Text>
-          </View>
-
-          <View style={styles.reviewsSection}>
-            <Text style={styles.sectionTitle}>
-              Değerlendirmeler {reviews.length > 0 ? `(${reviews.length})` : ''}
-            </Text>
-            {reviewsLoading ? (
-              <ActivityIndicator color={Colors.primary} />
-            ) : reviews.length === 0 ? (
-              <Text style={styles.value}>Henüz değerlendirme yok.</Text>
-            ) : (
-              reviews.map((r) => (
-                <View key={r.id} style={styles.reviewCard}>
-                  <View style={styles.reviewHeader}>
-                    <Text style={styles.reviewUserName}>{r.userName}</Text>
-                    <View style={{ flexDirection: 'row' }}>
-                      {[1, 2, 3, 4, 5].map((star) => (
-                        <MaterialIcons
-                          key={star}
-                          name={star <= r.rating ? 'star' : 'star-border'}
-                          size={14}
-                          color={Colors.amber}
-                        />
-                      ))}
-                    </View>
-                  </View>
-                  {r.comment && <Text style={styles.reviewComment}>{r.comment}</Text>}
-                </View>
-              ))
-            )}
-          </View>
-        </View>
+        </>
       )}
     </ScreenContainer>
   );
@@ -279,16 +298,11 @@ export default function CafeProfileScreen() {
 
 const styles = StyleSheet.create({
   content: { padding: Spacing.md, gap: Spacing.md },
-  headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: Spacing.md, paddingVertical: Spacing.sm },
-  name: { ...Typography.h2, color: Colors.onSurface },
-  editBtn: { backgroundColor: Colors.surfaceContainerLowest, paddingHorizontal: Spacing.md, paddingVertical: Spacing.sm, borderRadius: Radius.md },
-  editText: { ...Typography.labelMd, color: Colors.primary },
-  logoutBtn: { padding: 8, borderWidth: 1, borderColor: Colors.surfaceVariant, borderRadius: Radius.md, backgroundColor: Colors.surfaceContainerLowest },
+  logoutRow: { flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'flex-start', paddingVertical: 4 },
+  logoutText: { ...Typography.labelMd, color: Colors.onSurfaceVariant },
   card: { backgroundColor: Colors.surfaceContainerLowest, borderRadius: Radius.lg, padding: Spacing.md, gap: Spacing.xs, ...Shadows.sm },
   label: { ...Typography.labelMd, color: Colors.onSurfaceVariant },
   value: { ...Typography.bodyMd, color: Colors.onSurface },
-  coverImage: { width: '100%', height: 140, borderRadius: Radius.lg, marginBottom: Spacing.sm, backgroundColor: Colors.surfaceContainer },
-  avatar: { width: 72, height: 72, borderRadius: 36, marginRight: Spacing.md, backgroundColor: Colors.surfaceContainer },
   ratingRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2 },
   ratingText: { ...Typography.bodyMd, color: Colors.onSurfaceVariant },
   reviewsSection: { gap: Spacing.sm },

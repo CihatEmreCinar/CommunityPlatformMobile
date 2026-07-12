@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import {
   View, Text, FlatList, TouchableOpacity, StyleSheet,
-  ActivityIndicator, Alert, RefreshControl, ScrollView, Image,
+  ActivityIndicator, Alert, RefreshControl, ScrollView, Image, Share,
 } from 'react-native';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
@@ -10,6 +10,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { postService } from '../../../services/postService';
 import { formatNotificationTime } from '../../../utils/notificationUtils';
 import type { Post, UserSocialStats } from '../../../types/post.types';
+import { ProfileHeader } from '../../../components/profile/ProfileHeader';
 
 const ACCENT = '#0F766E';
 
@@ -26,17 +27,6 @@ function dedupePostsById(items: Post[]): Post[] {
   }
 
   return unique;
-}
-
-// ─── Stat kutusu ─────────────────────────────────────────────────────────────
-
-function StatBox({ value, label }: { value: number; label: string }) {
-  return (
-    <View style={styles.statBox}>
-      <Text style={styles.statValue}>{value}</Text>
-      <Text style={styles.statLabel}>{label}</Text>
-    </View>
-  );
 }
 
 // ─── Post kartı (mini) ───────────────────────────────────────────────────────
@@ -127,6 +117,11 @@ export default function EmployerProfileScreen() {
     router.replace('/(auth)/login');
   }
 
+  const handleShare = useCallback(() => {
+    const name = `${user?.firstName ?? ''} ${user?.lastName ?? ''}`.trim();
+    Share.share({ message: `${name || 'Bu eğitmeni'} Atolium'da keşfet!` });
+  }, [user?.firstName, user?.lastName]);
+
   // ─── Postlar ───────────────────────────────────────────────────────────────
   const fetchPosts = useCallback(async (reset = false) => {
     if (!user?.id) return;
@@ -194,90 +189,58 @@ export default function EmployerProfileScreen() {
   // ─── Header ────────────────────────────────────────────────────────────────
   const renderHeader = () => (
     <View>
-      <View style={styles.profileTop}>
-        <TouchableOpacity
-          style={styles.avatarWrap}
-          onPress={() => router.push('/(employer)/edit-profile' as any)}
-          activeOpacity={0.7}
-        >
-          {user?.avatarUrl ? (
-            <Image source={{ uri: user.avatarUrl }} style={styles.avatarImage} />
-          ) : (
-            <View style={styles.avatar}>
-              <Text style={styles.avatarInitials}>{user?.firstName?.[0]}{user?.lastName?.[0]}</Text>
-            </View>
-          )}
-          <View style={styles.avatarEditBadge}>
-            <Ionicons name="camera" size={12} color="#FFFFFF" />
-          </View>
+      <ProfileHeader
+        coverUrl={profile?.coverImageUrl}
+        avatarUrl={user?.avatarUrl}
+        fullName={`${user?.firstName ?? ''} ${user?.lastName ?? ''}`.trim()}
+        roleLabel="Eğitmen"
+        bio={user?.bio}
+        city={user?.city}
+        stats={[
+          { label: 'Atölye', value: profile?.totalWorkshops ?? 0 },
+          { label: 'Gönderi', value: stats?.postCount ?? 0 },
+          { label: 'Takipçi', value: stats?.followerCount ?? 0 },
+          { label: 'Takip', value: stats?.followingCount ?? 0 },
+        ]}
+        actions={{
+          variant: 'own',
+          onEditProfile: () => router.push('/(employer)/edit-profile' as any),
+          onShareProfile: handleShare,
+        }}
+        extra={
+          <>
+            {profile?.workshopTitle ? (
+              <View style={styles.workshopTitleRow}>
+                <Ionicons name="briefcase-outline" size={13} color="#6B7280" />
+                <Text style={styles.workshopTitleText}>{profile.workshopTitle}</Text>
+              </View>
+            ) : null}
+            {profile?.specialization && profile.specialization.length > 0 && (
+              <View style={styles.specializationRow}>
+                {profile.specialization.map((s, index) => (
+                  <View key={`${s}-${index}`} style={styles.specChip}><Text style={styles.specChipText}>{s}</Text></View>
+                ))}
+              </View>
+            )}
+          </>
+        }
+      />
+
+      <View style={styles.quickActionsRow}>
+        <TouchableOpacity style={styles.newPostBtn} onPress={() => router.push('/(employer)/post/create' as any)}>
+          <Ionicons name="add" size={16} color="#FFFFFF" />
+          <Text style={styles.newPostBtnText}>Yeni Gönderi</Text>
         </TouchableOpacity>
-
-        <View style={styles.profileActions}>
-          {/* YENİ: Yeni gönderi paylaş — header'da sabit + ikonu */}
-          <TouchableOpacity
-            style={styles.newPostIconBtn}
-            onPress={() => router.push('/(employer)/post/create' as any)}
-            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-          >
-            <Ionicons name="add" size={20} color="#FFFFFF" />
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.editProfileBtn}
-            onPress={() => router.push('/(employer)/edit-profile' as any)}
-          >
-            <Text style={styles.editProfileText}>Profili Düzenle</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.logoutBtn}
-            onPress={() => Alert.alert('Çıkış', 'Çıkış yapmak istiyor musun?', [
-              { text: 'İptal', style: 'cancel' },
-              { text: 'Çıkış', style: 'destructive', onPress: handleLogout },
-            ])}
-          >
-            <Ionicons name="log-out-outline" size={20} color="#6B7280" />
-          </TouchableOpacity>
-        </View>
+        <TouchableOpacity
+          style={styles.logoutBtn}
+          onPress={() => Alert.alert('Çıkış', 'Çıkış yapmak istiyor musun?', [
+            { text: 'İptal', style: 'cancel' },
+            { text: 'Çıkış', style: 'destructive', onPress: handleLogout },
+          ])}
+        >
+          <Ionicons name="log-out-outline" size={18} color="#6B7280" />
+        </TouchableOpacity>
       </View>
-
-      <View style={styles.nameSection}>
-        <Text style={styles.fullName}>{user?.firstName} {user?.lastName}</Text>
-        <View style={styles.roleBadge}><Text style={styles.roleText}>Eğitmen</Text></View>
-      </View>
-
-      {/* YENİ: workshopTitle (unvan) varsa göster */}
-      {profile?.workshopTitle ? (
-        <Text style={styles.workshopTitleText}>{profile.workshopTitle}</Text>
-      ) : null}
-
-      {/* YENİ: bio */}
-      {user?.bio ? (
-        <Text style={styles.bioText}>{user.bio}</Text>
-      ) : null}
-
-      {user?.city ? (
-        <Text style={styles.cityText}>{user.city}</Text>
-      ) : null}
-
-      {/* YENİ: uzmanlık tag'leri */}
-      {profile?.specialization && profile.specialization.length > 0 && (
-        <View style={styles.specializationRow}>
-          {profile.specialization.map((s, index) => (
-            <View key={`${s}-${index}`} style={styles.specChip}><Text style={styles.specChipText}>{s}</Text></View>
-          ))}
-        </View>
-      )}
-
-      {loadingStats ? (
-        <ActivityIndicator color={ACCENT} style={{ marginVertical: 16 }} />
-      ) : (
-        <View style={styles.statsRow}>
-          <StatBox value={stats?.postCount ?? 0} label="Gönderi" />
-          <View style={styles.statDivider} />
-          <StatBox value={stats?.followerCount ?? 0} label="Takipçi" />
-          <View style={styles.statDivider} />
-          <StatBox value={stats?.followingCount ?? 0} label="Takip" />
-        </View>
-      )}
 
       <View style={styles.tabBar}>
         <TouchableOpacity style={[styles.tab, activeTab === 'posts' && styles.tabActive]} onPress={() => setActiveTab('posts')}>
@@ -372,32 +335,15 @@ export default function EmployerProfileScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F9FAFB' },
   listContent: { paddingBottom: 32 },
-  profileTop: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', padding: 16, paddingBottom: 8, backgroundColor: '#FFFFFF' },
-  avatarWrap: { position: 'relative' },
-  avatar: { width: 72, height: 72, borderRadius: 36, backgroundColor: ACCENT, alignItems: 'center', justifyContent: 'center' },
-  avatarImage: { width: 72, height: 72, borderRadius: 36 },
-  avatarInitials: { fontSize: 26, fontWeight: '700', color: '#FFFFFF' },
-  avatarEditBadge: { position: 'absolute', bottom: -2, right: -2, width: 24, height: 24, borderRadius: 12, backgroundColor: ACCENT, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: '#FFFFFF' },
-  profileActions: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 4 },
-  newPostIconBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: ACCENT, alignItems: 'center', justifyContent: 'center' },
-  editProfileBtn: { borderWidth: 1, borderColor: '#E5E7EB', borderRadius: 8, paddingHorizontal: 14, paddingVertical: 7 },
-  editProfileText: { fontSize: 13, fontWeight: '600', color: '#374151' },
+  quickActionsRow: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 16, paddingBottom: 12, backgroundColor: '#FFFFFF' },
+  newPostBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: ACCENT, borderRadius: 20, paddingHorizontal: 14, paddingVertical: 9 },
+  newPostBtnText: { fontSize: 13, fontWeight: '600', color: '#FFFFFF' },
   logoutBtn: { padding: 8, borderWidth: 1, borderColor: '#E5E7EB', borderRadius: 8 },
-  nameSection: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 16, paddingBottom: 4, backgroundColor: '#FFFFFF' },
-  fullName: { fontSize: 18, fontWeight: '700', color: '#111827' },
-  roleBadge: { backgroundColor: '#F0FDFA', borderRadius: 6, paddingHorizontal: 8, paddingVertical: 2 },
-  roleText: { fontSize: 11, fontWeight: '600', color: ACCENT },
-  workshopTitleText: { fontSize: 13, color: '#6B7280', paddingHorizontal: 16, paddingBottom: 6, backgroundColor: '#FFFFFF' },
-  bioText: { fontSize: 13, color: '#374151', lineHeight: 19, paddingHorizontal: 16, paddingBottom: 10, backgroundColor: '#FFFFFF' },
-  cityText: { fontSize: 13, color: '#6B7280', fontWeight: '600', paddingHorizontal: 16, paddingBottom: 8, backgroundColor: '#FFFFFF' },
-  specializationRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, paddingHorizontal: 16, paddingBottom: 12, backgroundColor: '#FFFFFF' },
+  workshopTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 4 },
+  workshopTitleText: { fontSize: 13, color: '#6B7280' },
+  specializationRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 8 },
   specChip: { backgroundColor: '#F0FDFA', borderRadius: 12, paddingHorizontal: 10, paddingVertical: 4 },
   specChipText: { fontSize: 12, color: ACCENT, fontWeight: '500' },
-  statsRow: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#FFFFFF', paddingVertical: 14, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: '#E5E7EB' },
-  statBox: { flex: 1, alignItems: 'center', gap: 2 },
-  statValue: { fontSize: 18, fontWeight: '700', color: '#111827' },
-  statLabel: { fontSize: 12, color: '#6B7280' },
-  statDivider: { width: StyleSheet.hairlineWidth, height: 32, backgroundColor: '#E5E7EB' },
   tabBar: { flexDirection: 'row', backgroundColor: '#FFFFFF', borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: '#E5E7EB' },
   tab: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 12 },
   tabActive: { borderBottomWidth: 2, borderBottomColor: ACCENT },

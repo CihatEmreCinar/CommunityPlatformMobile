@@ -9,6 +9,8 @@ import type { Category } from '../../types/category';
 import { ScreenContainer } from '../../components/layout/ScreenContainer';
 import { FormHeader } from '../../components/layout/FormHeader';
 import { ProfileEditForm } from '../../components/layout/profile/ProfileEditForm';
+import { ProfileHeader } from '../../components/profile/ProfileHeader';
+import { useAuth } from '../../contexts/AuthContext';
 
 const ACCENT = '#6366F1'; // employee tab'lerindeki mevcut accent renk ile aynı
 const MAX_BIO = 300;
@@ -16,11 +18,13 @@ const MAX_SPECIALIZATION = 8;
 
 export default function EditEmployerProfileScreen() {
   const router = useRouter();
+  const { user } = useAuth();
 
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [uploadingCoverImage, setUploadingCoverImage] = useState(false);
 
   const [title, setTitle] = useState('');
   const [bio, setBio] = useState('');
@@ -30,6 +34,7 @@ export default function EditEmployerProfileScreen() {
   const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>([]);
   const [city, setCity] = useState('');
   const [profileImageUrl, setProfileImageUrl] = useState<string | null>(null);
+  const [coverImageUrl, setCoverImageUrl] = useState<string | null>(null);
 
   useEffect(() => {
     Promise.all([employerService.getProfile(), categoryService.getAll()])
@@ -42,6 +47,7 @@ export default function EditEmployerProfileScreen() {
         setSelectedCategoryIds(p.categoryIds ?? []);
         setCity(p.city ?? '');
         setProfileImageUrl(p.profileImageUrl ?? null);
+        setCoverImageUrl(p.coverImageUrl ?? null);
       })
       .catch(() => Alert.alert('Hata', 'Profil yüklenemedi.'))
       .finally(() => setLoading(false));
@@ -62,6 +68,39 @@ export default function EditEmployerProfileScreen() {
     if (result.canceled || !result.assets?.[0]) return;
     setProfileImageUrl(result.assets[0].uri);
     Alert.alert('Önizleme', 'Fotoğraf seçildi ancak yükleme henüz aktif değil — bu özellik yakında eklenecek.');
+  }, []);
+
+  const handlePickCover = useCallback(async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert('İzin gerekli', 'Kapak görseli seçmek için galeri izni vermelisin.');
+      return;
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [16, 9],
+      quality: 0.7,
+    });
+    if (result.canceled || !result.assets?.[0]) return;
+
+    const asset = result.assets[0];
+    setUploadingCoverImage(true);
+    try {
+      const extension = asset.uri.split('.').pop()?.split('?')[0] ?? 'jpg';
+      const formData = new FormData();
+      formData.append('file', {
+        uri: asset.uri,
+        name: `cover_${Date.now()}.${extension}`,
+        type: 'image/jpeg',
+      } as any);
+      const res = await employerService.uploadEmployerCover(formData);
+      setCoverImageUrl(res.url);
+    } catch {
+      Alert.alert('Hata', 'Kapak görseli yüklenemedi.');
+    } finally {
+      setUploadingCoverImage(false);
+    }
   }, []);
 
   const addSpecialization = useCallback(() => {
@@ -127,10 +166,18 @@ export default function EditEmployerProfileScreen() {
         />
       }
     >
+      <ProfileHeader
+        editable
+        coverUrl={coverImageUrl}
+        avatarUrl={profileImageUrl}
+        fullName={user ? `${user.firstName} ${user.lastName}` : ''}
+        roleLabel="Eğitmen"
+        onPickCover={handlePickCover}
+        onPickAvatar={handlePickImage}
+        uploadingCover={uploadingCoverImage}
+        uploadingAvatar={uploadingPhoto}
+      />
       <ProfileEditForm
-        photoUrl={profileImageUrl}
-        onPickPhoto={handlePickImage}
-        uploadingPhoto={uploadingPhoto}
         titleLabel="Unvan"
         titlePlaceholder="örn. Seramik Meraklısı"
         title={title}

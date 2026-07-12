@@ -80,11 +80,14 @@ export default function CafePostCreateScreen() {
 
     setSubmitting(true);
 
+    let createdPostId: string | null = null;
+
     try {
       // NOT: workshopId gönderilmiyor — backend Cafe post'larında nullable kabul ediyor.
       const post = await postService.create({
         caption: content.trim(),
       });
+      createdPostId = post.id;
 
       for (let index = 0; index < mediaFiles.length; index += 1) {
         const media = mediaFiles[index];
@@ -99,7 +102,18 @@ export default function CafePostCreateScreen() {
 
       router.back();
     } catch {
-      Alert.alert('Hata', 'Gönderi paylaşılamadı. Tekrar dene.');
+      // Medya yükleme post oluşturulduktan SONRA yapılıyor. Buradan bir hata
+      // fırlarsa (ör. HEIC/HEIF 400) post DB'de zaten var demektir — kullanıcıya
+      // "paylaşılamadı" deyip fotoğrafsız bir post'u ortada bırakmamak için
+      // rollback yapıp gerçekten sil.
+      if (createdPostId) {
+        try {
+          await postService.delete(createdPostId);
+        } catch {
+          // rollback da başarısız olursa yine de kullanıcıyı bilgilendiriyoruz
+        }
+      }
+      Alert.alert('Hata', 'Fotoğraf/video yüklenemedi, gönderi paylaşılmadı. Lütfen farklı bir dosya deneyin.');
     } finally {
       setSubmitting(false);
     }
