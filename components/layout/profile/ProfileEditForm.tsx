@@ -24,6 +24,7 @@ export type ProfileEditFormProps = {
   // Deneyim
   yearsExperience: string;
   onYearsExperienceChange: (value: string) => void;
+  showExperience?: boolean;
 
   // Uzmanlık alanları
   specialization: string[];
@@ -32,6 +33,7 @@ export type ProfileEditFormProps = {
   onAddSpecialization: () => void;
   onRemoveSpecialization: (tag: string) => void;
   maxSpecialization?: number;
+  showSpecialization?: boolean;
 
   // Kategoriler
   categories: Category[];
@@ -57,12 +59,14 @@ export function ProfileEditForm({
   onCityChange,
   yearsExperience,
   onYearsExperienceChange,
+  showExperience = true,
   specialization,
   specInput,
   onSpecInputChange,
   onAddSpecialization,
   onRemoveSpecialization,
   maxSpecialization = 8,
+  showSpecialization = true,
   categories,
   selectedCategoryIds,
   onToggleCategory,
@@ -111,59 +115,63 @@ export function ProfileEditForm({
       </View>
 
       {/* Deneyim */}
-      <View style={styles.section}>
-        <Text style={styles.sectionLabel}>Deneyim (yıl)</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="örn. 5"
-          placeholderTextColor="#9CA3AF"
-          value={yearsExperience}
-          onChangeText={(t) => onYearsExperienceChange(t.replace(/[^0-9]/g, ''))}
-          keyboardType="number-pad"
-          maxLength={2}
-        />
-      </View>
+      {showExperience && (
+        <View style={styles.section}>
+          <Text style={styles.sectionLabel}>Deneyim (yıl)</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="örn. 5"
+            placeholderTextColor="#9CA3AF"
+            value={yearsExperience}
+            onChangeText={(t) => onYearsExperienceChange(t.replace(/[^0-9]/g, ''))}
+            keyboardType="number-pad"
+            maxLength={2}
+          />
+        </View>
+      )}
 
       {/* Uzmanlık alanları */}
-      <View style={styles.section}>
-        <Text style={styles.sectionLabel}>Uzmanlık alanları</Text>
-        {specialization.length > 0 && (
-          <View style={styles.tagList}>
-            {specialization.map((s) => (
+      {showSpecialization && (
+        <View style={styles.section}>
+          <Text style={styles.sectionLabel}>Uzmanlık alanları</Text>
+          {specialization.length > 0 && (
+            <View style={styles.tagList}>
+              {specialization.map((s) => (
+                <TouchableOpacity
+                  key={s}
+                  style={styles.tagChip}
+                  onPress={() => onRemoveSpecialization(s)}
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.tagText}>{s}</Text>
+                  <Ionicons name="close-circle" size={14} color={ACCENT} />
+                </TouchableOpacity>
+              ))}
+            </View>
+          )}
+          {specialization.length < maxSpecialization && (
+            <View style={styles.tagInputRow}>
+              <TextInput
+                style={styles.tagInput}
+                placeholder="Uzmanlık ekle..."
+                placeholderTextColor="#9CA3AF"
+                value={specInput}
+                onChangeText={onSpecInputChange}
+                onSubmitEditing={onAddSpecialization}
+                returnKeyType="done"
+                maxLength={30}
+              />
               <TouchableOpacity
-                key={s}
-                style={styles.tagChip}
-                onPress={() => onRemoveSpecialization(s)}
-                activeOpacity={0.7}
+                style={[styles.addTagBtn, !specInput.trim() && styles.addTagBtnDisabled]}
+                onPress={onAddSpecialization}
+                disabled={!specInput.trim()}
               >
-                <Text style={styles.tagText}>{s}</Text>
-                <Ionicons name="close-circle" size={14} color={ACCENT} />
+                <Ionicons name="add" size={20} color="#FFFFFF" />
               </TouchableOpacity>
-            ))}
-          </View>
-        )}
-        {specialization.length < maxSpecialization && (
-          <View style={styles.tagInputRow}>
-            <TextInput
-              style={styles.tagInput}
-              placeholder="Uzmanlık ekle..."
-              placeholderTextColor="#9CA3AF"
-              value={specInput}
-              onChangeText={onSpecInputChange}
-              onSubmitEditing={onAddSpecialization}
-              returnKeyType="done"
-              maxLength={30}
-            />
-            <TouchableOpacity
-              style={[styles.addTagBtn, !specInput.trim() && styles.addTagBtnDisabled]}
-              onPress={onAddSpecialization}
-              disabled={!specInput.trim()}
-            >
-              <Ionicons name="add" size={20} color="#FFFFFF" />
-            </TouchableOpacity>
-          </View>
-        )}
-      </View>
+            </View>
+          )}
+        </View>
+      )}
 
       {/* Kategoriler */}
       {categories.length > 0 ? (

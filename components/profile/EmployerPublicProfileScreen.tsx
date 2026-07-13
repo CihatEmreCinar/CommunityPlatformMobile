@@ -97,8 +97,11 @@ export function EmployerPublicProfileScreen({ employerId }: { employerId: string
     try {
       const result = await employerService.getPublicProfile(employerId);
       setProfile(result);
-    } catch {
-      // sessiz hata
+    } catch (error) {
+      // NOT: Önceden tamamen sessizdi — 404 gibi durumlarda kullanıcı hiçbir
+      // hata görmeden jenerik "Eğitmen Profili" fallback'ine düşüyordu ve bu
+      // durum bir routing bug'ı gibi görünüyordu. En azından logla.
+      console.log('EmployerPublicProfileScreen: profil alınamadı', employerId, error);
     } finally {
       setLoadingProfile(false);
     }

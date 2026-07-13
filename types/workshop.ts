@@ -39,3 +39,27 @@ export interface WorkshopRequest {
   categoryIds?: string[];
   tags?: string[];
 }
+
+export interface WorkshopSearchFilters {
+  q?: string;
+  city?: string;
+  categoryId?: string;
+  locationType?: 'online' | 'in-person';
+  minPrice?: number;
+  maxPrice?: number;
+  minCapacity?: number;
+  maxCapacity?: number;
+  startAfter?: string;
+  startBefore?: string;
+  page?: number;
+  pageSize?: number;
+}
+
+export interface WorkshopSearchResult {
+  workshops: Workshop[];
+  page: number;
+  pageSize: number;
+  total: number;
+  totalPages: number;
+  hasNextPage: boolean;
+}

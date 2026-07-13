@@ -45,7 +45,7 @@ export default function EmployerSearchTabScreen() {
   const canLoadMore = !loading && searchResult.hasNextPage;
 
   return (
-    <ScreenContainer edges={['top', 'bottom']} header={<Text style={styles.title}>Mekan Bul</Text>}>
+    <ScreenContainer edges={['top', 'bottom']} header={<Text style={styles.title}>Mekan Bul</Text>} scroll={false}>
       <View style={styles.content}>
         <View style={styles.filtersRow}>
           <View style={styles.filterInputWrapper}>

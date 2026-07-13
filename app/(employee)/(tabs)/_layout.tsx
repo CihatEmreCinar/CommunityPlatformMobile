@@ -74,6 +74,15 @@ export default function EmployeeTabsLayout() {
         }}
       />
       <Tabs.Screen
+        name="search"
+        options={{
+          title: 'Keşfet',
+          tabBarIcon: ({ color, size }) => (
+            <MaterialIcons name="search" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="enrollments"
         options={{
           title: 'Kayıtlarım',

@@ -202,11 +202,13 @@ export default function CafeProfileScreen() {
             onCityChange={setCity}
             yearsExperience={''}
             onYearsExperienceChange={() => {}}
+            showExperience={false}
             specialization={[]}
             specInput={''}
             onSpecInputChange={() => {}}
             onAddSpecialization={() => {}}
             onRemoveSpecialization={() => {}}
+            showSpecialization={false}
             categories={categories}
             selectedCategoryIds={selectedCategoryIds}
             onToggleCategory={(id) => setSelectedCategoryIds((prev) =>
