@@ -8,6 +8,7 @@ import {
   ActivityIndicator,
   TouchableOpacity,
 } from 'react-native';
+import { useRouter } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
 import { enrollmentService } from '../../../services/enrollmentService';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -17,11 +18,21 @@ import { Colors, Typography, Spacing, Radius, Shadows } from '../../../constants
 const STATUS_LABELS: Record<string, { label: string; color: string; bg: string }> = {
   confirmed: { label: 'Onaylandı', color: Colors.primary, bg: Colors.primaryContainer },
   pending: { label: 'Bekliyor', color: Colors.secondary, bg: Colors.secondaryContainer },
-  attended: { label: 'Katıldım', color: '#0F766E', bg: '#CCFBF1' },
   cancelled: { label: 'İptal', color: Colors.error, bg: Colors.errorContainer },
 };
 
+function resolveBadge(e: Enrollment) {
+  if (e.attendanceStatus === 'Attended') {
+    return { label: 'Katıldım', color: '#0F766E', bg: '#CCFBF1' };
+  }
+  if (e.attendanceStatus === 'NoShow') {
+    return { label: 'Katılmadım', color: Colors.error, bg: Colors.errorContainer };
+  }
+  return STATUS_LABELS[e.status] ?? STATUS_LABELS.pending;
+}
+
 export default function EnrollmentsScreen() {
+  const router = useRouter();
   const [enrollments, setEnrollments] = useState<Enrollment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -84,15 +95,30 @@ export default function EnrollmentsScreen() {
           <Text style={styles.emptyText}>Henüz kayıt yok</Text>
         </View>
       ) : (
-        enrollments.map((e) => <EnrollmentCard key={e.id} enrollment={e} onCancel={handleCancel} />)
+        enrollments.map((e) => (
+          <EnrollmentCard
+            key={e.id}
+            enrollment={e}
+            onCancel={handleCancel}
+            onOpenTicket={() => router.push(`/(employee)/enrollment/${e.id}`)}
+          />
+        ))
       )}
       </ScrollView>
     </SafeAreaView>
   );
 }
 
-function EnrollmentCard({ enrollment: e, onCancel }: { enrollment: Enrollment; onCancel: (id: string) => void }) {
-  const s = STATUS_LABELS[e.status] ?? STATUS_LABELS.pending;
+function EnrollmentCard({
+  enrollment: e,
+  onCancel,
+  onOpenTicket,
+}: {
+  enrollment: Enrollment;
+  onCancel: (id: string) => void;
+  onOpenTicket: () => void;
+}) {
+  const s = resolveBadge(e);
   const date = new Date(e.workshopStartAt).toLocaleDateString('tr-TR', {
     day: 'numeric',
     month: 'long',
@@ -101,13 +127,19 @@ function EnrollmentCard({ enrollment: e, onCancel }: { enrollment: Enrollment; o
     minute: '2-digit',
   });
 
+  const canOpenTicket = e.status === 'confirmed';
+
   return (
-    <View style={styles.card}>
+    <TouchableOpacity
+      style={styles.card}
+      activeOpacity={canOpenTicket ? 0.8 : 1}
+      onPress={canOpenTicket ? onOpenTicket : undefined}
+    >
       <View style={styles.cardHeader}>
         <Text style={styles.workshopTitle} numberOfLines={2}>
           {e.workshopTitle}
         </Text>
-        <View style={[styles.badge, { backgroundColor: s.bg }]}> 
+        <View style={[styles.badge, { backgroundColor: s.bg }]}>
           <Text style={[styles.badgeText, { color: s.color }]}>{s.label}</Text>
         </View>
       </View>
@@ -117,11 +149,6 @@ function EnrollmentCard({ enrollment: e, onCancel }: { enrollment: Enrollment; o
         <Text style={styles.infoText}>{date}</Text>
       </View>
 
-      <View style={styles.infoRow}>
-        <MaterialIcons name="confirmation-number" size={14} color={Colors.outline} />
-        <Text style={styles.infoText}>{e.ticketCode}</Text>
-      </View>
-
       {e.status === 'pending' && (
         <View style={styles.pendingInfo}>
           <MaterialIcons name="hourglass-top" size={14} color={Colors.secondary} />
@@ -129,12 +156,19 @@ function EnrollmentCard({ enrollment: e, onCancel }: { enrollment: Enrollment; o
         </View>
       )}
 
-      {e.status === 'confirmed' && (
+      {canOpenTicket && (
+        <View style={styles.ticketRow}>
+          <MaterialIcons name="qr-code-2" size={16} color={Colors.primary} />
+          <Text style={styles.ticketRowText}>Bileti görüntülemek için dokun</Text>
+        </View>
+      )}
+
+      {e.status === 'confirmed' && e.attendanceStatus !== 'Attended' && (
         <TouchableOpacity style={styles.cancelBtn} onPress={() => onCancel(e.id)} activeOpacity={0.8}>
           <Text style={styles.cancelText}>Kaydı İptal Et</Text>
         </TouchableOpacity>
       )}
-    </View>
+    </TouchableOpacity>
   );
 }
 
@@ -162,6 +196,16 @@ const styles = StyleSheet.create({
   badgeText: { ...Typography.labelSm, fontWeight: '600' },
   infoRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.xs },
   infoText: { ...Typography.bodyMd, color: Colors.onSurfaceVariant, fontSize: 13 },
+  ticketRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.xs,
+    marginTop: Spacing.xs,
+    padding: Spacing.sm,
+    borderRadius: Radius.md,
+    backgroundColor: Colors.primaryContainer,
+  },
+  ticketRowText: { ...Typography.bodyMd, color: Colors.onPrimaryContainer, fontSize: 13 },
   cancelBtn: {
     marginTop: Spacing.xs,
     paddingVertical: Spacing.sm,

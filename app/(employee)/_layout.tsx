@@ -6,6 +6,7 @@ export default function EmployeeLayout() {
       <Stack.Screen name="(tabs)" />
       <Stack.Screen name="workshop/[id]" />
       <Stack.Screen name="employer/[id]" />
+      <Stack.Screen name="enrollment/[id]" />
     </Stack>
   );
 }

@@ -66,7 +66,7 @@ async function checkEligibility() {
   try {
     const enrollments = await enrollmentService.getMine();
     const myEnrollment = enrollments.find((e) => e.workshopId === id);
-    setCanReview(myEnrollment?.status === 'attended');
+    setCanReview(myEnrollment?.attendanceStatus === 'Attended');
     setEnrollmentStatus(myEnrollment?.status ?? null);
   } catch (error) {
     console.log('Kayıt durumu kontrol edilemedi', error);
@@ -145,12 +145,12 @@ async function checkEligibility() {
   const showReviewForm = canReview && !hasReviewed;
   const isEnrolled = enrollmentStatus != null;
   const enrollmentButtonText =
-    enrollmentStatus === 'pending'
+    canReview
+      ? 'Katıldın'
+      : enrollmentStatus === 'pending'
       ? 'Onay Bekleniyor'
       : enrollmentStatus === 'confirmed'
       ? 'Kaydın Onaylandı'
-      : enrollmentStatus === 'attended'
-      ? 'Katıldın'
       : enrollmentStatus === 'cancelled'
       ? 'Kayıt İptal Edildi'
       : isFull

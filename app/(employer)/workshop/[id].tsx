@@ -110,6 +110,20 @@ export default function EmployerWorkshopDetailScreen() {
         </View>
       </View>
 
+      <TouchableOpacity
+        style={styles.participantsButton}
+        activeOpacity={0.85}
+        onPress={() =>
+          router.push({
+            pathname: '/(employer)/workshop/participants',
+            params: { id: workshop.id, title: workshop.title },
+          })
+        }
+      >
+        <MaterialIcons name="qr-code-scanner" size={20} color={Colors.onPrimary} />
+        <Text style={styles.participantsButtonText}>Katılımcılar</Text>
+      </TouchableOpacity>
+
       {/* Reviews */}
       <View style={styles.reviewsSection}>
         <Text style={styles.sectionTitle}>Değerlendirmeler</Text>
@@ -225,6 +239,17 @@ const styles = StyleSheet.create({
   statDivider: { width: 1, backgroundColor: Colors.surfaceVariant },
   statValue: { ...Typography.h2, color: Colors.onSurface },
   statLabel: { ...Typography.labelSm, color: Colors.onSurfaceVariant, marginTop: 2 },
+  participantsButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: Spacing.xs,
+    backgroundColor: Colors.primary,
+    borderRadius: Radius.lg,
+    paddingVertical: Spacing.sm,
+    marginBottom: Spacing.lg,
+  },
+  participantsButtonText: { ...Typography.labelMd, color: Colors.onPrimary },
   reviewsSection: { gap: Spacing.sm },
   sectionTitle: { ...Typography.h3, color: Colors.onSurface },
   emptyText: { ...Typography.bodyMd, color: Colors.onSurfaceVariant },
