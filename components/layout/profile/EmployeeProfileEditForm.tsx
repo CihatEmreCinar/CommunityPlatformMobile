@@ -1,0 +1,228 @@
+import React from 'react';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { Colors, Typography, Spacing, Radius } from '../../../constants/theme';
+
+export type EmployeeProfileEditFormProps = {
+  // Hakkında
+  bio: string;
+  onBioChange: (value: string) => void;
+  maxBio?: number;
+
+  // Şehir
+  city: string;
+  onCityChange: (value: string) => void;
+
+  // İlgi alanları
+  interests: string[];
+  interestInput: string;
+  onInterestInputChange: (value: string) => void;
+  onAddInterest: () => void;
+  onRemoveInterest: (tag: string) => void;
+  maxInterests?: number;
+
+  // Hobiler
+  hobbies: string[];
+  hobbyInput: string;
+  onHobbyInputChange: (value: string) => void;
+  onAddHobby: () => void;
+  onRemoveHobby: (tag: string) => void;
+  maxHobbies?: number;
+};
+
+/**
+ * Katılımcı (employee) edit-profile ekranının form gövdesi.
+ * ProfileEditForm (Employer) ile aynı görsel dili paylaşır (bölüm başlıkları,
+ * input/chip stilleri) ancak alan seti farklı olduğu için (Unvan/Uzmanlık/
+ * Kategoriler yerine İlgi Alanları/Hobiler) ayrı bir component olarak
+ * tutulur. Veri çekmez/kaydetmez — tamamen controlled'dır; fetch/save mantığı
+ * app/(employee)/edit-profile.tsx içinde kalır.
+ */
+export function EmployeeProfileEditForm({
+  bio,
+  onBioChange,
+  maxBio = 300,
+  city,
+  onCityChange,
+  interests,
+  interestInput,
+  onInterestInputChange,
+  onAddInterest,
+  onRemoveInterest,
+  maxInterests = 12,
+  hobbies,
+  hobbyInput,
+  onHobbyInputChange,
+  onAddHobby,
+  onRemoveHobby,
+  maxHobbies = 12,
+}: EmployeeProfileEditFormProps) {
+  return (
+    <>
+      {/* Hakkında */}
+      <View style={styles.section}>
+        <Text style={styles.sectionLabel}>Hakkında</Text>
+        <TextInput
+          style={styles.bioInput}
+          placeholder="Kendinden bahset..."
+          placeholderTextColor={Colors.onSurfaceVariant}
+          value={bio}
+          onChangeText={onBioChange}
+          multiline
+          maxLength={maxBio}
+          textAlignVertical="top"
+        />
+        <Text style={styles.charCount}>{bio.length}/{maxBio}</Text>
+      </View>
+
+      {/* Şehir */}
+      <View style={styles.section}>
+        <Text style={styles.sectionLabel}>Şehir</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="örn. İstanbul"
+          placeholderTextColor={Colors.onSurfaceVariant}
+          value={city}
+          onChangeText={onCityChange}
+          maxLength={60}
+        />
+      </View>
+
+      {/* İlgi Alanları */}
+      <View style={styles.section}>
+        <Text style={styles.sectionLabel}>İlgi Alanları</Text>
+        {interests.length > 0 && (
+          <View style={styles.tagList}>
+            {interests.map((item) => (
+              <TouchableOpacity
+                key={item}
+                style={styles.tagChip}
+                onPress={() => onRemoveInterest(item)}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.tagText}>{item}</Text>
+                <Ionicons name="close-circle" size={14} color={Colors.primary} />
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
+        {interests.length < maxInterests && (
+          <View style={styles.tagInputRow}>
+            <TextInput
+              style={styles.tagInput}
+              placeholder="Yeni ilgi alanı ekle"
+              placeholderTextColor={Colors.onSurfaceVariant}
+              value={interestInput}
+              onChangeText={onInterestInputChange}
+              onSubmitEditing={onAddInterest}
+              returnKeyType="done"
+              maxLength={30}
+            />
+            <TouchableOpacity
+              style={[styles.addTagBtn, !interestInput.trim() && styles.addTagBtnDisabled]}
+              onPress={onAddInterest}
+              disabled={!interestInput.trim()}
+            >
+              <Ionicons name="add" size={20} color={Colors.white} />
+            </TouchableOpacity>
+          </View>
+        )}
+      </View>
+
+      {/* Hobiler */}
+      <View style={styles.section}>
+        <Text style={styles.sectionLabel}>Hobiler</Text>
+        {hobbies.length > 0 && (
+          <View style={styles.tagList}>
+            {hobbies.map((item) => (
+              <TouchableOpacity
+                key={item}
+                style={styles.tagChip}
+                onPress={() => onRemoveHobby(item)}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.tagText}>{item}</Text>
+                <Ionicons name="close-circle" size={14} color={Colors.primary} />
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
+        {hobbies.length < maxHobbies && (
+          <View style={styles.tagInputRow}>
+            <TextInput
+              style={styles.tagInput}
+              placeholder="Yeni hobi ekle"
+              placeholderTextColor={Colors.onSurfaceVariant}
+              value={hobbyInput}
+              onChangeText={onHobbyInputChange}
+              onSubmitEditing={onAddHobby}
+              returnKeyType="done"
+              maxLength={30}
+            />
+            <TouchableOpacity
+              style={[styles.addTagBtn, !hobbyInput.trim() && styles.addTagBtnDisabled]}
+              onPress={onAddHobby}
+              disabled={!hobbyInput.trim()}
+            >
+              <Ionicons name="add" size={20} color={Colors.white} />
+            </TouchableOpacity>
+          </View>
+        )}
+      </View>
+    </>
+  );
+}
+
+const styles = StyleSheet.create({
+  section: { paddingHorizontal: Spacing.md, paddingVertical: Spacing.gutter },
+  sectionLabel: { ...Typography.labelMd, color: Colors.onSurfaceVariant, textTransform: 'none', marginBottom: Spacing.sm, letterSpacing: 0 },
+  input: {
+    backgroundColor: Colors.surfaceContainerLow,
+    borderWidth: 1,
+    borderColor: Colors.outlineVariant,
+    borderRadius: Radius.md,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    fontSize: 14,
+    color: Colors.onSurface,
+  },
+  bioInput: {
+    backgroundColor: Colors.surfaceContainerLow,
+    borderWidth: 1,
+    borderColor: Colors.outlineVariant,
+    borderRadius: Radius.md,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    fontSize: 14,
+    color: Colors.onSurface,
+    minHeight: 90,
+  },
+  charCount: { ...Typography.labelSm, color: Colors.onSurfaceVariant, textAlign: 'right', marginTop: 6 },
+  tagList: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.sm, marginBottom: Spacing.sm },
+  tagChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: Colors.primaryContainer,
+    borderWidth: 1,
+    borderColor: Colors.primaryLighter,
+    borderRadius: Radius.full,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+  },
+  tagText: { fontSize: 13, color: Colors.primaryDarker, fontWeight: '500' },
+  tagInputRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm },
+  tagInput: {
+    flex: 1,
+    backgroundColor: Colors.surfaceContainerLow,
+    borderWidth: 1,
+    borderColor: Colors.outlineVariant,
+    borderRadius: Radius.md,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    fontSize: 14,
+    color: Colors.onSurface,
+  },
+  addTagBtn: { width: 40, height: 40, borderRadius: Radius.full, backgroundColor: Colors.primary, alignItems: 'center', justifyContent: 'center' },
+  addTagBtnDisabled: { backgroundColor: Colors.primaryLighter },
+});

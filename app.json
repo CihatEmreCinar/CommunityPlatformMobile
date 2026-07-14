@@ -2,6 +2,7 @@
   "expo": {
     "name": "CommunityPlatformMobile",
     "slug": "CommunityPlatformMobile",
+    "scheme": "atolium",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/splash-icon.png",
@@ -22,7 +23,12 @@
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO"
+      ],
+      "package": "com.emrecnr.CommunityPlatformMobile"
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -43,6 +49,13 @@
           "color": "#ffffff"
         }
       ]
-    ]
+    ],
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "6d0d1db7-ff83-43d5-a451-21a129367e7b"
+      }
+    },
+    "owner": "emrecnr"
   }
 }

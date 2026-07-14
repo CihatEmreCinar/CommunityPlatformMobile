@@ -13,6 +13,8 @@ const AVATAR_LEFT_PADDING = Spacing.lg; // spec: 24px sol boşluk
 
 export type ProfileHeaderProps = {
   coverUrl?: string | null;
+  /** Kapak yüksekliğini override eder (default: CoverImage'ın kendi varsayılanı, 210px). */
+  coverHeight?: number;
   avatarUrl?: string | null;
   fullName: string;
   /** Organizer / Mentor / Member karşılığı rol etiketi (örn. "Eğitmen", "Kafe", "Katılımcı"). */
@@ -48,6 +50,7 @@ export type ProfileHeaderProps = {
  */
 export function ProfileHeader({
   coverUrl,
+  coverHeight,
   avatarUrl,
   fullName,
   roleLabel,
@@ -66,6 +69,7 @@ export function ProfileHeader({
     <View style={styles.wrapper}>
       <CoverImage
         uri={coverUrl}
+        height={coverHeight}
         editable={editable}
         uploading={uploadingCover}
         onPress={onPickCover}

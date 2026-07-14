@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useMemo } from 'react';
+import { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import {
   View,
   Text,
@@ -182,9 +182,14 @@ function ScannerModal({
   const [scanned, setScanned] = useState(false);
   const [preview, setPreview] = useState<{ qrPayload: string; participantName: string; workshopTitle: string; alreadyUsed: boolean } | null>(null);
   const [processing, setProcessing] = useState(false);
+  // useState yerine ref: CameraView aynı kare için onBarcodeScanned'i art arda birkaç kez
+  // tetikleyebiliyor; state güncellemesi bir sonraki render'a kadar gecikir, bu da aynı
+  // QR için birden fazla /tickets/verify çağrısına yol açardı. Ref senkron ve anında geçerli.
+  const lockRef = useRef(false);
 
   useEffect(() => {
     if (visible) {
+      lockRef.current = false;
       setScanned(false);
       setPreview(null);
       if (!permission?.granted) requestPermission();
@@ -192,7 +197,8 @@ function ScannerModal({
   }, [visible]);
 
   async function handleScan({ data }: { data: string }) {
-    if (scanned || processing) return;
+    if (lockRef.current) return;
+    lockRef.current = true;
     setScanned(true);
     setProcessing(true);
     try {
@@ -204,8 +210,23 @@ function ScannerModal({
         alreadyUsed: result.alreadyUsed,
       });
     } catch (e: any) {
-      Alert.alert('Geçersiz Bilet', e?.response?.data?.message || 'Bu QR kod doğrulanamadı.', [
-        { text: 'Tamam', onPress: () => setScanned(false) },
+      const status = e?.response?.status;
+      const backendMessage = e?.response?.data?.message;
+      const detail =
+        status === 403
+          ? 'Bu atölye bu işletmeye ait değil.'
+          : status === 429
+          ? 'Çok fazla deneme yapıldı, birkaç saniye bekleyip tekrar deneyin.'
+          : backendMessage || 'Bu QR kod doğrulanamadı.';
+
+      Alert.alert('Geçersiz Bilet', `[${status ?? 'network'}] ${detail}`, [
+        {
+          text: 'Tamam',
+          onPress: () => {
+            lockRef.current = false;
+            setScanned(false);
+          },
+        },
       ]);
     } finally {
       setProcessing(false);
@@ -223,8 +244,10 @@ function ScannerModal({
       if (e?.response?.status === 409) {
         Alert.alert('Zaten Okutulmuş', 'Bu bilet daha önce kullanılmış.');
       } else {
-        Alert.alert('Hata', e?.response?.data?.message || 'Check-in başarısız.');
+        const status = e?.response?.status;
+        Alert.alert('Hata', `[${status ?? 'network'}] ${e?.response?.data?.message || 'Check-in başarısız.'}`);
       }
+      lockRef.current = false;
       setScanned(false);
       setPreview(null);
     } finally {

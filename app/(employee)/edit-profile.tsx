@@ -1,31 +1,116 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { View, Text, TextInput, TouchableOpacity, ActivityIndicator, Alert, StyleSheet } from 'react-native';
+import { View, ActivityIndicator, Alert, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
+import * as ImagePicker from 'expo-image-picker';
 import { employeeService } from '../../services/employeeService';
 import type { EmployeeProfile } from '../../services/employeeService';
+import { userService } from '../../services/userService';
 import { ScreenContainer } from '../../components/layout/ScreenContainer';
 import { FormHeader } from '../../components/layout/FormHeader';
+import { ProfileHeader } from '../../components/profile/ProfileHeader';
+import { EmployeeProfileEditForm } from '../../components/layout/profile/EmployeeProfileEditForm';
+import { useAuth } from '../../contexts/AuthContext';
+import { Colors } from '../../constants/theme';
 
-const ACCENT = '#6366F1';
+const MAX_BIO = 300;
+const COVER_HEIGHT = 168; // spec: view/edit'teki kapak alanı varsayılan 210px'den biraz kısaltıldı
+
+async function buildImageFormData(uri: string, prefix: string): Promise<FormData> {
+  const extension = uri.split('.').pop()?.split('?')[0] ?? 'jpg';
+  const formData = new FormData();
+  formData.append('file', {
+    uri,
+    name: `${prefix}_${Date.now()}.${extension}`,
+    type: 'image/jpeg',
+  } as any);
+  return formData;
+}
 
 export default function EditEmployeeProfileScreen() {
   const router = useRouter();
+  const { user, refreshUser } = useAuth();
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [uploadingCover, setUploadingCover] = useState(false);
+
+  const [bio, setBio] = useState('');
+  const [city, setCity] = useState('');
   const [interests, setInterests] = useState<string[]>([]);
   const [hobbies, setHobbies] = useState<string[]>([]);
   const [interestInput, setInterestInput] = useState('');
   const [hobbyInput, setHobbyInput] = useState('');
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [coverImageUrl, setCoverImageUrl] = useState<string | null>(null);
 
   useEffect(() => {
     employeeService.getProfile()
       .then((profile: EmployeeProfile) => {
+        setBio(profile.bio ?? '');
+        setCity(profile.city ?? '');
         setInterests(profile.interests ?? []);
         setHobbies(profile.hobbies ?? []);
+        setAvatarUrl(profile.avatarUrl ?? user?.avatarUrl ?? null);
+        setCoverImageUrl(profile.coverImageUrl ?? null);
       })
       .catch(() => Alert.alert('Hata', 'Profil yüklenemedi.'))
       .finally(() => setLoading(false));
+  }, []);
+
+  const handlePickAvatar = useCallback(async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert('İzin gerekli', 'Fotoğraf seçmek için galeri izni vermelisin.');
+      return;
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.7,
+    });
+    if (result.canceled || !result.assets?.[0]) return;
+
+    const asset = result.assets[0];
+    setUploadingAvatar(true);
+    try {
+      const formData = await buildImageFormData(asset.uri, 'avatar');
+      const res = await userService.uploadAvatar(formData);
+      setAvatarUrl(res.url);
+      await refreshUser();
+    } catch {
+      Alert.alert('Hata', 'Profil fotoğrafı yüklenemedi.');
+    } finally {
+      setUploadingAvatar(false);
+    }
+  }, [refreshUser]);
+
+  const handlePickCover = useCallback(async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert('İzin gerekli', 'Kapak görseli seçmek için galeri izni vermelisin.');
+      return;
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [16, 9],
+      quality: 0.7,
+    });
+    if (result.canceled || !result.assets?.[0]) return;
+
+    const asset = result.assets[0];
+    setUploadingCover(true);
+    try {
+      const formData = await buildImageFormData(asset.uri, 'cover');
+      const res = await employeeService.uploadEmployeeCover(formData);
+      setCoverImageUrl(res.url);
+    } catch {
+      Alert.alert('Hata', 'Kapak görseli yüklenemedi.');
+    } finally {
+      setUploadingCover(false);
+    }
   }, []);
 
   const addInterest = useCallback(() => {
@@ -62,19 +147,22 @@ export default function EditEmployeeProfileScreen() {
       await employeeService.updateProfile({
         interests,
         hobbies,
+        bio: bio.trim() || undefined,
+        city: city.trim() || undefined,
       });
+      await refreshUser();
       router.back();
     } catch {
       Alert.alert('Hata', 'Profil güncellenemedi.');
     } finally {
       setSaving(false);
     }
-  }, [interests, hobbies, router]);
+  }, [interests, hobbies, bio, city, refreshUser, router]);
 
   if (loading) {
     return (
       <View style={styles.centered}>
-        <ActivityIndicator size="large" color={ACCENT} />
+        <ActivityIndicator size="large" color={Colors.primary} />
       </View>
     );
   }
@@ -88,91 +176,43 @@ export default function EditEmployeeProfileScreen() {
           onClose={() => router.back()}
           onSave={handleSave}
           saving={saving}
-          accentColor={ACCENT}
+          accentColor={Colors.primary}
         />
       }
     >
-      <View style={styles.section}>
-        <Text style={styles.sectionLabel}>İlgi Alanları</Text>
-        <View style={styles.tagList}>
-          {interests.map((item) => (
-            <TouchableOpacity
-              key={item}
-              style={styles.tagChip}
-              onPress={() => removeInterest(item)}
-              activeOpacity={0.7}
-            >
-              <Text style={styles.tagText}>{item}</Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-        <View style={styles.tagInputRow}>
-          <TextInput
-            style={styles.input}
-            placeholder="Yeni ilgi alanı ekle"
-            placeholderTextColor="#9CA3AF"
-            value={interestInput}
-            onChangeText={setInterestInput}
-            onSubmitEditing={addInterest}
-            returnKeyType="done"
-          />
-          <TouchableOpacity
-            style={[styles.addBtn, !interestInput.trim() && styles.disabledBtn]}
-            onPress={addInterest}
-            disabled={!interestInput.trim()}
-          >
-            <Text style={styles.addBtnText}>Ekle</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-
-      <View style={styles.section}>
-        <Text style={styles.sectionLabel}>Hobiler</Text>
-        <View style={styles.tagList}>
-          {hobbies.map((item) => (
-            <TouchableOpacity
-              key={item}
-              style={styles.tagChip}
-              onPress={() => removeHobby(item)}
-              activeOpacity={0.7}
-            >
-              <Text style={styles.tagText}>{item}</Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-        <View style={styles.tagInputRow}>
-          <TextInput
-            style={styles.input}
-            placeholder="Yeni hobi ekle"
-            placeholderTextColor="#9CA3AF"
-            value={hobbyInput}
-            onChangeText={setHobbyInput}
-            onSubmitEditing={addHobby}
-            returnKeyType="done"
-          />
-          <TouchableOpacity
-            style={[styles.addBtn, !hobbyInput.trim() && styles.disabledBtn]}
-            onPress={addHobby}
-            disabled={!hobbyInput.trim()}
-          >
-            <Text style={styles.addBtnText}>Ekle</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
+      <ProfileHeader
+        editable
+        coverUrl={coverImageUrl}
+        coverHeight={COVER_HEIGHT}
+        avatarUrl={avatarUrl}
+        fullName={user ? `${user.firstName} ${user.lastName}` : ''}
+        roleLabel="Katılımcı"
+        onPickCover={handlePickCover}
+        onPickAvatar={handlePickAvatar}
+        uploadingCover={uploadingCover}
+        uploadingAvatar={uploadingAvatar}
+      />
+      <EmployeeProfileEditForm
+        bio={bio}
+        onBioChange={setBio}
+        maxBio={MAX_BIO}
+        city={city}
+        onCityChange={setCity}
+        interests={interests}
+        interestInput={interestInput}
+        onInterestInputChange={setInterestInput}
+        onAddInterest={addInterest}
+        onRemoveInterest={removeInterest}
+        hobbies={hobbies}
+        hobbyInput={hobbyInput}
+        onHobbyInputChange={setHobbyInput}
+        onAddHobby={addHobby}
+        onRemoveHobby={removeHobby}
+      />
     </ScreenContainer>
   );
 }
 
 const styles = StyleSheet.create({
-  centered: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: '#FFFFFF' },
-  section: { paddingHorizontal: 16, paddingTop: 20, gap: 10 },
-  sectionLabel: { fontSize: 13, fontWeight: '600', color: '#374151', marginBottom: 12 },
-  tagList: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 12 },
-  tagChip: { backgroundColor: '#EEF2FF', borderRadius: 16, paddingHorizontal: 12, paddingVertical: 8, borderWidth: 1, borderColor: '#BFDBFE' },
-  tagText: { fontSize: 13, color: '#1D4ED8' },
-  tagInputRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  input: { flex: 1, backgroundColor: '#F9FAFB', borderWidth: 1, borderColor: '#E5E7EB', borderRadius: 10, paddingHorizontal: 14, paddingVertical: 10, fontSize: 14, color: '#111827' },
-  addBtn: { backgroundColor: ACCENT, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 12, alignItems: 'center', justifyContent: 'center' },
-  addBtnText: { color: '#FFFFFF', fontWeight: '700' },
-  disabledBtn: { opacity: 0.48 },
+  centered: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: Colors.surfaceContainerLowest },
 });

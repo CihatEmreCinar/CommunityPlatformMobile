@@ -12,22 +12,36 @@ import {
   Share,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { useAuth } from '../../../contexts/AuthContext';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { postService } from '../../../services/postService';
+import { employeeService } from '../../../services/employeeService';
+import type { EmployeeProfile } from '../../../services/employeeService';
 import type { UserSocialStats } from '../../../types/post.types';
 import { ProfileHeader } from '../../../components/profile/ProfileHeader';
+import { Colors } from '../../../constants/theme';
 
-const ACCENT = '#6366F1';
+const ACCENT = Colors.primary;
+const COVER_HEIGHT = 168; // spec: kapak alanı varsayılan 210px'den biraz kısaltıldı
 
 export default function EmployeeProfileScreen() {
   const router = useRouter();
   const { user, logout, refreshUser } = useAuth();
 
+  const [profile, setProfile] = useState<EmployeeProfile | null>(null);
   const [stats, setStats] = useState<UserSocialStats | null>(null);
   const [loadingStats, setLoadingStats] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+
+  const fetchProfile = useCallback(async () => {
+    try {
+      const p = await employeeService.getProfile();
+      setProfile(p);
+    } catch {
+      // sessiz hata — kapak/temel bilgiler için ikincil veri kaynağı
+    }
+  }, []);
 
   const fetchStats = useCallback(async () => {
     if (!user?.id) return;
@@ -53,11 +67,19 @@ export default function EmployeeProfileScreen() {
 
   const refresh = useCallback(async () => {
     setRefreshing(true);
-    await Promise.all([refreshUser(), fetchStats()]);
+    await Promise.all([refreshUser(), fetchStats(), fetchProfile()]);
     setRefreshing(false);
-  }, [fetchStats, refreshUser]);
+  }, [fetchStats, fetchProfile, refreshUser]);
 
-  useEffect(() => { fetchStats(); }, []);
+  useEffect(() => { fetchStats(); fetchProfile(); }, []);
+
+  // Profili düzenle ekranından dönüldüğünde (kapak/avatar/bio/interests
+  // güncellenmiş olabilir) güncel veriyi tazele.
+  useFocusEffect(
+    useCallback(() => {
+      fetchProfile();
+    }, [fetchProfile])
+  );
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
@@ -68,7 +90,8 @@ export default function EmployeeProfileScreen() {
     >
       {/* Profil üst */}
       <ProfileHeader
-        coverUrl={null}
+        coverUrl={profile?.coverImageUrl}
+        coverHeight={COVER_HEIGHT}
         avatarUrl={user?.avatarUrl}
         fullName={`${user?.firstName ?? ''} ${user?.lastName ?? ''}`.trim()}
         roleLabel="Katılımcı"
