@@ -11,6 +11,7 @@ import { ProfileHeader } from '../../components/profile/ProfileHeader';
 import { EmployeeProfileEditForm } from '../../components/layout/profile/EmployeeProfileEditForm';
 import { useAuth } from '../../contexts/AuthContext';
 import { Colors } from '../../constants/theme';
+import { EMPTY_LOCATION_SELECTION, type LocationSelection } from '../../types/location';
 
 const MAX_BIO = 300;
 const COVER_HEIGHT = 168; // spec: view/edit'teki kapak alanı varsayılan 210px'den biraz kısaltıldı
@@ -36,7 +37,8 @@ export default function EditEmployeeProfileScreen() {
   const [uploadingCover, setUploadingCover] = useState(false);
 
   const [bio, setBio] = useState('');
-  const [city, setCity] = useState('');
+  const [location, setLocation] = useState<LocationSelection>(EMPTY_LOCATION_SELECTION);
+  const [preferredLocation, setPreferredLocation] = useState<LocationSelection>(EMPTY_LOCATION_SELECTION);
   const [interests, setInterests] = useState<string[]>([]);
   const [hobbies, setHobbies] = useState<string[]>([]);
   const [interestInput, setInterestInput] = useState('');
@@ -48,7 +50,18 @@ export default function EditEmployeeProfileScreen() {
     employeeService.getProfile()
       .then((profile: EmployeeProfile) => {
         setBio(profile.bio ?? '');
-        setCity(profile.city ?? '');
+        setLocation({
+          cityId: profile.cityId ?? null,
+          cityName: profile.city ?? null,
+          districtId: profile.districtId ?? null,
+          districtName: profile.district ?? null,
+        });
+        setPreferredLocation({
+          cityId: profile.preferredCityId ?? null,
+          cityName: profile.preferredCity ?? null,
+          districtId: profile.preferredDistrictId ?? null,
+          districtName: profile.preferredDistrict ?? null,
+        });
         setInterests(profile.interests ?? []);
         setHobbies(profile.hobbies ?? []);
         setAvatarUrl(profile.avatarUrl ?? user?.avatarUrl ?? null);
@@ -148,7 +161,10 @@ export default function EditEmployeeProfileScreen() {
         interests,
         hobbies,
         bio: bio.trim() || undefined,
-        city: city.trim() || undefined,
+        cityId: location.cityId ?? undefined,
+        districtId: location.districtId ?? undefined,
+        preferredCityId: preferredLocation.cityId ?? undefined,
+        preferredDistrictId: preferredLocation.districtId ?? undefined,
       });
       await refreshUser();
       router.back();
@@ -157,7 +173,7 @@ export default function EditEmployeeProfileScreen() {
     } finally {
       setSaving(false);
     }
-  }, [interests, hobbies, bio, city, refreshUser, router]);
+  }, [interests, hobbies, bio, location, preferredLocation, refreshUser, router]);
 
   if (loading) {
     return (
@@ -196,8 +212,10 @@ export default function EditEmployeeProfileScreen() {
         bio={bio}
         onBioChange={setBio}
         maxBio={MAX_BIO}
-        city={city}
-        onCityChange={setCity}
+        location={location}
+        onLocationChange={setLocation}
+        preferredLocation={preferredLocation}
+        onPreferredLocationChange={setPreferredLocation}
         interests={interests}
         interestInput={interestInput}
         onInterestInputChange={setInterestInput}

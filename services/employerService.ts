@@ -16,6 +16,9 @@ export interface EmployerProfile {
   profileImageUrl: string | null;
   bio: string | null;
   city: string | null;
+  cityId: string | null;
+  district: string | null;
+  districtId: string | null;
   avgRating: number;
   totalWorkshops: number;
   employerRank: string;
@@ -29,7 +32,8 @@ export interface EmployerProfileRequest {
   coverImageUrl?: string;
   profileImageUrl?: string;
   bio?: string;
-  city?: string;
+  cityId?: string;
+  districtId?: string;
 }
 
 export interface PublicWorkshopItem {
@@ -47,6 +51,9 @@ export interface EmployerPublicProfile {
   workshopTitle: string;
   bio: string | null;
   city: string | null;
+  cityId: string | null;
+  district: string | null;
+  districtId: string | null;
   profileImageUrl: string | null;
   /** NOT: Backend şu an bu alanı döndürmüyor — eklenince otomatik çalışır. */
   coverImageUrl?: string | null;

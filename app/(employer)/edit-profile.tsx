@@ -11,6 +11,7 @@ import { FormHeader } from '../../components/layout/FormHeader';
 import { ProfileEditForm } from '../../components/layout/profile/ProfileEditForm';
 import { ProfileHeader } from '../../components/profile/ProfileHeader';
 import { useAuth } from '../../contexts/AuthContext';
+import { EMPTY_LOCATION_SELECTION, type LocationSelection } from '../../types/location';
 
 const ACCENT = '#6366F1'; // employee tab'lerindeki mevcut accent renk ile aynı
 const MAX_BIO = 300;
@@ -32,7 +33,7 @@ export default function EditEmployerProfileScreen() {
   const [specInput, setSpecInput] = useState('');
   const [specialization, setSpecialization] = useState<string[]>([]);
   const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>([]);
-  const [city, setCity] = useState('');
+  const [location, setLocation] = useState<LocationSelection>(EMPTY_LOCATION_SELECTION);
   const [profileImageUrl, setProfileImageUrl] = useState<string | null>(null);
   const [coverImageUrl, setCoverImageUrl] = useState<string | null>(null);
 
@@ -45,7 +46,12 @@ export default function EditEmployerProfileScreen() {
         setYearsExperience(p.yearsExperience != null ? String(p.yearsExperience) : '');
         setSpecialization(p.specialization ?? []);
         setSelectedCategoryIds(p.categoryIds ?? []);
-        setCity(p.city ?? '');
+        setLocation({
+          cityId: p.cityId ?? null,
+          cityName: p.city ?? null,
+          districtId: p.districtId ?? null,
+          districtName: p.district ?? null,
+        });
         setProfileImageUrl(p.profileImageUrl ?? null);
         setCoverImageUrl(p.coverImageUrl ?? null);
       })
@@ -132,7 +138,8 @@ export default function EditEmployerProfileScreen() {
       await employerService.updateProfile({
         workshopTitle: title.trim(),
         bio: bio.trim() || undefined,
-        city: city.trim() || undefined,
+        cityId: location.cityId ?? undefined,
+        districtId: location.districtId ?? undefined,
         yearsExperience: yearsExperience ? Number(yearsExperience) : undefined,
         specialization,
         categoryIds: selectedCategoryIds,
@@ -143,7 +150,7 @@ export default function EditEmployerProfileScreen() {
     } finally {
       setSaving(false);
     }
-  }, [title, bio, city, yearsExperience, specialization, selectedCategoryIds, router]);
+  }, [title, bio, location, yearsExperience, specialization, selectedCategoryIds, router]);
 
   if (loading) {
     return (
@@ -185,8 +192,8 @@ export default function EditEmployerProfileScreen() {
         bio={bio}
         onBioChange={setBio}
         maxBio={MAX_BIO}
-        city={city}
-        onCityChange={setCity}
+        location={location}
+        onLocationChange={setLocation}
         yearsExperience={yearsExperience}
         onYearsExperienceChange={setYearsExperience}
         specialization={specialization}

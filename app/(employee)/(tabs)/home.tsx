@@ -8,13 +8,17 @@ import {
   ActivityIndicator,
   TouchableOpacity,
   Image,
+  Alert,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import * as Location from 'expo-location';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useAuth } from '../../../contexts/AuthContext';
 import { workshopService } from '../../../services/workshopService';
 import { Workshop } from '../../../types/workshop';
 import { Colors, Typography, Spacing, Radius, Shadows } from '../../../constants/theme';
+import { useCurrentLocation } from '../../../hooks/useCurrentLocation';
+import { formatCityDistrict } from '../../../utils/locationFormat';
 import {
   SafeAreaView,
   SafeAreaProvider,
@@ -27,9 +31,23 @@ export default function EmployeeHomeScreen() {
   const router = useRouter();
   const [recommended, setRecommended] = useState<Workshop[]>([]);
   const [allWorkshops, setAllWorkshops] = useState<Workshop[]>([]);
+  const [nearby, setNearby] = useState<Workshop[]>([]);
+  const [nearbyUsingGps, setNearbyUsingGps] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const insets = useSafeAreaInsets();
+  const { getCurrentLocation, loading: locatingForNearby } = useCurrentLocation();
+
+  const loadNearby = useCallback(async (coords?: { latitude: number; longitude: number } | null) => {
+    try {
+      const data = await workshopService.getNearby(
+        coords ? { latitude: coords.latitude, longitude: coords.longitude, limit: 10 } : { limit: 10 }
+      );
+      setNearby(data);
+    } catch (error) {
+      console.log('Yakındaki atölyeler yüklenemedi', error);
+    }
+  }, []);
 
   const loadData = useCallback(async () => {
     try {
@@ -39,13 +57,26 @@ export default function EmployeeHomeScreen() {
       ]);
       setRecommended(recommendedData.slice(0, 5));
       setAllWorkshops(allData);
+
+      // Konum izni daha önce verilmişse sessizce GPS koordinatını kullan;
+      // verilmemişse burada izin İSTENMEZ — backend'in tercih edilen bölge →
+      // aynı şehir → popüler → son eklenenler fallback zinciri devreye girer.
+      // İzin isteme, "Konumuma Göre Sırala" butonuna basılınca tetiklenir.
+      const { status } = await Location.getForegroundPermissionsAsync();
+      if (status === 'granted') {
+        const position = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+        setNearbyUsingGps(true);
+        await loadNearby({ latitude: position.coords.latitude, longitude: position.coords.longitude });
+      } else {
+        await loadNearby(null);
+      }
     } catch (error) {
       console.log('Atölyeler yüklenemedi', error);
     } finally {
       setIsLoading(false);
       setIsRefreshing(false);
     }
-  }, []);
+  }, [loadNearby]);
 
   useEffect(() => {
     loadData();
@@ -54,6 +85,16 @@ export default function EmployeeHomeScreen() {
   function onRefresh() {
     setIsRefreshing(true);
     loadData();
+  }
+
+  async function handleUseGpsForNearby() {
+    const coords = await getCurrentLocation();
+    if (!coords) {
+      Alert.alert('Konum alınamadı', 'Konum izni verilmedi veya cihaz konumu okunamadı.');
+      return;
+    }
+    setNearbyUsingGps(true);
+    await loadNearby(coords);
   }
 
   async function handleLogout() {
@@ -152,6 +193,43 @@ export default function EmployeeHomeScreen() {
         </>
       )}
 
+      {/* Nearby Section */}
+      {nearby.length > 0 && (
+        <>
+          <View style={styles.sectionHeaderRow}>
+            <Text style={styles.sectionTitle}>Yakınımdakiler</Text>
+            <TouchableOpacity
+              style={styles.gpsButton}
+              onPress={handleUseGpsForNearby}
+              disabled={locatingForNearby}
+              activeOpacity={0.7}
+            >
+              {locatingForNearby ? (
+                <ActivityIndicator size="small" color={Colors.primary} />
+              ) : (
+                <MaterialIcons name="my-location" size={14} color={Colors.primary} />
+              )}
+              <Text style={styles.gpsButtonText}>
+                {nearbyUsingGps ? 'Konumu Güncelle' : 'Konumuma Göre Sırala'}
+              </Text>
+            </TouchableOpacity>
+          </View>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.horizontalList}
+          >
+            {nearby.map((workshop) => (
+              <NearbyCard
+                key={workshop.id}
+                workshop={workshop}
+                onPress={() => router.push(`/(employee)/workshop/${workshop.id}` as any)}
+              />
+            ))}
+          </ScrollView>
+        </>
+      )}
+
       {/* All Workshops Section */}
       <View style={styles.sectionHeader}>
         <Text style={styles.sectionTitle}>Tüm Atölyeler</Text>
@@ -173,6 +251,46 @@ export default function EmployeeHomeScreen() {
         )}
       </View>
     </ScrollView>
+  );
+}
+
+function NearbyCard({ workshop, onPress }: { workshop: Workshop; onPress: () => void }) {
+  const locationLabel =
+    workshop.locationType === 'online'
+      ? 'Online'
+      : formatCityDistrict(workshop.city, workshop.district) || workshop.venueName || workshop.address || workshop.locationDetail;
+
+  return (
+    <TouchableOpacity style={styles.recCard} onPress={onPress} activeOpacity={0.85}>
+      <View style={styles.recImagePlaceholder}>
+        <MaterialIcons name={workshop.locationType === 'online' ? 'videocam' : 'place'} size={28} color={Colors.primary} />
+      </View>
+      <Text style={styles.recTitle} numberOfLines={2}>
+        {workshop.title}
+      </Text>
+      {locationLabel ? (
+        <View style={styles.nearbyLocationRow}>
+          <MaterialIcons name="location-on" size={11} color={Colors.onSurfaceVariant} />
+          <Text style={styles.nearbyLocationText} numberOfLines={1}>{locationLabel}</Text>
+        </View>
+      ) : null}
+      <View style={styles.recFooter}>
+        <Text style={styles.recPrice}>{workshop.price} ₺</Text>
+        {workshop.distanceKm != null ? (
+          <View style={styles.recRating}>
+            <MaterialIcons name="directions-walk" size={12} color={Colors.onSurfaceVariant} />
+            <Text style={styles.recRatingText}>{workshop.distanceKm.toFixed(1)} km</Text>
+          </View>
+        ) : (
+          workshop.avgRating > 0 && (
+            <View style={styles.recRating}>
+              <MaterialIcons name="star" size={12} color={Colors.amber} />
+              <Text style={styles.recRatingText}>{workshop.avgRating.toFixed(1)}</Text>
+            </View>
+          )
+        )}
+      </View>
+    </TouchableOpacity>
   );
 }
 
@@ -202,6 +320,10 @@ function WorkshopListItem({ workshop, onPress }: { workshop: Workshop; onPress: 
   const isFull = workshop.enrolledCount >= workshop.capacity;
   const startDate = new Date(workshop.startAt);
   const formattedDate = startDate.toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' });
+  const locationLabel =
+    workshop.locationType === 'online'
+      ? 'Online'
+      : workshop.venueName || workshop.address || workshop.locationDetail || formatCityDistrict(workshop.city, workshop.district) || '—';
 
   return (
     <TouchableOpacity style={styles.listItem} onPress={onPress} activeOpacity={0.85}>
@@ -226,8 +348,8 @@ function WorkshopListItem({ workshop, onPress }: { workshop: Workshop; onPress: 
               size={12}
               color={Colors.outline}
             />
-            <Text style={styles.listMetaText}>
-              {workshop.locationType === 'online' ? 'Online' : workshop.locationDetail}
+            <Text style={styles.listMetaText} numberOfLines={1}>
+              {locationLabel}
             </Text>
           </View>
         </View>
@@ -321,6 +443,35 @@ iconButton: {
   },
   sectionHeader: {
     marginBottom: Spacing.sm,
+  },
+  sectionHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: Spacing.sm,
+  },
+  gpsButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: Spacing.xs,
+    paddingVertical: 4,
+  },
+  gpsButtonText: {
+    ...Typography.labelSm,
+    color: Colors.primary,
+    fontWeight: '600',
+  },
+  nearbyLocationRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
+    marginTop: 2,
+  },
+  nearbyLocationText: {
+    ...Typography.labelSm,
+    color: Colors.onSurfaceVariant,
+    flexShrink: 1,
   },
   sectionTitle: {
     ...Typography.h3,

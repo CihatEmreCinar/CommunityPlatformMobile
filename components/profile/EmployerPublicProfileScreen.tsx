@@ -20,6 +20,7 @@ import { employerService, type EmployerPublicProfile } from '../../services/empl
 import { formatNotificationTime } from '../../utils/notificationUtils';
 import type { Post, UserSocialStats } from '../../types/post.types';
 import { ProfileHeader } from './ProfileHeader';
+import { formatCityDistrict } from '../../utils/locationFormat';
 
 const ACCENT = '#0F766E';
 
@@ -233,7 +234,7 @@ export function EmployerPublicProfileScreen({ employerId }: { employerId: string
         fullName={profile ? `${profile.firstName} ${profile.lastName}` : 'Eğitmen Profili'}
         roleLabel="Eğitmen"
         bio={profile?.bio}
-        city={profile?.city}
+        city={formatCityDistrict(profile?.city, profile?.district)}
         stats={[
           { label: 'Atölye', value: profile?.totalWorkshops ?? 0 },
           { label: 'Gönderi', value: stats?.postCount ?? 0 },

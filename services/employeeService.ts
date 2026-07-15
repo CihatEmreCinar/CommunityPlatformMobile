@@ -13,6 +13,15 @@ export interface EmployeeProfile {
   avatarUrl: string | null;
   coverImageUrl: string | null;
   city: string | null;
+  cityId: string | null;
+  district: string | null;
+  districtId: string | null;
+  // Atölye keşfi için tercih edilen bölge — kayıt/kişisel şehirden bağımsız,
+  // GPS izni yoksa "nearby" fallback zincirinin ilk adımı olarak kullanılır.
+  preferredCity: string | null;
+  preferredCityId: string | null;
+  preferredDistrict: string | null;
+  preferredDistrictId: string | null;
   totalAttendedWorkshops: number;
   xpPoints: number;
   rankLevel: number;
@@ -25,7 +34,10 @@ export interface UpdateEmployeeProfileRequest {
   bio?: string;
   avatarUrl?: string;
   coverImageUrl?: string;
-  city?: string;
+  cityId?: string;
+  districtId?: string;
+  preferredCityId?: string;
+  preferredDistrictId?: string;
 }
 
 const BASE_URL = '/employee';

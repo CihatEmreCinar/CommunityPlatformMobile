@@ -11,7 +11,12 @@ export interface CafeProfile {
   name: string;
   bio: string | null;
   city: string | null;
+  cityId: string | null;
+  district: string | null;
+  districtId: string | null;
   address: string | null;
+  latitude: number | null;
+  longitude: number | null;
   avatarUrl: string | null;
   coverImageUrl: string | null;
   categoryNames?: string[];
@@ -33,7 +38,12 @@ export interface CafePublicProfile {
   name: string;
   bio: string | null;
   city: string | null;
+  cityId: string | null;
+  district: string | null;
+  districtId: string | null;
   address: string | null;
+  latitude: number | null;
+  longitude: number | null;
   avatarUrl: string | null;
   coverImageUrl: string | null;
   categoryNames?: string[];
@@ -44,8 +54,11 @@ export interface CafePublicProfile {
 export interface CafeProfileRequest {
   name?: string;
   bio?: string;
-  city?: string;
+  cityId?: string;
+  districtId?: string;
   address?: string;
+  latitude?: number;
+  longitude?: number;
   categoryIds?: string[];
 }
 

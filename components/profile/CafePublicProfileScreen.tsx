@@ -23,6 +23,7 @@ import { formatNotificationTime } from '../../utils/notificationUtils';
 import type { Post, UserSocialStats } from '../../types/post.types';
 import { ProfileHeader } from './ProfileHeader';
 import { Colors } from '../../constants/theme';
+import { formatCityDistrict, openMapsForCoordinate } from '../../utils/locationFormat';
 
 const ACCENT = '#0F766E';
 
@@ -244,7 +245,7 @@ export function CafePublicProfileScreen({ cafeId }: { cafeId: string }) {
         fullName={profile?.name ?? 'Kafe Profili'}
         roleLabel="Kafe"
         bio={profile?.bio}
-        city={profile?.city}
+        city={formatCityDistrict(profile?.city, profile?.district)}
         stats={[
           { label: 'Gönderi', value: stats?.postCount ?? 0 },
           { label: 'Takipçi', value: stats?.followerCount ?? 0 },
@@ -268,6 +269,21 @@ export function CafePublicProfileScreen({ cafeId }: { cafeId: string }) {
           ) : null
         }
       />
+
+      {profile?.address ? (
+        <View style={styles.addressRow}>
+          <Ionicons name="location-outline" size={16} color={Colors.onSurfaceVariant} />
+          <Text style={styles.addressText}>{profile.address}</Text>
+          {profile.latitude != null && profile.longitude != null && (
+            <TouchableOpacity
+              onPress={() => openMapsForCoordinate(profile.latitude!, profile.longitude!, profile.name)}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            >
+              <Text style={styles.mapLink}>Haritada Göster</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+      ) : null}
 
       <View style={styles.reviewsSection}>
         <Text style={styles.sectionTitle}>
@@ -347,6 +363,9 @@ const styles = StyleSheet.create({
   loadingOverlay: { position: 'absolute', top: 60, left: 0, right: 0, alignItems: 'center' },
   topBar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingTop: 12, paddingBottom: 8, backgroundColor: '#FFFFFF' },
   ratingRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 8 },
+  addressRow: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 16, marginTop: 4, flexWrap: 'wrap' },
+  addressText: { fontSize: 13, color: Colors.onSurfaceVariant, flexShrink: 1 },
+  mapLink: { fontSize: 13, color: Colors.primary, fontWeight: '600' },
   ratingText: { fontSize: 14, color: '#6B7280' },
   reviewsSection: { padding: 14, backgroundColor: '#FFFFFF', gap: 8, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: '#E5E7EB' },
   sectionTitle: { fontSize: 15, fontWeight: '700', color: '#111827' },

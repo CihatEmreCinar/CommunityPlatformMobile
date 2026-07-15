@@ -2,6 +2,8 @@ import React from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import type { Category } from '../../../types/category';
+import { CityDistrictPicker } from '../../location/CityDistrictPicker';
+import type { LocationSelection } from '../../../types/location';
 
 const ACCENT = '#0F766E';
 
@@ -17,9 +19,9 @@ export type ProfileEditFormProps = {
   onBioChange: (value: string) => void;
   maxBio?: number;
 
-  // Şehir
-  city: string;
-  onCityChange: (value: string) => void;
+  // Şehir / İlçe
+  location: LocationSelection;
+  onLocationChange: (value: LocationSelection) => void;
 
   // Deneyim
   yearsExperience: string;
@@ -55,8 +57,8 @@ export function ProfileEditForm({
   bio,
   onBioChange,
   maxBio = 300,
-  city,
-  onCityChange,
+  location,
+  onLocationChange,
   yearsExperience,
   onYearsExperienceChange,
   showExperience = true,
@@ -103,15 +105,7 @@ export function ProfileEditForm({
       </View>
 
       <View style={styles.section}>
-        <Text style={styles.sectionLabel}>Şehir</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="örn. İstanbul"
-          placeholderTextColor="#9CA3AF"
-          value={city}
-          onChangeText={onCityChange}
-          maxLength={60}
-        />
+        <CityDistrictPicker value={location} onChange={onLocationChange} />
       </View>
 
       {/* Deneyim */}

@@ -19,6 +19,16 @@ import { Review } from '../../../types/review';
 import { Enrollment } from '../../../types/enrollment';
 import { Colors, Typography, Spacing, Radius, Shadows } from '../../../constants/theme';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { formatCityDistrict, openMapsForCoordinate } from '../../../utils/locationFormat';
+
+/** Atölyenin konum kartında gösterilecek ana metni oluşturur: önce Mekan Adı
+ *  + Adres, o da yoksa eski serbest metin `locationDetail` alanına düşer. */
+function getWorkshopLocationLabel(workshop: Workshop): string {
+  if (workshop.locationType === 'online') return 'Online';
+  const parts = [workshop.venueName, workshop.address].filter((p): p is string => !!p?.trim());
+  if (parts.length > 0) return parts.join(' — ');
+  return workshop.locationDetail || '—';
+}
 
 export default function WorkshopDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -203,7 +213,7 @@ async function checkEligibility() {
             <InfoItem
               icon={workshop.locationType === 'online' ? 'videocam' : 'place'}
               label="Konum"
-              value={workshop.locationType === 'online' ? 'Online' : workshop.locationDetail || '—'}
+              value={getWorkshopLocationLabel(workshop)}
             />
             <InfoItem
               icon="groups"
@@ -211,6 +221,31 @@ async function checkEligibility() {
               value={`${workshop.enrolledCount}/${workshop.capacity} kişi`}
             />
           </View>
+
+          {workshop.locationType === 'in-person' && (
+            <>
+              {formatCityDistrict(workshop.city, workshop.district) && (
+                <View style={styles.locationMetaRow}>
+                  <MaterialIcons name="location-on" size={14} color={Colors.onSurfaceVariant} />
+                  <Text style={styles.locationMetaText}>
+                    {formatCityDistrict(workshop.city, workshop.district)}
+                  </Text>
+                </View>
+              )}
+              {workshop.latitude != null && workshop.longitude != null && (
+                <TouchableOpacity
+                  style={styles.mapButton}
+                  onPress={() =>
+                    openMapsForCoordinate(workshop.latitude!, workshop.longitude!, workshop.venueName || workshop.title)
+                  }
+                  activeOpacity={0.7}
+                >
+                  <MaterialIcons name="map" size={16} color={Colors.primary} />
+                  <Text style={styles.mapButtonText}>Haritada Göster</Text>
+                </TouchableOpacity>
+              )}
+            </>
+          )}
 
           {/* Description */}
           {workshop.description && (
@@ -424,6 +459,33 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     gap: Spacing.sm,
     marginTop: Spacing.sm,
+  },
+  locationMetaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginTop: Spacing.sm,
+  },
+  locationMetaText: {
+    ...Typography.labelMd,
+    color: Colors.onSurfaceVariant,
+  },
+  mapButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    alignSelf: 'flex-start',
+    marginTop: Spacing.xs,
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: 6,
+    borderRadius: Radius.md,
+    borderWidth: 1,
+    borderColor: Colors.primaryLighter,
+    backgroundColor: Colors.primaryContainer,
+  },
+  mapButtonText: {
+    ...Typography.labelMd,
+    color: Colors.primaryDarker,
   },
   infoItem: {
     flexBasis: '47%',

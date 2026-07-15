@@ -15,6 +15,15 @@ export interface Workshop {
   enrolledCount: number;
   locationType: 'online' | 'in-person';
   locationDetail: string | null;
+  // Fiziksel etkinlik konumu — sadece locationType='in-person' iken anlamlı.
+  venueName: string | null;
+  address: string | null;
+  city: string | null;
+  cityId: string | null;
+  district: string | null;
+  districtId: string | null;
+  latitude: number | null;
+  longitude: number | null;
   startAt: string;
   endAt: string;
   status: string;
@@ -24,6 +33,8 @@ export interface Workshop {
   avgRating: number;
   reviewCount: number;
   createdAt: string;
+  /** Sadece GET /workshops/nearby ile latitude/longitude verildiğinde dolar. */
+  distanceKm?: number | null;
 }
 
 export interface WorkshopRequest {
@@ -34,6 +45,12 @@ export interface WorkshopRequest {
   capacity: number;
   locationType: 'online' | 'in-person';
   locationDetail?: string;
+  venueName?: string;
+  address?: string;
+  cityId?: string;
+  districtId?: string;
+  latitude?: number;
+  longitude?: number;
   startAt: string;
   endAt: string;
   categoryIds?: string[];

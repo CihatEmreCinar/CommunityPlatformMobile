@@ -27,6 +27,9 @@ export interface User {
   lastName: string;
   role: UserRole;
   city?: string | null;
+  cityId?: string | null;
+  district?: string | null;
+  districtId?: string | null;
   bio?: string | null;
   avatarUrl?: string | null;
   xpPoints: number;
@@ -55,5 +58,6 @@ export interface RegisterRequest {
   firstName: string;
   lastName: string;
   role: RoleValue;
-  city?: string;
+  cityId?: string;
+  districtId?: string;
 }

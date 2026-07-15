@@ -17,6 +17,9 @@ import { categoryService } from '../../../services/categoryService';
 import { Category } from '../../../types/category';
 import { Colors, Typography, Spacing, Radius, Shadows } from '../../../constants/theme';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { CityDistrictPicker } from '../../../components/location/CityDistrictPicker';
+import { EMPTY_LOCATION_SELECTION, type LocationSelection } from '../../../types/location';
+import { useCurrentLocation } from '../../../hooks/useCurrentLocation';
 
 export default function CreateWorkshopScreen() {
   const router = useRouter();
@@ -27,6 +30,12 @@ export default function CreateWorkshopScreen() {
   const [price, setPrice] = useState('');
   const [capacity, setCapacity] = useState('');
   const [locationType, setLocationType] = useState<'online' | 'in-person'>('in-person');
+  const [venueName, setVenueName] = useState('');
+  const [address, setAddress] = useState('');
+  const [location, setLocation] = useState<LocationSelection>(EMPTY_LOCATION_SELECTION);
+  const [latitude, setLatitude] = useState<number | null>(null);
+  const [longitude, setLongitude] = useState<number | null>(null);
+  const { getCurrentLocation, loading: locating } = useCurrentLocation();
   const [locationDetail, setLocationDetail] = useState('');
   const [tagsText, setTagsText] = useState('');
 
@@ -47,6 +56,16 @@ export default function CreateWorkshopScreen() {
     );
   }
 
+  async function handleUseCurrentLocation() {
+    const coords = await getCurrentLocation();
+    if (!coords) {
+      Alert.alert('Konum alınamadı', 'Konum izni verilmedi veya cihaz konumu okunamadı.');
+      return;
+    }
+    setLatitude(coords.latitude);
+    setLongitude(coords.longitude);
+  }
+
   function validate(): string | null {
     if (!title.trim()) return 'Başlık zorunludur.';
     if (!price || isNaN(Number(price)) || Number(price) < 0) return 'Geçerli bir fiyat girin.';
@@ -54,8 +73,8 @@ export default function CreateWorkshopScreen() {
       return 'Geçerli bir kapasite girin.';
     if (!startDate) return 'Tarih zorunludur (YYYY-AA-GG formatında).';
     if (!startTime || !endTime) return 'Başlangıç ve bitiş saati zorunludur (SS:DD formatında).';
-    if (locationType === 'in-person' && !locationDetail.trim())
-      return 'Yüz yüze atölyeler için konum zorunludur.';
+    if (locationType === 'in-person' && !address.trim())
+      return 'Yüz yüze atölyeler için adres zorunludur.';
     return null;
   }
 
@@ -83,6 +102,12 @@ export default function CreateWorkshopScreen() {
         capacity: Number(capacity),
         locationType,
         locationDetail: locationDetail.trim() || undefined,
+        venueName: locationType === 'in-person' ? venueName.trim() || undefined : undefined,
+        address: locationType === 'in-person' ? address.trim() || undefined : undefined,
+        cityId: locationType === 'in-person' ? location.cityId ?? undefined : undefined,
+        districtId: locationType === 'in-person' ? location.districtId ?? undefined : undefined,
+        latitude: locationType === 'in-person' ? latitude ?? undefined : undefined,
+        longitude: locationType === 'in-person' ? longitude ?? undefined : undefined,
         startAt,
         endAt,
         tags,
@@ -205,18 +230,71 @@ export default function CreateWorkshopScreen() {
           </View>
         </View>
 
-        {/* Location Detail */}
+        {/* Fiziksel Konum */}
         {locationType === 'in-person' && (
-          <View style={styles.fieldGroup}>
-            <Text style={styles.label}>Adres *</Text>
-            <TextInput
-              style={styles.input}
-              value={locationDetail}
-              onChangeText={setLocationDetail}
-              placeholder="Örn: Kadıköy, İstanbul"
-              placeholderTextColor={Colors.outlineVariant}
-            />
-          </View>
+          <>
+            <View style={styles.fieldGroup}>
+              <Text style={styles.label}>Mekan Adı</Text>
+              <TextInput
+                style={styles.input}
+                value={venueName}
+                onChangeText={setVenueName}
+                placeholder="Örn: Atolium Design Stüdyosu"
+                placeholderTextColor={Colors.outlineVariant}
+              />
+            </View>
+
+            <View style={styles.fieldGroup}>
+              <Text style={styles.label}>Adres *</Text>
+              <TextInput
+                style={styles.input}
+                value={address}
+                onChangeText={setAddress}
+                placeholder="Örn: Caferağa Mah. Moda Cad. No:10, Kadıköy"
+                placeholderTextColor={Colors.outlineVariant}
+              />
+            </View>
+
+            <View style={styles.fieldGroup}>
+              <Text style={styles.label}>Şehir / İlçe</Text>
+              <CityDistrictPicker value={location} onChange={setLocation} />
+            </View>
+
+            <View style={styles.fieldGroup}>
+              <TouchableOpacity
+                style={styles.locationBtn}
+                onPress={handleUseCurrentLocation}
+                disabled={locating}
+                activeOpacity={0.7}
+              >
+                {locating ? (
+                  <ActivityIndicator size="small" color={Colors.primary} />
+                ) : (
+                  <MaterialIcons name="my-location" size={16} color={Colors.primary} />
+                )}
+                <Text style={styles.locationBtnText}>
+                  {latitude != null && longitude != null ? 'Konumu Güncelle' : 'Konumumu Kullan'}
+                </Text>
+              </TouchableOpacity>
+              {latitude != null && longitude != null && (
+                <Text style={styles.coordText}>
+                  Harita pini ayarlandı ({latitude.toFixed(5)}, {longitude.toFixed(5)}) — bu, katılımcılara
+                  "Yakınımdakiler" listesinde mesafe gösterilmesini sağlar.
+                </Text>
+              )}
+            </View>
+
+            <View style={styles.fieldGroup}>
+              <Text style={styles.label}>Ek Konum Notu (opsiyonel)</Text>
+              <TextInput
+                style={styles.input}
+                value={locationDetail}
+                onChangeText={setLocationDetail}
+                placeholder="Örn: 3. kat, yeşil kapı"
+                placeholderTextColor={Colors.outlineVariant}
+              />
+            </View>
+          </>
         )}
 
         {/* Date & Time */}
@@ -398,6 +476,28 @@ const styles = StyleSheet.create({
   },
   toggleTextActive: {
     color: Colors.onPrimary,
+  },
+  locationBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    alignSelf: 'flex-start',
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: 8,
+    borderRadius: Radius.md,
+    borderWidth: 1,
+    borderColor: Colors.primaryLighter,
+    backgroundColor: Colors.primaryContainer,
+  },
+  locationBtnText: {
+    ...Typography.labelMd,
+    color: Colors.primaryDarker,
+  },
+  coordText: {
+    ...Typography.labelSm,
+    color: Colors.onSurfaceVariant,
+    marginTop: Spacing.xs,
+    lineHeight: 16,
   },
   categoryWrap: {
     flexDirection: 'row',

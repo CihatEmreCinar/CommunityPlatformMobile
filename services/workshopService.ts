@@ -9,9 +9,30 @@ interface WorkshopSearchPageResponse {
   items: Workshop[];
 }
 
+export interface WorkshopNearbyParams {
+  /** İkisi de verilmezse backend fallback zincirini çalıştırır (tercih edilen
+   *  ilçe → aynı şehir → popüler → son eklenenler). */
+  latitude?: number;
+  longitude?: number;
+  /** km cinsinden arama yarıçapı, backend varsayılanı 20. */
+  radius?: number;
+  limit?: number;
+}
+
 export const workshopService = {
   async getAll(params?: { status?: string; page?: number; limit?: number }): Promise<Workshop[]> {
     const { data } = await apiClient.get<Workshop[]>('/workshops', { params });
+    return data;
+  },
+
+  /**
+   * GET /workshops/nearby — konum izni verilmişse Haversine ile gerçek
+   * mesafe sıralaması (DistanceKm dolu döner); verilmemişse backend
+   * PreferredDistrict → aynı şehir → popüler → son eklenenler fallback
+   * zincirini uygular.
+   */
+  async getNearby(params?: WorkshopNearbyParams): Promise<Workshop[]> {
+    const { data } = await apiClient.get<Workshop[]>('/workshops/nearby', { params });
     return data;
   },
 

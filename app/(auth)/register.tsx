@@ -17,13 +17,15 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { useAuth } from '../../contexts/AuthContext';
 import { Colors, Typography, Spacing, Radius, Shadows } from '../../constants/theme';
 import { ROLES, type RoleValue } from '../../constants/roles';
+import { CityDistrictPicker } from '../../components/location/CityDistrictPicker';
+import { EMPTY_LOCATION_SELECTION, type LocationSelection } from '../../types/location';
 
 export default function RegisterScreen() {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [city, setCity] = useState('');
+  const [location, setLocation] = useState<LocationSelection>(EMPTY_LOCATION_SELECTION);
   const [role, setRole] = useState<RoleValue>(ROLES.EMPLOYEE);
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -42,7 +44,15 @@ export default function RegisterScreen() {
 
     setIsLoading(true);
     try {
-      await register({ firstName, lastName, email, password, role, city });
+      await register({
+        firstName,
+        lastName,
+        email,
+        password,
+        role,
+        cityId: location.cityId ?? undefined,
+        districtId: location.districtId ?? undefined,
+      });
       if (role === ROLES.EMPLOYER) {
         router.replace('/(employer)/dashboard');
       } else if (role === ROLES.CAFE) {
@@ -200,20 +210,10 @@ export default function RegisterScreen() {
             </View>
           </View>
 
-          {/* City */}
+          {/* Şehir / İlçe */}
           <View style={styles.fieldGroup}>
-            <Text style={styles.label}>Şehir (opsiyonel)</Text>
-            <View style={styles.inputWrapper}>
-              <MaterialIcons name="location-on" size={18} color={Colors.outline} style={styles.inputIcon} />
-              <TextInput
-                style={styles.input}
-                placeholder="Şehrin"
-                placeholderTextColor={Colors.outlineVariant}
-                value={city}
-                onChangeText={setCity}
-                autoCapitalize="words"
-              />
-            </View>
+            <Text style={styles.label}>Konum (opsiyonel)</Text>
+            <CityDistrictPicker value={location} onChange={setLocation} />
           </View>
 
           {/* Submit */}

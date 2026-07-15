@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { View, Text, ActivityIndicator, Alert, StyleSheet, TouchableOpacity, Share } from 'react-native';
+import { View, Text, TextInput, ActivityIndicator, Alert, StyleSheet, TouchableOpacity, Share } from 'react-native';
 import { useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import { ScreenContainer } from '../../../components/layout/ScreenContainer';
@@ -15,6 +15,9 @@ import { Colors, Typography, Spacing, Radius, Shadows } from '../../../constants
 import { useAuth } from '../../../contexts/AuthContext';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import type { Category } from '../../../types/category';
+import { EMPTY_LOCATION_SELECTION, type LocationSelection } from '../../../types/location';
+import { useCurrentLocation } from '../../../hooks/useCurrentLocation';
+import { formatCityDistrict, openMapsForCoordinate } from '../../../utils/locationFormat';
 
 export default function CafeProfileScreen() {
   const router = useRouter();
@@ -28,8 +31,11 @@ export default function CafeProfileScreen() {
 
   const [name, setName] = useState('');
   const [bio, setBio] = useState('');
-  const [city, setCity] = useState('');
+  const [location, setLocation] = useState<LocationSelection>(EMPTY_LOCATION_SELECTION);
   const [address, setAddress] = useState('');
+  const [latitude, setLatitude] = useState<number | null>(null);
+  const [longitude, setLongitude] = useState<number | null>(null);
+  const { getCurrentLocation, loading: locating } = useCurrentLocation();
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [coverImageUrl, setCoverImageUrl] = useState<string | null>(null);
   const [uploadingCoverImage, setUploadingCoverImage] = useState(false);
@@ -45,8 +51,15 @@ export default function CafeProfileScreen() {
         setProfile(p);
         setName(p.name ?? '');
         setBio(p.bio ?? '');
-        setCity(p.city ?? '');
+        setLocation({
+          cityId: p.cityId ?? null,
+          cityName: p.city ?? null,
+          districtId: p.districtId ?? null,
+          districtName: p.district ?? null,
+        });
         setAddress(p.address ?? '');
+        setLatitude(p.latitude ?? null);
+        setLongitude(p.longitude ?? null);
         setAvatarUrl(p.avatarUrl ?? null);
         setCoverImageUrl(p.coverImageUrl ?? null);
         setCategories(cats);
@@ -140,6 +153,16 @@ export default function CafeProfileScreen() {
     }
   }
 
+  const handleUseCurrentLocation = useCallback(async () => {
+    const coords = await getCurrentLocation();
+    if (!coords) {
+      Alert.alert('Konum alınamadı', 'Konum izni verilmedi veya cihaz konumu okunamadı.');
+      return;
+    }
+    setLatitude(coords.latitude);
+    setLongitude(coords.longitude);
+  }, [getCurrentLocation]);
+
   const handleSave = useCallback(async () => {
     if (!name.trim()) { Alert.alert('Ad gerekli', 'Lütfen kafe adını girin.'); return; }
     setSaving(true);
@@ -147,15 +170,25 @@ export default function CafeProfileScreen() {
       const updated = await cafeProfileService.updateMe({
         name: name.trim(),
         bio: bio.trim() || undefined,
-        city: city.trim() || undefined,
+        cityId: location.cityId ?? undefined,
+        districtId: location.districtId ?? undefined,
         address: address.trim() || undefined,
+        latitude: latitude ?? undefined,
+        longitude: longitude ?? undefined,
         categoryIds: selectedCategoryIds.length > 0 ? selectedCategoryIds : undefined,
       });
       setProfile(updated);
       setName(updated.name ?? '');
       setBio(updated.bio ?? '');
-      setCity(updated.city ?? '');
+      setLocation({
+        cityId: updated.cityId ?? null,
+        cityName: updated.city ?? null,
+        districtId: updated.districtId ?? null,
+        districtName: updated.district ?? null,
+      });
       setAddress(updated.address ?? '');
+      setLatitude(updated.latitude ?? null);
+      setLongitude(updated.longitude ?? null);
       setAvatarUrl(updated.avatarUrl ?? avatarUrl);
       setSelectedCategoryIds(updated.categoryIds ?? selectedCategoryIds);
       setEditing(false);
@@ -166,7 +199,7 @@ export default function CafeProfileScreen() {
     } finally {
       setSaving(false);
     }
-  }, [name, bio, city, address, avatarUrl, selectedCategoryIds]);
+  }, [name, bio, location, address, latitude, longitude, avatarUrl, selectedCategoryIds]);
 
   if (loading) return <ScreenContainer edges={[ 'top', 'bottom' ]}><View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}><ActivityIndicator size="large" color={Colors.primary} /></View></ScreenContainer>;
 
@@ -198,8 +231,8 @@ export default function CafeProfileScreen() {
             onTitleChange={setName}
             bio={bio}
             onBioChange={setBio}
-            city={city}
-            onCityChange={setCity}
+            location={location}
+            onLocationChange={setLocation}
             yearsExperience={''}
             onYearsExperienceChange={() => {}}
             showExperience={false}
@@ -215,6 +248,44 @@ export default function CafeProfileScreen() {
               prev.includes(id) ? prev.filter((c) => c !== id) : [...prev, id]
             )}
           />
+
+          <View style={styles.section}>
+            <Text style={styles.sectionLabel}>Adres</Text>
+            <TextInput
+              style={styles.addressInput}
+              placeholder="örn. Bağdat Cad. No:15, Kadıköy"
+              placeholderTextColor={Colors.onSurfaceVariant}
+              value={address}
+              onChangeText={setAddress}
+              multiline
+              maxLength={200}
+            />
+            <TouchableOpacity
+              style={styles.locationBtn}
+              onPress={handleUseCurrentLocation}
+              disabled={locating}
+              activeOpacity={0.7}
+            >
+              {locating ? (
+                <ActivityIndicator size="small" color={Colors.primary} />
+              ) : (
+                <MaterialIcons name="my-location" size={16} color={Colors.primary} />
+              )}
+              <Text style={styles.locationBtnText}>
+                {latitude != null && longitude != null ? 'Konumu Güncelle' : 'Konumumu Kullan'}
+              </Text>
+            </TouchableOpacity>
+            {latitude != null && longitude != null ? (
+              <Text style={styles.coordText}>
+                Harita pini ayarlandı ({latitude.toFixed(5)}, {longitude.toFixed(5)})
+              </Text>
+            ) : (
+              <Text style={styles.coordText}>
+                Harita pini eklemek için "Konumumu Kullan" butonuna basın — kafenizin haritada doğru
+                konumda görünmesini sağlar.
+              </Text>
+            )}
+          </View>
         </>
       ) : (
         <>
@@ -224,7 +295,7 @@ export default function CafeProfileScreen() {
             fullName={profile?.name ?? ''}
             roleLabel="Kafe"
             bio={profile?.bio}
-            city={profile?.city}
+            city={formatCityDistrict(profile?.city, profile?.district)}
             stats={[
               { label: 'Gönderi', value: socialStats?.postCount ?? 0 },
               { label: 'Takipçi', value: socialStats?.followerCount ?? 0 },
@@ -260,6 +331,16 @@ export default function CafeProfileScreen() {
             <View style={styles.card}>
               <Text style={styles.label}>Adres</Text>
               <Text style={styles.value}>{profile?.address || '—'}</Text>
+              {profile?.latitude != null && profile?.longitude != null && (
+                <TouchableOpacity
+                  style={styles.mapLinkRow}
+                  onPress={() => openMapsForCoordinate(profile.latitude!, profile.longitude!, profile.name)}
+                  activeOpacity={0.7}
+                >
+                  <MaterialIcons name="map" size={16} color={Colors.primary} />
+                  <Text style={styles.mapLinkText}>Haritada Göster</Text>
+                </TouchableOpacity>
+              )}
             </View>
 
             <View style={styles.reviewsSection}>
@@ -299,6 +380,36 @@ export default function CafeProfileScreen() {
 }
 
 const styles = StyleSheet.create({
+  section: { paddingHorizontal: Spacing.md, paddingVertical: Spacing.gutter },
+  sectionLabel: { ...Typography.labelMd, color: Colors.onSurfaceVariant, textTransform: 'none', marginBottom: Spacing.sm, letterSpacing: 0 },
+  addressInput: {
+    backgroundColor: Colors.surfaceContainerLow,
+    borderWidth: 1,
+    borderColor: Colors.outlineVariant,
+    borderRadius: Radius.md,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    fontSize: 14,
+    color: Colors.onSurface,
+    minHeight: 60,
+  },
+  locationBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    alignSelf: 'flex-start',
+    marginTop: Spacing.sm,
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: 8,
+    borderRadius: Radius.md,
+    borderWidth: 1,
+    borderColor: Colors.primaryLighter,
+    backgroundColor: Colors.primaryContainer,
+  },
+  locationBtnText: { ...Typography.labelMd, color: Colors.primaryDarker },
+  coordText: { ...Typography.labelSm, color: Colors.onSurfaceVariant, marginTop: Spacing.xs, lineHeight: 16 },
+  mapLinkRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 4 },
+  mapLinkText: { ...Typography.labelMd, color: Colors.primary },
   content: { padding: Spacing.md, gap: Spacing.md },
   logoutRow: { flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'flex-start', paddingVertical: 4 },
   logoutText: { ...Typography.labelMd, color: Colors.onSurfaceVariant },

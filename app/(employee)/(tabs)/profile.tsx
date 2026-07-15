@@ -21,6 +21,7 @@ import type { EmployeeProfile } from '../../../services/employeeService';
 import type { UserSocialStats } from '../../../types/post.types';
 import { ProfileHeader } from '../../../components/profile/ProfileHeader';
 import { Colors } from '../../../constants/theme';
+import { formatCityDistrict } from '../../../utils/locationFormat';
 
 const ACCENT = Colors.primary;
 const COVER_HEIGHT = 168; // spec: kapak alanı varsayılan 210px'den biraz kısaltıldı
@@ -96,7 +97,7 @@ export default function EmployeeProfileScreen() {
         fullName={`${user?.firstName ?? ''} ${user?.lastName ?? ''}`.trim()}
         roleLabel="Katılımcı"
         bio={user?.bio}
-        city={user?.city}
+        city={formatCityDistrict(user?.city, user?.district)}
         stats={[
           { label: 'Gönderi', value: stats?.postCount ?? 0 },
           { label: 'Takipçi', value: stats?.followerCount ?? 0 },
@@ -141,12 +142,12 @@ export default function EmployeeProfileScreen() {
               <Text style={styles.levelText}>Seviye {user?.rankLevel ?? 1}</Text>
             </View>
           </View>
-          {user?.city ? (
+          {formatCityDistrict(user?.city, user?.district) ? (
             <>
               <View style={styles.separator} />
               <View style={styles.infoRow}>
                 <Ionicons name="location-outline" size={18} color="#6B7280" />
-                <Text style={styles.infoText}>{user.city}</Text>
+                <Text style={styles.infoText}>{formatCityDistrict(user?.city, user?.district)}</Text>
               </View>
             </>
           ) : null}

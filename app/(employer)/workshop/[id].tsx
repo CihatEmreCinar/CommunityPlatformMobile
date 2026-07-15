@@ -17,6 +17,7 @@ import { Workshop } from '../../../types/workshop';
 import { Review } from '../../../types/review';
 import { Colors, Typography, Spacing, Radius, Shadows } from '../../../constants/theme';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { formatCityDistrict, openMapsForCoordinate } from '../../../utils/locationFormat';
 
 export default function EmployerWorkshopDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -109,6 +110,34 @@ export default function EmployerWorkshopDetailScreen() {
           <Text style={styles.statLabel}>Yorum</Text>
         </View>
       </View>
+
+      {/* Konum */}
+      {workshop.locationType === 'in-person' && (workshop.address || workshop.venueName) && (
+        <View style={styles.locationCard}>
+          <View style={styles.locationCardRow}>
+            <MaterialIcons name="place" size={16} color={Colors.onSurfaceVariant} />
+            <View style={{ flex: 1 }}>
+              {workshop.venueName ? <Text style={styles.locationCardTitle}>{workshop.venueName}</Text> : null}
+              {workshop.address ? <Text style={styles.locationCardText}>{workshop.address}</Text> : null}
+              {formatCityDistrict(workshop.city, workshop.district) ? (
+                <Text style={styles.locationCardText}>{formatCityDistrict(workshop.city, workshop.district)}</Text>
+              ) : null}
+            </View>
+          </View>
+          {workshop.latitude != null && workshop.longitude != null && (
+            <TouchableOpacity
+              style={styles.locationCardMapBtn}
+              onPress={() =>
+                openMapsForCoordinate(workshop.latitude!, workshop.longitude!, workshop.venueName || workshop.title)
+              }
+              activeOpacity={0.7}
+            >
+              <MaterialIcons name="map" size={14} color={Colors.primary} />
+              <Text style={styles.locationCardMapBtnText}>Haritada Göster</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+      )}
 
       <TouchableOpacity
         style={styles.participantsButton}
@@ -237,6 +266,27 @@ const styles = StyleSheet.create({
   },
   statItem: { flex: 1, alignItems: 'center' },
   statDivider: { width: 1, backgroundColor: Colors.surfaceVariant },
+  locationCard: {
+    marginTop: Spacing.sm,
+    backgroundColor: Colors.surfaceContainerLowest,
+    borderRadius: Radius.lg,
+    borderWidth: 1,
+    borderColor: Colors.surfaceVariant,
+    padding: Spacing.sm,
+    gap: Spacing.xs,
+    ...Shadows.sm,
+  },
+  locationCardRow: { flexDirection: 'row', gap: Spacing.xs },
+  locationCardTitle: { ...Typography.labelMd, color: Colors.onSurface },
+  locationCardText: { ...Typography.labelSm, color: Colors.onSurfaceVariant, lineHeight: 16 },
+  locationCardMapBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    alignSelf: 'flex-start',
+    marginLeft: 22,
+  },
+  locationCardMapBtnText: { ...Typography.labelSm, color: Colors.primary, fontWeight: '600' },
   statValue: { ...Typography.h2, color: Colors.onSurface },
   statLabel: { ...Typography.labelSm, color: Colors.onSurfaceVariant, marginTop: 2 },
   participantsButton: {

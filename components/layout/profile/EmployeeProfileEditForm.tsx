@@ -2,6 +2,8 @@ import React from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Typography, Spacing, Radius } from '../../../constants/theme';
+import { CityDistrictPicker } from '../../location/CityDistrictPicker';
+import type { LocationSelection } from '../../../types/location';
 
 export type EmployeeProfileEditFormProps = {
   // Hakkında
@@ -9,9 +11,15 @@ export type EmployeeProfileEditFormProps = {
   onBioChange: (value: string) => void;
   maxBio?: number;
 
-  // Şehir
-  city: string;
-  onCityChange: (value: string) => void;
+  // Şehir / İlçe (kayıt konumu)
+  location: LocationSelection;
+  onLocationChange: (value: LocationSelection) => void;
+
+  // Tercih edilen bölge — atölye keşfinde "Yakınımdakiler" için GPS izni
+  // yoksa kullanılan ilk fallback. Kayıt şehrinden farklı olabilir (örn.
+  // işe gidip gelinen ilçe).
+  preferredLocation: LocationSelection;
+  onPreferredLocationChange: (value: LocationSelection) => void;
 
   // İlgi alanları
   interests: string[];
@@ -42,8 +50,10 @@ export function EmployeeProfileEditForm({
   bio,
   onBioChange,
   maxBio = 300,
-  city,
-  onCityChange,
+  location,
+  onLocationChange,
+  preferredLocation,
+  onPreferredLocationChange,
   interests,
   interestInput,
   onInterestInputChange,
@@ -75,16 +85,24 @@ export function EmployeeProfileEditForm({
         <Text style={styles.charCount}>{bio.length}/{maxBio}</Text>
       </View>
 
-      {/* Şehir */}
+      {/* Şehir / İlçe */}
       <View style={styles.section}>
         <Text style={styles.sectionLabel}>Şehir</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="örn. İstanbul"
-          placeholderTextColor={Colors.onSurfaceVariant}
-          value={city}
-          onChangeText={onCityChange}
-          maxLength={60}
+        <CityDistrictPicker value={location} onChange={onLocationChange} />
+      </View>
+
+      {/* Tercih Edilen Bölge */}
+      <View style={styles.section}>
+        <Text style={styles.sectionLabel}>Tercih Edilen Bölge</Text>
+        <Text style={styles.helperText}>
+          Atölye önerilerinde ve "Yakınımdakiler" listesinde konum iznin yoksa
+          bu bölge esas alınır.
+        </Text>
+        <CityDistrictPicker
+          value={preferredLocation}
+          onChange={onPreferredLocationChange}
+          cityLabel="Tercih Edilen Şehir"
+          districtLabel="Tercih Edilen İlçe"
         />
       </View>
 
@@ -176,6 +194,7 @@ export function EmployeeProfileEditForm({
 const styles = StyleSheet.create({
   section: { paddingHorizontal: Spacing.md, paddingVertical: Spacing.gutter },
   sectionLabel: { ...Typography.labelMd, color: Colors.onSurfaceVariant, textTransform: 'none', marginBottom: Spacing.sm, letterSpacing: 0 },
+  helperText: { ...Typography.labelSm, color: Colors.onSurfaceVariant, marginBottom: Spacing.sm, lineHeight: 16 },
   input: {
     backgroundColor: Colors.surfaceContainerLow,
     borderWidth: 1,

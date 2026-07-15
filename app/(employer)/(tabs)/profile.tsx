@@ -11,6 +11,7 @@ import { postService } from '../../../services/postService';
 import { formatNotificationTime } from '../../../utils/notificationUtils';
 import type { Post, UserSocialStats } from '../../../types/post.types';
 import { ProfileHeader } from '../../../components/profile/ProfileHeader';
+import { formatCityDistrict } from '../../../utils/locationFormat';
 
 const ACCENT = '#0F766E';
 
@@ -195,7 +196,7 @@ export default function EmployerProfileScreen() {
         fullName={`${user?.firstName ?? ''} ${user?.lastName ?? ''}`.trim()}
         roleLabel="Eğitmen"
         bio={user?.bio}
-        city={user?.city}
+        city={formatCityDistrict(user?.city, user?.district)}
         stats={[
           { label: 'Atölye', value: profile?.totalWorkshops ?? 0 },
           { label: 'Gönderi', value: stats?.postCount ?? 0 },
@@ -272,10 +273,10 @@ export default function EmployerProfileScreen() {
           <Text style={styles.infoText}>{profile.yearsExperience} yıl deneyim</Text>
         </View>
       )}
-      {user?.city ? (
+      {formatCityDistrict(user?.city, user?.district) ? (
         <View style={styles.infoRow}>
           <Ionicons name="location-outline" size={18} color="#6B7280" />
-          <Text style={styles.infoText}>{user.city}</Text>
+          <Text style={styles.infoText}>{formatCityDistrict(user?.city, user?.district)}</Text>
         </View>
       ) : null}
       {/* YENİ: kategoriler */}

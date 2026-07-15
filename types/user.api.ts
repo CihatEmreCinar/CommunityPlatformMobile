@@ -23,6 +23,9 @@ export interface MyProfileDto {
   lastName: string;
   role: string;
   city: string | null;
+  cityId: string | null;
+  district: string | null;
+  districtId: string | null;
   bio: string | null;
   avatarUrl: string | null;
   xpPoints: number;
