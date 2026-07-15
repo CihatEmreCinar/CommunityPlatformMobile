@@ -141,18 +141,27 @@ export default function MyWorkshopsScreen() {
                   </Text>
                   <Text style={styles.cardPrice}>{workshop.price} ₺</Text>
                 </View>
-                <View
-                  style={[
-                    styles.statusBadge,
-                    { backgroundColor: STATUS_COLORS[workshop.status] + '1A' },
-                  ]}
-                >
+                <View style={styles.cardHeaderRight}>
+                  <TouchableOpacity
+                    style={styles.editIconButton}
+                    onPress={() => router.push(`/(employer)/workshop/edit/${workshop.id}` as any)}
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                  >
+                    <MaterialIcons name="edit" size={16} color={Colors.onSurfaceVariant} />
+                  </TouchableOpacity>
                   <View
-                    style={[styles.statusDot, { backgroundColor: STATUS_COLORS[workshop.status] }]}
-                  />
-                  <Text style={[styles.statusText, { color: STATUS_COLORS[workshop.status] }]}>
-                    {STATUS_LABELS[workshop.status] || workshop.status}
-                  </Text>
+                    style={[
+                      styles.statusBadge,
+                      { backgroundColor: STATUS_COLORS[workshop.status] + '1A' },
+                    ]}
+                  >
+                    <View
+                      style={[styles.statusDot, { backgroundColor: STATUS_COLORS[workshop.status] }]}
+                    />
+                    <Text style={[styles.statusText, { color: STATUS_COLORS[workshop.status] }]}>
+                      {STATUS_LABELS[workshop.status] || workshop.status}
+                    </Text>
+                  </View>
                 </View>
               </View>
 
@@ -285,6 +294,19 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
   },
   cardTitleWrap: { flex: 1, marginRight: Spacing.sm },
+  cardHeaderRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.xs,
+  },
+  editIconButton: {
+    width: 28,
+    height: 28,
+    borderRadius: Radius.full,
+    backgroundColor: Colors.surfaceContainer,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   cardTitle: {
     ...Typography.labelMd,
     fontSize: 15,
