@@ -8,25 +8,19 @@ import {
   ActivityIndicator,
   TouchableOpacity,
   Alert,
-  Modal,
   TextInput,
-  KeyboardAvoidingView,
-  Platform,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Icon } from '../../components/ui/Icon';
-import { spaceBookingService, type SpaceBooking, type SpaceBookingStatus } from '../../services/spaceBookingService';
+import { Badge } from '../../components/ui/Badge';
+import { EmptyState } from '../../components/ui/EmptyState';
+import { Button } from '../../components/ui/Button';
+import { Modal } from '../../components/ui/Modal';
+import { spaceBookingService, type SpaceBooking } from '../../services/spaceBookingService';
 import { spaceBookingReviewService } from '../../services/spaceBookingReviewService';
+import { getSpaceBookingStatusStyle } from '../../utils/spaceBookingStatus';
 import { Colors, Typography, Spacing, Radius, Shadows } from '../../constants/theme';
 import { SafeAreaView } from 'react-native-safe-area-context';
-
-const STATUS_LABELS: Record<SpaceBookingStatus, { label: string; color: string; bg: string }> = {
-  Pending: { label: 'Bekliyor', color: Colors.secondary, bg: Colors.secondaryContainer },
-  Approved: { label: 'Onaylandı', color: Colors.primary, bg: Colors.primaryContainer },
-  Rejected: { label: 'Reddedildi', color: Colors.error, bg: Colors.errorContainer },
-  Cancelled: { label: 'İptal', color: Colors.outline, bg: Colors.surfaceContainer },
-  Completed: { label: 'Tamamlandı', color: '#0F766E', bg: '#CCFBF1' },
-};
 
 // Approved + süresi geçmiş, ya da doğrudan Completed olan ve henüz review'ı olmayan
 // rezervasyonlar değerlendirilebilir.
@@ -116,14 +110,16 @@ export default function EmployerBookingsScreen() {
         </View>
 
         {bookings.length === 0 ? (
-          <View style={styles.emptyState}>
-            <Icon name="eventBusy" size={40} color={Colors.outline} />
-            <Text style={styles.emptyTitle}>Rezervasyon yok</Text>
-            <Text style={styles.emptyText}>Bir mekan bulup rezervasyon talebi oluşturabilirsin.</Text>
-          </View>
+          <EmptyState
+            icon="eventBusy"
+            title="Rezervasyon yok"
+            description="Bir mekan bulup rezervasyon talebi oluşturabilirsin."
+            titleMarginTop={Spacing.sm}
+            style={styles.emptyState}
+          />
         ) : (
           bookings.map((item) => {
-            const statusStyle = STATUS_LABELS[item.status] ?? STATUS_LABELS.Pending;
+            const statusStyle = getSpaceBookingStatusStyle(item.status);
             return (
               <View key={item.id} style={styles.card}>
                 <View style={styles.cardHeader}>
@@ -131,9 +127,7 @@ export default function EmployerBookingsScreen() {
                     <Text style={styles.cardTitle} numberOfLines={2}>{item.spaceListingTitle ?? 'Alan'}</Text>
                     <Text style={styles.cardSubtitle}>{item.cafeName ?? 'Kafe'}</Text>
                   </View>
-                  <View style={[styles.badge, { backgroundColor: statusStyle.bg }]}>
-                    <Text style={[styles.badgeText, { color: statusStyle.color }]}>{statusStyle.label}</Text>
-                  </View>
+                  <Badge label={statusStyle.label} color={statusStyle.color} backgroundColor={statusStyle.bg} />
                 </View>
 
                 <View style={styles.metaRow}>
@@ -154,25 +148,25 @@ export default function EmployerBookingsScreen() {
 
                 {item.status === 'Pending' ? (
                   <View style={styles.cardActions}>
-                    <TouchableOpacity
-                      style={[styles.actionButton, styles.cancelButton]}
+                    <Button
+                      style={styles.flexOne}
+                      color="danger"
+                      label="İptal Et"
                       disabled={actionId === item.id}
                       onPress={() => handleCancel(item.id)}
-                    >
-                      <Text style={styles.actionText}>İptal Et</Text>
-                    </TouchableOpacity>
+                    />
                   </View>
                 ) : null}
 
                 {canReview(item) ? (
                   <View style={styles.cardActions}>
-                    <TouchableOpacity
-                      style={[styles.actionButton, styles.reviewButton]}
+                    <Button
+                      style={styles.flexOne}
+                      color="primary"
+                      icon="starRate"
+                      label="Değerlendir"
                       onPress={() => setReviewTarget(item)}
-                    >
-                      <Icon name="starRate" size={16} color={Colors.onPrimary} />
-                      <Text style={styles.actionText}>Değerlendir</Text>
-                    </TouchableOpacity>
+                    />
                   </View>
                 ) : null}
               </View>
@@ -235,63 +229,35 @@ function SpaceBookingReviewModal({
   }
 
   return (
-    <Modal
-      visible={!!booking}
-      animationType="slide"
-      presentationStyle="pageSheet"
-      onRequestClose={onClose}
-    >
-      <KeyboardAvoidingView
-        style={styles.modalContainer}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      >
-        <View style={styles.modalHeader}>
-          <Text style={styles.modalTitle}>Kafeyi Değerlendir</Text>
-          <TouchableOpacity onPress={onClose}>
-            <Icon name="closeModal" size={22} color={Colors.onSurface} />
+    <Modal visible={!!booking} onClose={onClose} title="Kafeyi Değerlendir">
+      <Text style={styles.modalCafeName}>{booking?.cafeName ?? 'Kafe'}</Text>
+      <Text style={styles.modalListingTitle}>{booking?.spaceListingTitle ?? ''}</Text>
+
+      <View style={styles.starRow}>
+        {[1, 2, 3, 4, 5].map((star) => (
+          <TouchableOpacity key={star} onPress={() => setRating(star)}>
+            <Icon name={star <= rating ? 'star' : 'starEmpty'} size={36} color={Colors.amber} />
           </TouchableOpacity>
-        </View>
+        ))}
+      </View>
 
-        <View style={styles.modalBody}>
-          <Text style={styles.modalCafeName}>{booking?.cafeName ?? 'Kafe'}</Text>
-          <Text style={styles.modalListingTitle}>{booking?.spaceListingTitle ?? ''}</Text>
+      <TextInput
+        style={styles.reviewInput}
+        placeholder="Yorumunu yaz (opsiyonel)"
+        placeholderTextColor={Colors.outlineVariant}
+        value={comment}
+        onChangeText={setComment}
+        multiline
+        numberOfLines={4}
+      />
 
-          <View style={styles.starRow}>
-            {[1, 2, 3, 4, 5].map((star) => (
-              <TouchableOpacity key={star} onPress={() => setRating(star)}>
-                <Icon
-                  name={star <= rating ? 'star' : 'starEmpty'}
-                  size={36}
-                  color={Colors.amber}
-                />
-              </TouchableOpacity>
-            ))}
-          </View>
-
-          <TextInput
-            style={styles.reviewInput}
-            placeholder="Yorumunu yaz (opsiyonel)"
-            placeholderTextColor={Colors.outlineVariant}
-            value={comment}
-            onChangeText={setComment}
-            multiline
-            numberOfLines={4}
-          />
-
-          <TouchableOpacity
-            style={[styles.submitReviewButton, submitting && styles.enrollButtonDisabled]}
-            onPress={handleSubmit}
-            disabled={submitting}
-            activeOpacity={0.85}
-          >
-            {submitting ? (
-              <ActivityIndicator color={Colors.onPrimary} />
-            ) : (
-              <Text style={styles.submitReviewButtonText}>Yorumu Gönder</Text>
-            )}
-          </TouchableOpacity>
-        </View>
-      </KeyboardAvoidingView>
+      <Button
+        style={styles.submitReviewButton}
+        color="primary"
+        label="Yorumu Gönder"
+        loading={submitting}
+        onPress={handleSubmit}
+      />
     </Modal>
   );
 }
@@ -317,9 +283,7 @@ const styles = StyleSheet.create({
     ...Shadows.sm,
   },
   title: { ...Typography.h3, color: Colors.onSurface },
-  emptyState: { alignItems: 'center', paddingVertical: Spacing.xl * 1.5, gap: Spacing.sm },
-  emptyTitle: { ...Typography.h3, color: Colors.onSurface, marginTop: Spacing.sm },
-  emptyText: { ...Typography.bodyMd, color: Colors.onSurfaceVariant, textAlign: 'center' },
+  emptyState: { paddingVertical: Spacing.xl * 1.5, gap: Spacing.sm },
   card: {
     backgroundColor: Colors.surfaceContainerLowest,
     borderRadius: Radius.xl,
@@ -334,40 +298,12 @@ const styles = StyleSheet.create({
   cardTitleWrap: { flex: 1 },
   cardTitle: { ...Typography.h3, color: Colors.onSurface, fontSize: 16 },
   cardSubtitle: { ...Typography.bodyMd, color: Colors.onSurfaceVariant, marginTop: 2 },
-  badge: { paddingHorizontal: Spacing.sm, paddingVertical: 3, borderRadius: Radius.full, alignSelf: 'flex-start' },
-  badgeText: { ...Typography.labelSm, fontWeight: '700' },
   metaRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.xs },
   metaText: { ...Typography.bodyMd, color: Colors.onSurfaceVariant, fontSize: 13 },
   cardActions: { flexDirection: 'row', gap: Spacing.sm, marginTop: Spacing.sm },
-  actionButton: {
-    flex: 1,
-    paddingVertical: Spacing.sm,
-    borderRadius: Radius.md,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  cancelButton: {
-    backgroundColor: Colors.error,
-  },
-  reviewButton: {
-    backgroundColor: Colors.primary,
-    flexDirection: 'row',
-    gap: 6,
-  },
-  actionText: { ...Typography.labelMd, color: '#FFFFFF' },
+  flexOne: { flex: 1 },
 
   // Review modal
-  modalContainer: { flex: 1, backgroundColor: Colors.background },
-  modalHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: Spacing.containerMargin,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.surfaceVariant,
-  },
-  modalTitle: { ...Typography.h3, color: Colors.onSurface },
-  modalBody: { padding: Spacing.containerMargin, gap: Spacing.sm },
   modalCafeName: { ...Typography.h2, color: Colors.onSurface },
   modalListingTitle: { ...Typography.bodyMd, color: Colors.onSurfaceVariant, marginBottom: Spacing.sm },
   starRow: { flexDirection: 'row', gap: Spacing.xs },
@@ -383,13 +319,5 @@ const styles = StyleSheet.create({
     minHeight: 90,
     textAlignVertical: 'top',
   },
-  submitReviewButton: {
-    backgroundColor: Colors.primary,
-    borderRadius: Radius.md,
-    paddingVertical: Spacing.sm,
-    alignItems: 'center',
-    marginTop: Spacing.sm,
-  },
-  submitReviewButtonText: { ...Typography.labelMd, color: Colors.onPrimary },
-  enrollButtonDisabled: { backgroundColor: Colors.outline },
+  submitReviewButton: { marginTop: Spacing.sm },
 });

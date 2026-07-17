@@ -9,7 +9,9 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Icon, IconName } from '../../../components/ui/Icon';
+import { Icon } from '../../../components/ui/Icon';
+import { StatCard } from '../../../components/ui/StatCard';
+import { Button } from '../../../components/ui/Button';
 import { useAuth } from '../../../contexts/AuthContext';
 import { employerService } from '../../../services/employerService';import { enrollmentService } from '../../../services/enrollmentService';
 import { workshopService } from '../../../services/workshopService';import { EmployerDashboard } from '../../../types/dashboard';
@@ -203,88 +205,42 @@ export default function EmployerDashboardScreen() {
    {/* Quick Actions */}
       <Text style={styles.sectionTitle}>Hızlı İşlemler</Text>
       <View style={styles.actionsRow}>
-        <ActionButton
+        <Button
+          variant="tile"
           icon="addCircleOutline"
           label="Atölye Oluştur"
           onPress={() => router.push('/(employer)/workshop/create')}
         />
-        <ActionButton
+        <Button
+          variant="tile"
           icon="edit"
           label="Profili Düzenle"
           onPress={() => router.push('/(employer)/profile')}
         />
       </View>
       <View style={styles.actionsRow}>
-        <ActionButton
+        <Button
+          variant="tile"
           icon="search"
           label="Mekan Bul"
           onPress={() => router.push('/(employer)/(tabs)/search')}
         />
-        <ActionButton
+        <Button
+          variant="tile"
           icon="listAlt"
           label="Atölyelerim"
           onPress={() => router.push('/(employer)/workshop')}
         />
       </View>
       <View style={styles.actionsRow}>
-        <ActionButton
+        <Button
+          variant="tile"
           icon="eventAvailable"
           label="Rezervasyonlarım"
           onPress={() => router.push('/(employer)/bookings')}
         />
       </View>
     </ScrollView>
-  );
-}
-
-function StatCard({
-  icon,
-  label,
-  value,
-  color,
-  onPress,
-}: {
-  icon: IconName;
-  label: string;
-  value: number;
-  color: string;
-  onPress?: () => void;
-}) {
-  const content = (
-    <View style={styles.statCard}>
-      <View style={[styles.statIconWrap, { backgroundColor: color + '1A' }]}> 
-        <Icon name={icon} size={20} color={color} />
-      </View>
-      <Text style={styles.statValue}>{value}</Text>
-      <Text style={styles.statLabel}>{label}</Text>
-    </View>
-  );
-
-  if (onPress) {
-    return (
-      <TouchableOpacity activeOpacity={0.8} onPress={onPress} style={styles.statCardTouchable}>
-        {content}
-      </TouchableOpacity>
-    );
-  }
-
-  return content;
-}
-
-function ActionButton({
-  icon,
-  label,
-  onPress,
-}: {
-  icon: IconName;
-  label: string;
-  onPress: () => void;
-}) {
-  return (
-    <TouchableOpacity style={styles.actionButton} activeOpacity={0.85} onPress={onPress}>
-      <Icon name={icon} size={20} color={Colors.primary} />
-      <Text style={styles.actionLabel}>{label}</Text>
-    </TouchableOpacity>
   );
 }
 
@@ -364,33 +320,6 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     gap: Spacing.sm,
   },
-  statCard: {
-    flexBasis: '47%',
-    flexGrow: 1,
-    backgroundColor: Colors.surfaceContainerLowest,
-    borderRadius: Radius.lg,
-    borderWidth: 1,
-    borderColor: Colors.surfaceVariant,
-    padding: Spacing.md,
-    ...Shadows.sm,
-  },
-  statIconWrap: {
-    width: 36,
-    height: 36,
-    borderRadius: Radius.md,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: Spacing.sm,
-  },
-  statValue: {
-    ...Typography.h1Mobile,
-    color: Colors.onSurface,
-  },
-  statLabel: {
-    ...Typography.bodyMd,
-    color: Colors.onSurfaceVariant,
-    marginTop: 2,
-  },
   ratingCard: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -429,26 +358,5 @@ const styles = StyleSheet.create({
   actionsRow: {
     flexDirection: 'row',
     gap: Spacing.sm,
-  },
-  statCardTouchable: {
-    flexBasis: '47%',
-    flexGrow: 1,
-  },
-  actionButton: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: Spacing.xs,
-    backgroundColor: Colors.surfaceContainerLowest,
-    borderRadius: Radius.md,
-    borderWidth: 1,
-    borderColor: Colors.surfaceVariant,
-    paddingVertical: Spacing.sm,
-    ...Shadows.sm,
-  },
-  actionLabel: {
-    ...Typography.labelMd,
-    color: Colors.primary,
   },
 });

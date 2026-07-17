@@ -1,0 +1,1141 @@
+diff --git a/app/(cafe)/(tabs)/bookings.tsx b/app/(cafe)/(tabs)/bookings.tsx
+index a70e591..ceb4168 100644
+--- a/app/(cafe)/(tabs)/bookings.tsx
++++ b/app/(cafe)/(tabs)/bookings.tsx
+@@ -2,17 +2,13 @@ import { useCallback, useState } from 'react';
+ import { View, Text, StyleSheet, ScrollView, RefreshControl, ActivityIndicator, TouchableOpacity, Alert } from 'react-native';
+ import { useFocusEffect } from 'expo-router';
+ import { Icon } from '../../../components/ui/Icon';
++import { Badge } from '../../../components/ui/Badge';
++import { EmptyState } from '../../../components/ui/EmptyState';
++import { Button } from '../../../components/ui/Button';
+ import { ScreenContainer } from '../../../components/layout/ScreenContainer';
+ import { Colors, Typography, Spacing, Radius, Shadows } from '../../../constants/theme';
+-import { spaceBookingService, type SpaceBooking, type SpaceBookingStatus } from '../../../services/spaceBookingService';
+-
+-const STATUS_LABELS: Record<SpaceBookingStatus, { label: string; color: string; bg: string }> = {
+-  Pending: { label: 'Bekliyor', color: Colors.secondary, bg: Colors.secondaryContainer },
+-  Approved: { label: 'Onaylandı', color: Colors.primary, bg: Colors.primaryContainer },
+-  Rejected: { label: 'Reddedildi', color: Colors.error, bg: Colors.errorContainer },
+-  Cancelled: { label: 'İptal', color: Colors.outline, bg: Colors.surfaceContainer },
+-  Completed: { label: 'Tamamlandı', color: '#0F766E', bg: '#CCFBF1' },
+-};
++import { spaceBookingService, type SpaceBooking } from '../../../services/spaceBookingService';
++import { getSpaceBookingStatusStyle } from '../../../utils/spaceBookingStatus';
+ 
+ export default function CafeBookingsScreen() {
+   const [bookings, setBookings] = useState<SpaceBooking[]>([]);
+@@ -94,13 +90,14 @@ export default function CafeBookingsScreen() {
+         contentContainerStyle={styles.content}
+       >
+         {bookings.length === 0 ? (
+-          <View style={styles.emptyState}>
+-            <Icon name="eventBusy" size={40} color={Colors.outline} />
+-            <Text style={styles.emptyTitle}>Henüz talep yok</Text>
+-            <Text style={styles.emptyText}>İlanlarına gelen rezervasyon talepleri burada görünecek.</Text>
+-          </View>
++          <EmptyState
++            icon="eventBusy"
++            title="Henüz talep yok"
++            description="İlanlarına gelen rezervasyon talepleri burada görünecek."
++            style={styles.emptyState}
++          />
+         ) : bookings.map((item) => {
+-          const statusStyle = STATUS_LABELS[item.status] ?? STATUS_LABELS.Pending;
++          const statusStyle = getSpaceBookingStatusStyle(item.status);
+           return (
+             <View key={item.id} style={styles.card}>
+               <View style={styles.cardHeader}>
+@@ -108,9 +105,7 @@ export default function CafeBookingsScreen() {
+                   <Text style={styles.cardTitle} numberOfLines={2}>{item.spaceListingTitle ?? 'Alan'}</Text>
+                   <Text style={styles.cardSubtitle}>{item.employerWorkshopTitle ?? item.employerFullName ?? 'Employer'}</Text>
+                 </View>
+-                <View style={[styles.badge, { backgroundColor: statusStyle.bg }]}>
+-                  <Text style={[styles.badgeText, { color: statusStyle.color }]}>{statusStyle.label}</Text>
+-                </View>
++                <Badge label={statusStyle.label} color={statusStyle.color} backgroundColor={statusStyle.bg} />
+               </View>
+ 
+               <View style={styles.metaRow}>
+@@ -131,20 +126,20 @@ export default function CafeBookingsScreen() {
+ 
+               {item.status === 'Pending' ? (
+                 <View style={styles.cardActions}>
+-                  <TouchableOpacity
+-                    style={[styles.actionButton, styles.approveButton]}
++                  <Button
++                    style={styles.flexOne}
++                    color="primary"
++                    label="Onayla"
+                     disabled={actionId === item.id}
+                     onPress={() => confirmApprove(item)}
+-                  >
+-                    <Text style={styles.actionText}>Onayla</Text>
+-                  </TouchableOpacity>
+-                  <TouchableOpacity
+-                    style={[styles.actionButton, styles.rejectButton]}
++                  />
++                  <Button
++                    style={styles.flexOne}
++                    color="danger"
++                    label="Reddet"
+                     disabled={actionId === item.id}
+                     onPress={() => confirmReject(item)}
+-                  >
+-                    <Text style={styles.actionText}>Reddet</Text>
+-                  </TouchableOpacity>
++                  />
+                 </View>
+               ) : null}
+             </View>
+@@ -159,9 +154,7 @@ const styles = StyleSheet.create({
+   centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+   title: { ...Typography.h3, color: Colors.onSurface },
+   content: { padding: Spacing.md, gap: Spacing.md },
+-  emptyState: { alignItems: 'center', paddingVertical: Spacing.xl * 2, gap: Spacing.xs },
+-  emptyTitle: { ...Typography.h3, color: Colors.onSurface },
+-  emptyText: { ...Typography.bodyMd, color: Colors.onSurfaceVariant, textAlign: 'center' },
++  emptyState: { paddingVertical: Spacing.xl * 2, gap: Spacing.xs },
+   card: {
+     backgroundColor: Colors.surfaceContainerLowest,
+     borderRadius: Radius.xl,
+@@ -175,23 +168,8 @@ const styles = StyleSheet.create({
+   cardTitleWrap: { flex: 1 },
+   cardTitle: { ...Typography.h3, color: Colors.onSurface, fontSize: 16 },
+   cardSubtitle: { ...Typography.bodyMd, color: Colors.onSurfaceVariant, marginTop: 2 },
+-  badge: { paddingHorizontal: Spacing.sm, paddingVertical: 3, borderRadius: Radius.full, alignSelf: 'flex-start' },
+-  badgeText: { ...Typography.labelSm, fontWeight: '700' },
+   metaRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.xs },
+   metaText: { ...Typography.bodyMd, color: Colors.onSurfaceVariant, fontSize: 13 },
+   cardActions: { flexDirection: 'row', gap: Spacing.sm, marginTop: Spacing.sm },
+-  actionButton: {
+-    flex: 1,
+-    paddingVertical: Spacing.sm,
+-    borderRadius: Radius.md,
+-    justifyContent: 'center',
+-    alignItems: 'center',
+-  },
+-  approveButton: {
+-    backgroundColor: Colors.primary,
+-  },
+-  rejectButton: {
+-    backgroundColor: Colors.error,
+-  },
+-  actionText: { ...Typography.labelMd, color: '#FFFFFF' },
++  flexOne: { flex: 1 },
+ });
+diff --git a/app/(cafe)/(tabs)/dashboard.tsx b/app/(cafe)/(tabs)/dashboard.tsx
+index 355cca0..597d858 100644
+--- a/app/(cafe)/(tabs)/dashboard.tsx
++++ b/app/(cafe)/(tabs)/dashboard.tsx
+@@ -9,7 +9,9 @@ import {
+   TouchableOpacity,
+ } from 'react-native';
+ import { useRouter } from 'expo-router';
+-import { Icon, IconName } from '../../../components/ui/Icon';
++import { Icon } from '../../../components/ui/Icon';
++import { StatCard } from '../../../components/ui/StatCard';
++import { Button } from '../../../components/ui/Button';
+ import { useAuth } from '../../../contexts/AuthContext';
+ import { cafeProfileService, type CafeProfile, type CafeDashboardStats } from '../../../services/cafeProfileService';
+ import { spaceBookingService } from '../../../services/spaceBookingService';
+@@ -153,24 +155,28 @@ export default function CafeDashboardScreen() {
+       {/* Quick Actions */}
+       <Text style={styles.sectionTitle}>Hızlı İşlemler</Text>
+       <View style={styles.actionsRow}>
+-        <ActionButton
++        <Button
++          variant="tile"
+           icon="addCircleOutline"
+           label="İlan Oluştur"
+           onPress={() => router.push('/(cafe)/listing/create' as any)}
+         />
+-        <ActionButton
++        <Button
++          variant="tile"
+           icon="edit"
+           label="Profili Düzenle"
+           onPress={() => router.push('/(cafe)/(tabs)/profile' as any)}
+         />
+       </View>
+       <View style={styles.actionsRow}>
+-        <ActionButton
++        <Button
++          variant="tile"
+           icon="listAlt"
+           label="İlanlarım"
+           onPress={() => router.push('/(cafe)/(tabs)/listings' as any)}
+         />
+-        <ActionButton
++        <Button
++          variant="tile"
+           icon="eventAvailable"
+           label="Rezervasyonlar"
+           onPress={() => router.push('/(cafe)/(tabs)/bookings' as any)}
+@@ -180,57 +186,6 @@ export default function CafeDashboardScreen() {
+   );
+ }
+ 
+-function StatCard({
+-  icon,
+-  label,
+-  value,
+-  color,
+-  onPress,
+-}: {
+-  icon: IconName;
+-  label: string;
+-  value: number;
+-  color: string;
+-  onPress?: () => void;
+-}) {
+-  const content = (
+-    <View style={styles.statCard}>
+-      <View style={[styles.statIconWrap, { backgroundColor: color + '1A' }]}> 
+-        <Icon name={icon} size={20} color={color} />
+-      </View>
+-      <Text style={styles.statValue}>{value}</Text>
+-      <Text style={styles.statLabel}>{label}</Text>
+-    </View>
+-  );
+-
+-  if (onPress) {
+-    return (
+-      <TouchableOpacity activeOpacity={0.8} onPress={onPress} style={styles.statCardTouchable}>
+-        {content}
+-      </TouchableOpacity>
+-    );
+-  }
+-
+-  return content;
+-}
+-
+-function ActionButton({
+-  icon,
+-  label,
+-  onPress,
+-}: {
+-  icon: IconName;
+-  label: string;
+-  onPress: () => void;
+-}) {
+-  return (
+-    <TouchableOpacity style={styles.actionButton} activeOpacity={0.85} onPress={onPress}>
+-      <Icon name={icon} size={20} color={Colors.primary} />
+-      <Text style={styles.actionLabel}>{label}</Text>
+-    </TouchableOpacity>
+-  );
+-}
+-
+ const styles = StyleSheet.create({
+   flex: { flex: 1, backgroundColor: Colors.background },
+   loadingContainer: {
+@@ -271,33 +226,6 @@ const styles = StyleSheet.create({
+     flexWrap: 'wrap',
+     gap: Spacing.sm,
+   },
+-  statCard: {
+-    flexBasis: '47%',
+-    flexGrow: 1,
+-    backgroundColor: Colors.surfaceContainerLowest,
+-    borderRadius: Radius.lg,
+-    borderWidth: 1,
+-    borderColor: Colors.surfaceVariant,
+-    padding: Spacing.md,
+-    ...Shadows.sm,
+-  },
+-  statIconWrap: {
+-    width: 36,
+-    height: 36,
+-    borderRadius: Radius.md,
+-    justifyContent: 'center',
+-    alignItems: 'center',
+-    marginBottom: Spacing.sm,
+-  },
+-  statValue: {
+-    ...Typography.h1Mobile,
+-    color: Colors.onSurface,
+-  },
+-  statLabel: {
+-    ...Typography.bodyMd,
+-    color: Colors.onSurfaceVariant,
+-    marginTop: 2,
+-  },
+   sectionTitle: {
+     ...Typography.h3,
+     color: Colors.onSurface,
+@@ -307,25 +235,4 @@ const styles = StyleSheet.create({
+     flexDirection: 'row',
+     gap: Spacing.sm,
+   },
+-  statCardTouchable: {
+-    flexBasis: '47%',
+-    flexGrow: 1,
+-  },
+-  actionButton: {
+-    flex: 1,
+-    flexDirection: 'row',
+-    alignItems: 'center',
+-    justifyContent: 'center',
+-    gap: Spacing.xs,
+-    backgroundColor: Colors.surfaceContainerLowest,
+-    borderRadius: Radius.md,
+-    borderWidth: 1,
+-    borderColor: Colors.surfaceVariant,
+-    paddingVertical: Spacing.sm,
+-    ...Shadows.sm,
+-  },
+-  actionLabel: {
+-    ...Typography.labelMd,
+-    color: Colors.primary,
+-  },
+ });
+\ No newline at end of file
+diff --git a/app/(employer)/(tabs)/dashboard.tsx b/app/(employer)/(tabs)/dashboard.tsx
+index 2ea19ba..82910ed 100644
+--- a/app/(employer)/(tabs)/dashboard.tsx
++++ b/app/(employer)/(tabs)/dashboard.tsx
+@@ -9,7 +9,9 @@ import {
+   TouchableOpacity,
+ } from 'react-native';
+ import { useRouter } from 'expo-router';
+-import { Icon, IconName } from '../../../components/ui/Icon';
++import { Icon } from '../../../components/ui/Icon';
++import { StatCard } from '../../../components/ui/StatCard';
++import { Button } from '../../../components/ui/Button';
+ import { useAuth } from '../../../contexts/AuthContext';
+ import { employerService } from '../../../services/employerService';import { enrollmentService } from '../../../services/enrollmentService';
+ import { workshopService } from '../../../services/workshopService';import { EmployerDashboard } from '../../../types/dashboard';
+@@ -203,31 +205,36 @@ export default function EmployerDashboardScreen() {
+    {/* Quick Actions */}
+       <Text style={styles.sectionTitle}>Hızlı İşlemler</Text>
+       <View style={styles.actionsRow}>
+-        <ActionButton
++        <Button
++          variant="tile"
+           icon="addCircleOutline"
+           label="Atölye Oluştur"
+           onPress={() => router.push('/(employer)/workshop/create')}
+         />
+-        <ActionButton
++        <Button
++          variant="tile"
+           icon="edit"
+           label="Profili Düzenle"
+           onPress={() => router.push('/(employer)/profile')}
+         />
+       </View>
+       <View style={styles.actionsRow}>
+-        <ActionButton
++        <Button
++          variant="tile"
+           icon="search"
+           label="Mekan Bul"
+           onPress={() => router.push('/(employer)/(tabs)/search')}
+         />
+-        <ActionButton
++        <Button
++          variant="tile"
+           icon="listAlt"
+           label="Atölyelerim"
+           onPress={() => router.push('/(employer)/workshop')}
+         />
+       </View>
+       <View style={styles.actionsRow}>
+-        <ActionButton
++        <Button
++          variant="tile"
+           icon="eventAvailable"
+           label="Rezervasyonlarım"
+           onPress={() => router.push('/(employer)/bookings')}
+@@ -237,57 +244,6 @@ export default function EmployerDashboardScreen() {
+   );
+ }
+ 
+-function StatCard({
+-  icon,
+-  label,
+-  value,
+-  color,
+-  onPress,
+-}: {
+-  icon: IconName;
+-  label: string;
+-  value: number;
+-  color: string;
+-  onPress?: () => void;
+-}) {
+-  const content = (
+-    <View style={styles.statCard}>
+-      <View style={[styles.statIconWrap, { backgroundColor: color + '1A' }]}> 
+-        <Icon name={icon} size={20} color={color} />
+-      </View>
+-      <Text style={styles.statValue}>{value}</Text>
+-      <Text style={styles.statLabel}>{label}</Text>
+-    </View>
+-  );
+-
+-  if (onPress) {
+-    return (
+-      <TouchableOpacity activeOpacity={0.8} onPress={onPress} style={styles.statCardTouchable}>
+-        {content}
+-      </TouchableOpacity>
+-    );
+-  }
+-
+-  return content;
+-}
+-
+-function ActionButton({
+-  icon,
+-  label,
+-  onPress,
+-}: {
+-  icon: IconName;
+-  label: string;
+-  onPress: () => void;
+-}) {
+-  return (
+-    <TouchableOpacity style={styles.actionButton} activeOpacity={0.85} onPress={onPress}>
+-      <Icon name={icon} size={20} color={Colors.primary} />
+-      <Text style={styles.actionLabel}>{label}</Text>
+-    </TouchableOpacity>
+-  );
+-}
+-
+ const styles = StyleSheet.create({
+   flex: { flex: 1, backgroundColor: Colors.background },
+   loadingContainer: {
+@@ -364,33 +320,6 @@ const styles = StyleSheet.create({
+     flexWrap: 'wrap',
+     gap: Spacing.sm,
+   },
+-  statCard: {
+-    flexBasis: '47%',
+-    flexGrow: 1,
+-    backgroundColor: Colors.surfaceContainerLowest,
+-    borderRadius: Radius.lg,
+-    borderWidth: 1,
+-    borderColor: Colors.surfaceVariant,
+-    padding: Spacing.md,
+-    ...Shadows.sm,
+-  },
+-  statIconWrap: {
+-    width: 36,
+-    height: 36,
+-    borderRadius: Radius.md,
+-    justifyContent: 'center',
+-    alignItems: 'center',
+-    marginBottom: Spacing.sm,
+-  },
+-  statValue: {
+-    ...Typography.h1Mobile,
+-    color: Colors.onSurface,
+-  },
+-  statLabel: {
+-    ...Typography.bodyMd,
+-    color: Colors.onSurfaceVariant,
+-    marginTop: 2,
+-  },
+   ratingCard: {
+     flexDirection: 'row',
+     justifyContent: 'space-between',
+@@ -430,25 +359,4 @@ const styles = StyleSheet.create({
+     flexDirection: 'row',
+     gap: Spacing.sm,
+   },
+-  statCardTouchable: {
+-    flexBasis: '47%',
+-    flexGrow: 1,
+-  },
+-  actionButton: {
+-    flex: 1,
+-    flexDirection: 'row',
+-    alignItems: 'center',
+-    justifyContent: 'center',
+-    gap: Spacing.xs,
+-    backgroundColor: Colors.surfaceContainerLowest,
+-    borderRadius: Radius.md,
+-    borderWidth: 1,
+-    borderColor: Colors.surfaceVariant,
+-    paddingVertical: Spacing.sm,
+-    ...Shadows.sm,
+-  },
+-  actionLabel: {
+-    ...Typography.labelMd,
+-    color: Colors.primary,
+-  },
+ });
+\ No newline at end of file
+diff --git a/app/(employer)/bookings.tsx b/app/(employer)/bookings.tsx
+index 8cb72e8..a1122e0 100644
+--- a/app/(employer)/bookings.tsx
++++ b/app/(employer)/bookings.tsx
+@@ -8,26 +8,20 @@ import {
+   ActivityIndicator,
+   TouchableOpacity,
+   Alert,
+-  Modal,
+   TextInput,
+-  KeyboardAvoidingView,
+-  Platform,
+ } from 'react-native';
+ import { useRouter } from 'expo-router';
+ import { Icon } from '../../components/ui/Icon';
+-import { spaceBookingService, type SpaceBooking, type SpaceBookingStatus } from '../../services/spaceBookingService';
++import { Badge } from '../../components/ui/Badge';
++import { EmptyState } from '../../components/ui/EmptyState';
++import { Button } from '../../components/ui/Button';
++import { Modal } from '../../components/ui/Modal';
++import { spaceBookingService, type SpaceBooking } from '../../services/spaceBookingService';
+ import { spaceBookingReviewService } from '../../services/spaceBookingReviewService';
++import { getSpaceBookingStatusStyle } from '../../utils/spaceBookingStatus';
+ import { Colors, Typography, Spacing, Radius, Shadows } from '../../constants/theme';
+ import { SafeAreaView } from 'react-native-safe-area-context';
+ 
+-const STATUS_LABELS: Record<SpaceBookingStatus, { label: string; color: string; bg: string }> = {
+-  Pending: { label: 'Bekliyor', color: Colors.secondary, bg: Colors.secondaryContainer },
+-  Approved: { label: 'Onaylandı', color: Colors.primary, bg: Colors.primaryContainer },
+-  Rejected: { label: 'Reddedildi', color: Colors.error, bg: Colors.errorContainer },
+-  Cancelled: { label: 'İptal', color: Colors.outline, bg: Colors.surfaceContainer },
+-  Completed: { label: 'Tamamlandı', color: '#0F766E', bg: '#CCFBF1' },
+-};
+-
+ // Approved + süresi geçmiş, ya da doğrudan Completed olan ve henüz review'ı olmayan
+ // rezervasyonlar değerlendirilebilir.
+ function canReview(booking: SpaceBooking): boolean {
+@@ -116,14 +110,16 @@ export default function EmployerBookingsScreen() {
+         </View>
+ 
+         {bookings.length === 0 ? (
+-          <View style={styles.emptyState}>
+-            <Icon name="eventBusy" size={40} color={Colors.outline} />
+-            <Text style={styles.emptyTitle}>Rezervasyon yok</Text>
+-            <Text style={styles.emptyText}>Bir mekan bulup rezervasyon talebi oluşturabilirsin.</Text>
+-          </View>
++          <EmptyState
++            icon="eventBusy"
++            title="Rezervasyon yok"
++            description="Bir mekan bulup rezervasyon talebi oluşturabilirsin."
++            titleMarginTop={Spacing.sm}
++            style={styles.emptyState}
++          />
+         ) : (
+           bookings.map((item) => {
+-            const statusStyle = STATUS_LABELS[item.status] ?? STATUS_LABELS.Pending;
++            const statusStyle = getSpaceBookingStatusStyle(item.status);
+             return (
+               <View key={item.id} style={styles.card}>
+                 <View style={styles.cardHeader}>
+@@ -131,9 +127,7 @@ export default function EmployerBookingsScreen() {
+                     <Text style={styles.cardTitle} numberOfLines={2}>{item.spaceListingTitle ?? 'Alan'}</Text>
+                     <Text style={styles.cardSubtitle}>{item.cafeName ?? 'Kafe'}</Text>
+                   </View>
+-                  <View style={[styles.badge, { backgroundColor: statusStyle.bg }]}>
+-                    <Text style={[styles.badgeText, { color: statusStyle.color }]}>{statusStyle.label}</Text>
+-                  </View>
++                  <Badge label={statusStyle.label} color={statusStyle.color} backgroundColor={statusStyle.bg} />
+                 </View>
+ 
+                 <View style={styles.metaRow}>
+@@ -154,25 +148,25 @@ export default function EmployerBookingsScreen() {
+ 
+                 {item.status === 'Pending' ? (
+                   <View style={styles.cardActions}>
+-                    <TouchableOpacity
+-                      style={[styles.actionButton, styles.cancelButton]}
++                    <Button
++                      style={styles.flexOne}
++                      color="danger"
++                      label="İptal Et"
+                       disabled={actionId === item.id}
+                       onPress={() => handleCancel(item.id)}
+-                    >
+-                      <Text style={styles.actionText}>İptal Et</Text>
+-                    </TouchableOpacity>
++                    />
+                   </View>
+                 ) : null}
+ 
+                 {canReview(item) ? (
+                   <View style={styles.cardActions}>
+-                    <TouchableOpacity
+-                      style={[styles.actionButton, styles.reviewButton]}
++                    <Button
++                      style={styles.flexOne}
++                      color="primary"
++                      icon="starRate"
++                      label="Değerlendir"
+                       onPress={() => setReviewTarget(item)}
+-                    >
+-                      <Icon name="starRate" size={16} color={Colors.onPrimary} />
+-                      <Text style={styles.actionText}>Değerlendir</Text>
+-                    </TouchableOpacity>
++                    />
+                   </View>
+                 ) : null}
+               </View>
+@@ -235,63 +229,35 @@ function SpaceBookingReviewModal({
+   }
+ 
+   return (
+-    <Modal
+-      visible={!!booking}
+-      animationType="slide"
+-      presentationStyle="pageSheet"
+-      onRequestClose={onClose}
+-    >
+-      <KeyboardAvoidingView
+-        style={styles.modalContainer}
+-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+-      >
+-        <View style={styles.modalHeader}>
+-          <Text style={styles.modalTitle}>Kafeyi Değerlendir</Text>
+-          <TouchableOpacity onPress={onClose}>
+-            <Icon name="closeModal" size={22} color={Colors.onSurface} />
+-          </TouchableOpacity>
+-        </View>
++    <Modal visible={!!booking} onClose={onClose} title="Kafeyi Değerlendir">
++      <Text style={styles.modalCafeName}>{booking?.cafeName ?? 'Kafe'}</Text>
++      <Text style={styles.modalListingTitle}>{booking?.spaceListingTitle ?? ''}</Text>
+ 
+-        <View style={styles.modalBody}>
+-          <Text style={styles.modalCafeName}>{booking?.cafeName ?? 'Kafe'}</Text>
+-          <Text style={styles.modalListingTitle}>{booking?.spaceListingTitle ?? ''}</Text>
+-
+-          <View style={styles.starRow}>
+-            {[1, 2, 3, 4, 5].map((star) => (
+-              <TouchableOpacity key={star} onPress={() => setRating(star)}>
+-                <Icon
+-                  name={star <= rating ? 'star' : 'starEmpty'}
+-                  size={36}
+-                  color={Colors.amber}
+-                />
+-              </TouchableOpacity>
+-            ))}
+-          </View>
++      <View style={styles.starRow}>
++        {[1, 2, 3, 4, 5].map((star) => (
++          <TouchableOpacity key={star} onPress={() => setRating(star)}>
++            <Icon name={star <= rating ? 'star' : 'starEmpty'} size={36} color={Colors.amber} />
++          </TouchableOpacity>
++        ))}
++      </View>
+ 
+-          <TextInput
+-            style={styles.reviewInput}
+-            placeholder="Yorumunu yaz (opsiyonel)"
+-            placeholderTextColor={Colors.outlineVariant}
+-            value={comment}
+-            onChangeText={setComment}
+-            multiline
+-            numberOfLines={4}
+-          />
++      <TextInput
++        style={styles.reviewInput}
++        placeholder="Yorumunu yaz (opsiyonel)"
++        placeholderTextColor={Colors.outlineVariant}
++        value={comment}
++        onChangeText={setComment}
++        multiline
++        numberOfLines={4}
++      />
+ 
+-          <TouchableOpacity
+-            style={[styles.submitReviewButton, submitting && styles.enrollButtonDisabled]}
+-            onPress={handleSubmit}
+-            disabled={submitting}
+-            activeOpacity={0.85}
+-          >
+-            {submitting ? (
+-              <ActivityIndicator color={Colors.onPrimary} />
+-            ) : (
+-              <Text style={styles.submitReviewButtonText}>Yorumu Gönder</Text>
+-            )}
+-          </TouchableOpacity>
+-        </View>
+-      </KeyboardAvoidingView>
++      <Button
++        style={styles.submitReviewButton}
++        color="primary"
++        label="Yorumu Gönder"
++        loading={submitting}
++        onPress={handleSubmit}
++      />
+     </Modal>
+   );
+ }
+@@ -317,9 +283,7 @@ const styles = StyleSheet.create({
+     ...Shadows.sm,
+   },
+   title: { ...Typography.h3, color: Colors.onSurface },
+-  emptyState: { alignItems: 'center', paddingVertical: Spacing.xl * 1.5, gap: Spacing.sm },
+-  emptyTitle: { ...Typography.h3, color: Colors.onSurface, marginTop: Spacing.sm },
+-  emptyText: { ...Typography.bodyMd, color: Colors.onSurfaceVariant, textAlign: 'center' },
++  emptyState: { paddingVertical: Spacing.xl * 1.5, gap: Spacing.sm },
+   card: {
+     backgroundColor: Colors.surfaceContainerLowest,
+     borderRadius: Radius.xl,
+@@ -334,40 +298,12 @@ const styles = StyleSheet.create({
+   cardTitleWrap: { flex: 1 },
+   cardTitle: { ...Typography.h3, color: Colors.onSurface, fontSize: 16 },
+   cardSubtitle: { ...Typography.bodyMd, color: Colors.onSurfaceVariant, marginTop: 2 },
+-  badge: { paddingHorizontal: Spacing.sm, paddingVertical: 3, borderRadius: Radius.full, alignSelf: 'flex-start' },
+-  badgeText: { ...Typography.labelSm, fontWeight: '700' },
+   metaRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.xs },
+   metaText: { ...Typography.bodyMd, color: Colors.onSurfaceVariant, fontSize: 13 },
+   cardActions: { flexDirection: 'row', gap: Spacing.sm, marginTop: Spacing.sm },
+-  actionButton: {
+-    flex: 1,
+-    paddingVertical: Spacing.sm,
+-    borderRadius: Radius.md,
+-    justifyContent: 'center',
+-    alignItems: 'center',
+-  },
+-  cancelButton: {
+-    backgroundColor: Colors.error,
+-  },
+-  reviewButton: {
+-    backgroundColor: Colors.primary,
+-    flexDirection: 'row',
+-    gap: 6,
+-  },
+-  actionText: { ...Typography.labelMd, color: '#FFFFFF' },
++  flexOne: { flex: 1 },
+ 
+   // Review modal
+-  modalContainer: { flex: 1, backgroundColor: Colors.background },
+-  modalHeader: {
+-    flexDirection: 'row',
+-    alignItems: 'center',
+-    justifyContent: 'space-between',
+-    padding: Spacing.containerMargin,
+-    borderBottomWidth: 1,
+-    borderBottomColor: Colors.surfaceVariant,
+-  },
+-  modalTitle: { ...Typography.h3, color: Colors.onSurface },
+-  modalBody: { padding: Spacing.containerMargin, gap: Spacing.sm },
+   modalCafeName: { ...Typography.h2, color: Colors.onSurface },
+   modalListingTitle: { ...Typography.bodyMd, color: Colors.onSurfaceVariant, marginBottom: Spacing.sm },
+   starRow: { flexDirection: 'row', gap: Spacing.xs },
+@@ -383,13 +319,5 @@ const styles = StyleSheet.create({
+     minHeight: 90,
+     textAlignVertical: 'top',
+   },
+-  submitReviewButton: {
+-    backgroundColor: Colors.primary,
+-    borderRadius: Radius.md,
+-    paddingVertical: Spacing.sm,
+-    alignItems: 'center',
+-    marginTop: Spacing.sm,
+-  },
+-  submitReviewButtonText: { ...Typography.labelMd, color: Colors.onPrimary },
+-  enrollButtonDisabled: { backgroundColor: Colors.outline },
++  submitReviewButton: { marginTop: Spacing.sm },
+ });
+diff --git a/components/ui/Badge.tsx b/components/ui/Badge.tsx
+new file mode 100644
+index 0000000..06e9224
+--- /dev/null
++++ b/components/ui/Badge.tsx
+@@ -0,0 +1,35 @@
++import React from 'react';
++import { View, Text, StyleSheet, StyleProp, ViewStyle } from 'react-native';
++import { Typography, Spacing, Radius } from '../../constants/theme';
++
++export interface BadgeProps {
++  label: string;
++  color: string;
++  backgroundColor: string;
++  style?: StyleProp<ViewStyle>;
++}
++
++/**
++ * Jenerik durum rozeti — renk/arkaplan dışarıdan verilir. Domain'e özel
++ * (örn. rezervasyon durumu) renk eşlemeleri için bkz. utils/spaceBookingStatus.ts.
++ */
++export function Badge({ label, color, backgroundColor, style }: BadgeProps) {
++  return (
++    <View style={[styles.badge, { backgroundColor }, style]}>
++      <Text style={[styles.badgeText, { color }]}>{label}</Text>
++    </View>
++  );
++}
++
++const styles = StyleSheet.create({
++  badge: {
++    paddingHorizontal: Spacing.sm,
++    paddingVertical: 3,
++    borderRadius: Radius.full,
++    alignSelf: 'flex-start',
++  },
++  badgeText: {
++    ...Typography.labelSm,
++    fontWeight: '700',
++  },
++});
+diff --git a/components/ui/Button.tsx b/components/ui/Button.tsx
+new file mode 100644
+index 0000000..ebf0f1d
+--- /dev/null
++++ b/components/ui/Button.tsx
+@@ -0,0 +1,119 @@
++import React from 'react';
++import {
++  Text,
++  TouchableOpacity,
++  ActivityIndicator,
++  StyleSheet,
++  StyleProp,
++  ViewStyle,
++} from 'react-native';
++import { Icon, IconName } from './Icon';
++import { Colors, Typography, Spacing, Radius, Shadows } from '../../constants/theme';
++
++export type ButtonVariant = 'solid' | 'tile';
++export type ButtonColor = 'primary' | 'danger';
++
++export interface ButtonProps {
++  label: string;
++  onPress: () => void;
++  /** 'tile': dashboard hızlı işlem kutucuğu (ikon solda, bordered).
++   *  'solid': dolu arkaplanlı aksiyon butonu (varsayılan). */
++  variant?: ButtonVariant;
++  /** yalnızca variant='solid' için: arkaplan rengini belirler. */
++  color?: ButtonColor;
++  icon?: IconName;
++  iconSize?: number;
++  /** true olduğunda: buton metni yerine spinner gösterilir, arkaplan
++   *  Colors.outline'a döner (orijinaldeki "submitting" davranışı). */
++  loading?: boolean;
++  /** yalnızca etkileşimi kapatır, loading'in aksine görünümü DEĞİŞTİRMEZ —
++   *  orijinal cancel/approve/reject butonlarının davranışıyla birebir aynı. */
++  disabled?: boolean;
++  style?: StyleProp<ViewStyle>;
++}
++
++export function Button({
++  label,
++  onPress,
++  variant = 'solid',
++  color = 'primary',
++  icon,
++  iconSize = 16,
++  loading = false,
++  disabled = false,
++  style,
++}: ButtonProps) {
++  if (variant === 'tile') {
++    return (
++      <TouchableOpacity style={[styles.tile, style]} activeOpacity={0.85} onPress={onPress} disabled={disabled}>
++        {icon && <Icon name={icon} size={20} color={Colors.primary} />}
++        <Text style={styles.tileLabel}>{label}</Text>
++      </TouchableOpacity>
++    );
++  }
++
++  const backgroundColor = loading
++    ? Colors.outline
++    : color === 'danger'
++    ? Colors.error
++    : Colors.primary;
++
++  return (
++    <TouchableOpacity
++      style={[
++        styles.solid,
++        { backgroundColor },
++        icon ? styles.solidWithIcon : null,
++        style,
++      ]}
++      activeOpacity={0.85}
++      onPress={onPress}
++      disabled={disabled || loading}
++    >
++      {loading ? (
++        <ActivityIndicator color={Colors.onPrimary} />
++      ) : (
++        <>
++          {icon && <Icon name={icon} size={iconSize} color={Colors.onPrimary} />}
++          <Text style={styles.solidLabel}>{label}</Text>
++        </>
++      )}
++    </TouchableOpacity>
++  );
++}
++
++const styles = StyleSheet.create({
++  // ─── variant="tile" (dashboard hızlı işlemler) ────────────────────────────
++  tile: {
++    flex: 1,
++    flexDirection: 'row',
++    alignItems: 'center',
++    justifyContent: 'center',
++    gap: Spacing.xs,
++    backgroundColor: Colors.surfaceContainerLowest,
++    borderRadius: Radius.md,
++    borderWidth: 1,
++    borderColor: Colors.surfaceVariant,
++    paddingVertical: Spacing.sm,
++    ...Shadows.sm,
++  },
++  tileLabel: {
++    ...Typography.labelMd,
++    color: Colors.primary,
++  },
++  // ─── variant="solid" (rezervasyon kart aksiyonları) ───────────────────────
++  solid: {
++    paddingVertical: Spacing.sm,
++    borderRadius: Radius.md,
++    justifyContent: 'center',
++    alignItems: 'center',
++  },
++  solidWithIcon: {
++    flexDirection: 'row',
++    gap: 6,
++  },
++  solidLabel: {
++    ...Typography.labelMd,
++    color: Colors.onPrimary,
++  },
++});
+diff --git a/components/ui/EmptyState.tsx b/components/ui/EmptyState.tsx
+new file mode 100644
+index 0000000..e6055a4
+--- /dev/null
++++ b/components/ui/EmptyState.tsx
+@@ -0,0 +1,54 @@
++import React from 'react';
++import { View, Text, StyleSheet, StyleProp, ViewStyle } from 'react-native';
++import { Icon, IconName } from './Icon';
++import { Colors, Typography, Spacing } from '../../constants/theme';
++
++export interface EmptyStateProps {
++  icon: IconName;
++  title: string;
++  description: string;
++  iconSize?: number;
++  iconColor?: string;
++  /** employer bookings.tsx'te title'ın üstünde ekstra marginTop vardı, cafe'de yoktu —
++   *  orijinal farkı korumak için opsiyonel. */
++  titleMarginTop?: number;
++  /** Konteynerin paddingVertical/gap gibi özellikleri ekrandan ekrana farklıydı —
++   *  orijinal görünümü birebir korumak için dışarıdan override edilebilir. */
++  style?: StyleProp<ViewStyle>;
++}
++
++export function EmptyState({
++  icon,
++  title,
++  description,
++  iconSize = 40,
++  iconColor = Colors.outline,
++  titleMarginTop,
++  style,
++}: EmptyStateProps) {
++  return (
++    <View style={[styles.container, style]}>
++      <Icon name={icon} size={iconSize} color={iconColor} />
++      <Text style={[styles.title, titleMarginTop !== undefined && { marginTop: titleMarginTop }]}>
++        {title}
++      </Text>
++      <Text style={styles.description}>{description}</Text>
++    </View>
++  );
++}
++
++const styles = StyleSheet.create({
++  container: {
++    alignItems: 'center',
++    gap: Spacing.sm,
++  },
++  title: {
++    ...Typography.h3,
++    color: Colors.onSurface,
++  },
++  description: {
++    ...Typography.bodyMd,
++    color: Colors.onSurfaceVariant,
++    textAlign: 'center',
++  },
++});
+diff --git a/components/ui/Modal.tsx b/components/ui/Modal.tsx
+new file mode 100644
+index 0000000..9c77e29
+--- /dev/null
++++ b/components/ui/Modal.tsx
+@@ -0,0 +1,66 @@
++import React from 'react';
++import {
++  Modal as RNModal,
++  View,
++  Text,
++  TouchableOpacity,
++  StyleSheet,
++  KeyboardAvoidingView,
++  Platform,
++} from 'react-native';
++import { Icon } from './Icon';
++import { Colors, Typography, Spacing } from '../../constants/theme';
++
++export interface ModalProps {
++  visible: boolean;
++  onClose: () => void;
++  title: string;
++  children: React.ReactNode;
++  /** iOS'ta klavye açıldığında body'yi yukarı iter — form içeren modallar için. */
++  keyboardAvoiding?: boolean;
++}
++
++/**
++ * pageSheet stilinde, başlık + kapat ikonlu modal iskeleti.
++ * İlk kullanım yeri: employer bookings.tsx > SpaceBookingReviewModal.
++ */
++export function Modal({ visible, onClose, title, children, keyboardAvoiding = true }: ModalProps) {
++  const body = (
++    <View style={styles.container}>
++      <View style={styles.header}>
++        <Text style={styles.title}>{title}</Text>
++        <TouchableOpacity onPress={onClose}>
++          <Icon name="closeModal" size={22} color={Colors.onSurface} />
++        </TouchableOpacity>
++      </View>
++      <View style={styles.body}>{children}</View>
++    </View>
++  );
++
++  return (
++    <RNModal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
++      {keyboardAvoiding ? (
++        <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
++          {body}
++        </KeyboardAvoidingView>
++      ) : (
++        body
++      )}
++    </RNModal>
++  );
++}
++
++const styles = StyleSheet.create({
++  flex: { flex: 1 },
++  container: { flex: 1, backgroundColor: Colors.background },
++  header: {
++    flexDirection: 'row',
++    alignItems: 'center',
++    justifyContent: 'space-between',
++    padding: Spacing.containerMargin,
++    borderBottomWidth: 1,
++    borderBottomColor: Colors.surfaceVariant,
++  },
++  title: { ...Typography.h3, color: Colors.onSurface },
++  body: { padding: Spacing.containerMargin, gap: Spacing.sm },
++});
+diff --git a/components/ui/StatCard.tsx b/components/ui/StatCard.tsx
+new file mode 100644
+index 0000000..3bf8e3e
+--- /dev/null
++++ b/components/ui/StatCard.tsx
+@@ -0,0 +1,72 @@
++import React from 'react';
++import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
++import { Icon, IconName } from './Icon';
++import { Colors, Typography, Spacing, Radius, Shadows } from '../../constants/theme';
++
++export interface StatCardProps {
++  icon: IconName;
++  label: string;
++  value: number;
++  color: string;
++  onPress?: () => void;
++}
++
++/**
++ * employer/cafe dashboard.tsx'te birebir aynı (byte-identical) tanımlıydı —
++ * buraya değişiklik yapılmadan taşındı.
++ */
++export function StatCard({ icon, label, value, color, onPress }: StatCardProps) {
++  const content = (
++    <View style={styles.statCard}>
++      <View style={[styles.statIconWrap, { backgroundColor: color + '1A' }]}>
++        <Icon name={icon} size={20} color={color} />
++      </View>
++      <Text style={styles.statValue}>{value}</Text>
++      <Text style={styles.statLabel}>{label}</Text>
++    </View>
++  );
++
++  if (onPress) {
++    return (
++      <TouchableOpacity activeOpacity={0.8} onPress={onPress} style={styles.statCardTouchable}>
++        {content}
++      </TouchableOpacity>
++    );
++  }
++
++  return content;
++}
++
++const styles = StyleSheet.create({
++  statCard: {
++    flexBasis: '47%',
++    flexGrow: 1,
++    backgroundColor: Colors.surfaceContainerLowest,
++    borderRadius: Radius.lg,
++    borderWidth: 1,
++    borderColor: Colors.surfaceVariant,
++    padding: Spacing.md,
++    ...Shadows.sm,
++  },
++  statCardTouchable: {
++    flexBasis: '47%',
++    flexGrow: 1,
++  },
++  statIconWrap: {
++    width: 36,
++    height: 36,
++    borderRadius: Radius.md,
++    justifyContent: 'center',
++    alignItems: 'center',
++    marginBottom: Spacing.sm,
++  },
++  statValue: {
++    ...Typography.h1Mobile,
++    color: Colors.onSurface,
++  },
++  statLabel: {
++    ...Typography.bodyMd,
++    color: Colors.onSurfaceVariant,
++    marginTop: 2,
++  },
++});
+diff --git a/utils/spaceBookingStatus.ts b/utils/spaceBookingStatus.ts
+new file mode 100644
+index 0000000..fec4855
+--- /dev/null
++++ b/utils/spaceBookingStatus.ts
+@@ -0,0 +1,24 @@
++import { Colors } from '../constants/theme';
++import type { SpaceBookingStatus } from '../services/spaceBookingService';
++
++export interface SpaceBookingStatusStyle {
++  label: string;
++  color: string;
++  bg: string;
++}
++
++/**
++ * employer/bookings.tsx ve (cafe)/(tabs)/bookings.tsx içinde birebir aynı
++ * tanımlıydı — buraya değişiklik yapılmadan taşındı.
++ */
++export const SPACE_BOOKING_STATUS_STYLES: Record<SpaceBookingStatus, SpaceBookingStatusStyle> = {
++  Pending: { label: 'Bekliyor', color: Colors.secondary, bg: Colors.secondaryContainer },
++  Approved: { label: 'Onaylandı', color: Colors.primary, bg: Colors.primaryContainer },
++  Rejected: { label: 'Reddedildi', color: Colors.error, bg: Colors.errorContainer },
++  Cancelled: { label: 'İptal', color: Colors.outline, bg: Colors.surfaceContainer },
++  Completed: { label: 'Tamamlandı', color: '#0F766E', bg: '#CCFBF1' },
++};
++
++export function getSpaceBookingStatusStyle(status: SpaceBookingStatus): SpaceBookingStatusStyle {
++  return SPACE_BOOKING_STATUS_STYLES[status] ?? SPACE_BOOKING_STATUS_STYLES.Pending;
++}

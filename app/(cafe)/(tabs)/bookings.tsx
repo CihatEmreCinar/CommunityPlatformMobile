@@ -2,17 +2,13 @@ import { useCallback, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, RefreshControl, ActivityIndicator, TouchableOpacity, Alert } from 'react-native';
 import { useFocusEffect } from 'expo-router';
 import { Icon } from '../../../components/ui/Icon';
+import { Badge } from '../../../components/ui/Badge';
+import { EmptyState } from '../../../components/ui/EmptyState';
+import { Button } from '../../../components/ui/Button';
 import { ScreenContainer } from '../../../components/layout/ScreenContainer';
 import { Colors, Typography, Spacing, Radius, Shadows } from '../../../constants/theme';
-import { spaceBookingService, type SpaceBooking, type SpaceBookingStatus } from '../../../services/spaceBookingService';
-
-const STATUS_LABELS: Record<SpaceBookingStatus, { label: string; color: string; bg: string }> = {
-  Pending: { label: 'Bekliyor', color: Colors.secondary, bg: Colors.secondaryContainer },
-  Approved: { label: 'Onaylandı', color: Colors.primary, bg: Colors.primaryContainer },
-  Rejected: { label: 'Reddedildi', color: Colors.error, bg: Colors.errorContainer },
-  Cancelled: { label: 'İptal', color: Colors.outline, bg: Colors.surfaceContainer },
-  Completed: { label: 'Tamamlandı', color: '#0F766E', bg: '#CCFBF1' },
-};
+import { spaceBookingService, type SpaceBooking } from '../../../services/spaceBookingService';
+import { getSpaceBookingStatusStyle } from '../../../utils/spaceBookingStatus';
 
 export default function CafeBookingsScreen() {
   const [bookings, setBookings] = useState<SpaceBooking[]>([]);
@@ -94,13 +90,14 @@ export default function CafeBookingsScreen() {
         contentContainerStyle={styles.content}
       >
         {bookings.length === 0 ? (
-          <View style={styles.emptyState}>
-            <Icon name="eventBusy" size={40} color={Colors.outline} />
-            <Text style={styles.emptyTitle}>Henüz talep yok</Text>
-            <Text style={styles.emptyText}>İlanlarına gelen rezervasyon talepleri burada görünecek.</Text>
-          </View>
+          <EmptyState
+            icon="eventBusy"
+            title="Henüz talep yok"
+            description="İlanlarına gelen rezervasyon talepleri burada görünecek."
+            style={styles.emptyState}
+          />
         ) : bookings.map((item) => {
-          const statusStyle = STATUS_LABELS[item.status] ?? STATUS_LABELS.Pending;
+          const statusStyle = getSpaceBookingStatusStyle(item.status);
           return (
             <View key={item.id} style={styles.card}>
               <View style={styles.cardHeader}>
@@ -108,9 +105,7 @@ export default function CafeBookingsScreen() {
                   <Text style={styles.cardTitle} numberOfLines={2}>{item.spaceListingTitle ?? 'Alan'}</Text>
                   <Text style={styles.cardSubtitle}>{item.employerWorkshopTitle ?? item.employerFullName ?? 'Employer'}</Text>
                 </View>
-                <View style={[styles.badge, { backgroundColor: statusStyle.bg }]}>
-                  <Text style={[styles.badgeText, { color: statusStyle.color }]}>{statusStyle.label}</Text>
-                </View>
+                <Badge label={statusStyle.label} color={statusStyle.color} backgroundColor={statusStyle.bg} />
               </View>
 
               <View style={styles.metaRow}>
@@ -131,20 +126,20 @@ export default function CafeBookingsScreen() {
 
               {item.status === 'Pending' ? (
                 <View style={styles.cardActions}>
-                  <TouchableOpacity
-                    style={[styles.actionButton, styles.approveButton]}
+                  <Button
+                    style={styles.flexOne}
+                    color="primary"
+                    label="Onayla"
                     disabled={actionId === item.id}
                     onPress={() => confirmApprove(item)}
-                  >
-                    <Text style={styles.actionText}>Onayla</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={[styles.actionButton, styles.rejectButton]}
+                  />
+                  <Button
+                    style={styles.flexOne}
+                    color="danger"
+                    label="Reddet"
                     disabled={actionId === item.id}
                     onPress={() => confirmReject(item)}
-                  >
-                    <Text style={styles.actionText}>Reddet</Text>
-                  </TouchableOpacity>
+                  />
                 </View>
               ) : null}
             </View>
@@ -159,9 +154,7 @@ const styles = StyleSheet.create({
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   title: { ...Typography.h3, color: Colors.onSurface },
   content: { padding: Spacing.md, gap: Spacing.md },
-  emptyState: { alignItems: 'center', paddingVertical: Spacing.xl * 2, gap: Spacing.xs },
-  emptyTitle: { ...Typography.h3, color: Colors.onSurface },
-  emptyText: { ...Typography.bodyMd, color: Colors.onSurfaceVariant, textAlign: 'center' },
+  emptyState: { paddingVertical: Spacing.xl * 2, gap: Spacing.xs },
   card: {
     backgroundColor: Colors.surfaceContainerLowest,
     borderRadius: Radius.xl,
@@ -175,23 +168,8 @@ const styles = StyleSheet.create({
   cardTitleWrap: { flex: 1 },
   cardTitle: { ...Typography.h3, color: Colors.onSurface, fontSize: 16 },
   cardSubtitle: { ...Typography.bodyMd, color: Colors.onSurfaceVariant, marginTop: 2 },
-  badge: { paddingHorizontal: Spacing.sm, paddingVertical: 3, borderRadius: Radius.full, alignSelf: 'flex-start' },
-  badgeText: { ...Typography.labelSm, fontWeight: '700' },
   metaRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.xs },
   metaText: { ...Typography.bodyMd, color: Colors.onSurfaceVariant, fontSize: 13 },
   cardActions: { flexDirection: 'row', gap: Spacing.sm, marginTop: Spacing.sm },
-  actionButton: {
-    flex: 1,
-    paddingVertical: Spacing.sm,
-    borderRadius: Radius.md,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  approveButton: {
-    backgroundColor: Colors.primary,
-  },
-  rejectButton: {
-    backgroundColor: Colors.error,
-  },
-  actionText: { ...Typography.labelMd, color: '#FFFFFF' },
+  flexOne: { flex: 1 },
 });
