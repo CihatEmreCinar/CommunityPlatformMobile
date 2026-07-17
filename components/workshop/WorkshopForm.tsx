@@ -10,7 +10,7 @@ import {
   Alert,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { MaterialIcons } from '@expo/vector-icons';
+import { Icon } from '../ui/Icon';
 import { categoryService } from '../../services/categoryService';
 import { Category } from '../../types/category';
 import { Workshop, WorkshopRequest } from '../../types/workshop';
@@ -167,7 +167,7 @@ export function WorkshopForm({ mode, initialWorkshop, onSubmit }: WorkshopFormPr
         {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-            <MaterialIcons name="arrow-back" size={22} color={Colors.onSurface} />
+            <Icon name="arrowBack" size={22} color={Colors.onSurface} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>{mode === 'create' ? 'Yeni Atölye' : 'Atölyeyi Düzenle'}</Text>
           <View style={{ width: 40 }} />
@@ -234,7 +234,7 @@ export function WorkshopForm({ mode, initialWorkshop, onSubmit }: WorkshopFormPr
                 style={[styles.toggleButton, locationType === 'in-person' && styles.toggleButtonActive]}
                 onPress={() => setLocationType('in-person')}
               >
-                <MaterialIcons
+                <Icon
                   name="place"
                   size={16}
                   color={locationType === 'in-person' ? Colors.onPrimary : Colors.onSurfaceVariant}
@@ -252,7 +252,7 @@ export function WorkshopForm({ mode, initialWorkshop, onSubmit }: WorkshopFormPr
                 style={[styles.toggleButton, locationType === 'online' && styles.toggleButtonActive]}
                 onPress={() => setLocationType('online')}
               >
-                <MaterialIcons
+                <Icon
                   name="videocam"
                   size={16}
                   color={locationType === 'online' ? Colors.onPrimary : Colors.onSurfaceVariant}
@@ -306,7 +306,7 @@ export function WorkshopForm({ mode, initialWorkshop, onSubmit }: WorkshopFormPr
                   {locating ? (
                     <ActivityIndicator size="small" color={Colors.primary} />
                   ) : (
-                    <MaterialIcons name="my-location" size={16} color={Colors.primary} />
+                    <Icon name="myLocation" size={16} color={Colors.primary} />
                   )}
                   <Text style={styles.locationBtnText}>
                     {latitude != null && longitude != null ? 'Konumu Güncelle' : 'Konumumu Kullan'}
@@ -403,7 +403,7 @@ export function WorkshopForm({ mode, initialWorkshop, onSubmit }: WorkshopFormPr
 
           {mode === 'create' && (
             <View style={styles.noteBox}>
-              <MaterialIcons name="info-outline" size={16} color={Colors.onSurfaceVariant} />
+              <Icon name="infoOutline" size={16} color={Colors.onSurfaceVariant} />
               <Text style={styles.noteText}>
                 Atölyen taslak olarak oluşturulacak. Yayınlamak için profilini tamamlaman gerekir.
               </Text>

@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Icon } from '../../ui/Icon';
 import { Colors, Typography, Spacing, Radius } from '../../../constants/theme';
 import { CityDistrictPicker } from '../../location/CityDistrictPicker';
 import type { LocationSelection } from '../../../types/location';
@@ -119,7 +119,7 @@ export function EmployeeProfileEditForm({
                 activeOpacity={0.7}
               >
                 <Text style={styles.tagText}>{item}</Text>
-                <Ionicons name="close-circle" size={14} color={Colors.primary} />
+                <Icon name="closeCircle" size={14} color={Colors.primary} />
               </TouchableOpacity>
             ))}
           </View>
@@ -141,7 +141,7 @@ export function EmployeeProfileEditForm({
               onPress={onAddInterest}
               disabled={!interestInput.trim()}
             >
-              <Ionicons name="add" size={20} color={Colors.white} />
+              <Icon name="add" size={20} color={Colors.white} />
             </TouchableOpacity>
           </View>
         )}
@@ -160,7 +160,7 @@ export function EmployeeProfileEditForm({
                 activeOpacity={0.7}
               >
                 <Text style={styles.tagText}>{item}</Text>
-                <Ionicons name="close-circle" size={14} color={Colors.primary} />
+                <Icon name="closeCircle" size={14} color={Colors.primary} />
               </TouchableOpacity>
             ))}
           </View>
@@ -182,7 +182,7 @@ export function EmployeeProfileEditForm({
               onPress={onAddHobby}
               disabled={!hobbyInput.trim()}
             >
-              <Ionicons name="add" size={20} color={Colors.white} />
+              <Icon name="add" size={20} color={Colors.white} />
             </TouchableOpacity>
           </View>
         )}

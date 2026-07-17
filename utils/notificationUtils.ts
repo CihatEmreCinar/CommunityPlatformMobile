@@ -1,4 +1,5 @@
 import type { Notification, NotificationMetadata, NotificationType } from '../types/notification.types';
+import type { IconName } from '../components/ui/Icon';
 
 export function parseMetadata(metadata?: NotificationMetadata | null): NotificationMetadata | null {
   return metadata ?? null;
@@ -39,7 +40,7 @@ export function getNotificationRoute(notification: Notification): string | null 
 }
 
 type NotificationConfig = {
-  icon: string;
+  icon: IconName;
   color: string;
   label: string;
 };
@@ -47,86 +48,86 @@ type NotificationConfig = {
 const NOTIFICATION_CONFIG: Record<NotificationType, NotificationConfig> = {
   // ─── Workshop ───────────────────────────────────────────────────────────────
   WorkshopPublished: {
-    icon: 'megaphone-outline',
+    icon: 'megaphoneOutline',
     color: '#3B82F6',
     label: 'Yeni Workshop',
   },
   WorkshopReminder: {
-    icon: 'alarm-outline',
+    icon: 'alarmOutline',
     color: '#F59E0B',
     label: 'Hatırlatma',
   },
   WorkshopCompleted: {
-    icon: 'checkmark-circle-outline',
+    icon: 'checkmarkCircleOutline',
     color: '#10B981',
     label: 'Tamamlandı',
   },
   // ─── Başvuru ────────────────────────────────────────────────────────────────
   ApplicationReceived: {
-    icon: 'document-text-outline',
+    icon: 'documentTextOutline',
     color: '#8B5CF6',
     label: 'Başvuru Alındı',
   },
   ApplicationApproved: {
-    icon: 'checkmark-done-outline',
+    icon: 'checkmarkDoneOutline',
     color: '#10B981',
     label: 'Başvuru Onaylandı',
   },
   ApplicationRejected: {
-    icon: 'close-circle-outline',
+    icon: 'closeCircleOutline',
     color: '#EF4444',
     label: 'Başvuru Reddedildi',
   },
   // ─── İçerik moderasyonu ─────────────────────────────────────────────────────
   ContentPendingApproval: {
-    icon: 'time-outline',
+    icon: 'timeOutline',
     color: '#F59E0B',
     label: 'Onay Bekliyor',
   },
   ContentApproved: {
-    icon: 'shield-checkmark-outline',
+    icon: 'shieldCheckmarkOutline',
     color: '#10B981',
     label: 'İçerik Onaylandı',
   },
   ContentRejected: {
-    icon: 'shield-outline',
+    icon: 'shieldOutline',
     color: '#EF4444',
     label: 'İçerik Reddedildi',
   },
   // ─── Sosyal ─────────────────────────────────────────────────────────────────
   NewFollower: {
-    icon: 'person-add-outline',
+    icon: 'follow',
     color: '#6366F1',
     label: 'Yeni Takipçi',
   },
   PostLiked: {
-    icon: 'heart-outline',
+    icon: 'heartOutline',
     color: '#EC4899',
     label: 'Gönderi Beğenildi',
   },
   PostCommented: {
-    icon: 'chatbubble-outline',
+    icon: 'chatbubbleOutline',
     color: '#0EA5E9',
     label: 'Yorum Yapıldı',
   },
   PostShared: {
-    icon: 'share-social-outline',
+    icon: 'shareSocialOutline',
     color: '#14B8A6',
     label: 'Gönderi Paylaşıldı',
   },
   // ─── Rezervasyon ────────────────────────────────────────────────────────────
   BookingRequested: {
-    icon: 'calendar-outline',
+    icon: 'calendarOutline',
     color: '#8B5CF6',
     label: 'Yeni Rezervasyon Talebi',
   },
   BookingApproved: {
-    icon: 'checkmark-done-outline',
+    icon: 'checkmarkDoneOutline',
     color: '#10B981',
     label: 'Rezervasyon Onaylandı',
   },
   BookingRejected: {
-    icon: 'close-circle-outline',
+    icon: 'closeCircleOutline',
     color: '#EF4444',
     label: 'Rezervasyon Reddedildi',
   },
@@ -134,7 +135,7 @@ const NOTIFICATION_CONFIG: Record<NotificationType, NotificationConfig> = {
 
 export function getNotificationConfig(type: NotificationType): NotificationConfig {
   return NOTIFICATION_CONFIG[type] ?? {
-    icon: 'notifications-outline',
+    icon: 'notificationsOutline',
     color: '#6B7280',
     label: 'Bildirim',
   };

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, ActivityIndicator, Alert, TouchableOpacity, Image } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { MaterialIcons } from '@expo/vector-icons';
+import { Icon } from '../../../components/ui/Icon';
 import { ScreenContainer } from '../../../components/layout/ScreenContainer';
 import { Colors, Typography, Spacing, Radius, Shadows } from '../../../constants/theme';
 import { SpaceListingForm } from '../../../components/cafe/SpaceListingForm';
@@ -104,7 +104,7 @@ export default function SpaceListingDetailScreen() {
           <View style={styles.headerRow}>
             <Text style={styles.title}>İlanı Düzenle</Text>
             <TouchableOpacity onPress={() => setEditing(false)}>
-              <MaterialIcons name="close" size={24} color={Colors.onSurface} />
+              <Icon name="closeModal" size={24} color={Colors.onSurface} />
             </TouchableOpacity>
           </View>
         }
@@ -128,10 +128,10 @@ export default function SpaceListingDetailScreen() {
           <Text style={styles.title}>{listing.title}</Text>
           <View style={styles.headerActions}>
             <TouchableOpacity onPress={() => setEditing(true)} style={styles.iconButton}>
-              <MaterialIcons name="edit" size={22} color={Colors.primary} />
+              <Icon name="edit" size={22} color={Colors.primary} />
             </TouchableOpacity>
             <TouchableOpacity onPress={handleDelete} style={styles.iconButton}>
-              <MaterialIcons name="delete" size={22} color={Colors.error} />
+              <Icon name="delete" size={22} color={Colors.error} />
             </TouchableOpacity>
           </View>
         </View>

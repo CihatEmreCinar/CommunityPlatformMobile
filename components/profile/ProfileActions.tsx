@@ -1,6 +1,6 @@
 import React, { useRef } from 'react';
 import { View, Text, Animated, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Icon } from '../ui/Icon';
 import { Colors, Radius } from '../../constants/theme';
 
 export type ProfileActionsProps =
@@ -68,7 +68,7 @@ export function ProfileActions(props: ProfileActionsProps) {
           onPress={props.onEditProfile}
           accessibilityLabel="Profili düzenle"
         >
-          <Ionicons name="create-outline" size={15} color={Colors.white} />
+          <Icon name="createOutline" size={15} color={Colors.white} />
           <Text style={styles.primaryBtnText}>Düzenle</Text>
         </AnimatedPillButton>
         <AnimatedPillButton
@@ -76,7 +76,7 @@ export function ProfileActions(props: ProfileActionsProps) {
           onPress={props.onShareProfile}
           accessibilityLabel="Profili paylaş"
         >
-          <Ionicons name="share-social-outline" size={15} color={Colors.primary} />
+          <Icon name="shareSocialOutline" size={15} color={Colors.primary} />
         </AnimatedPillButton>
       </View>
     );
@@ -96,8 +96,8 @@ export function ProfileActions(props: ProfileActionsProps) {
           <ActivityIndicator size="small" color={isFollowing ? Colors.primary : Colors.white} />
         ) : (
           <>
-            <Ionicons
-              name={isFollowing ? 'checkmark' : 'person-add-outline'}
+            <Icon
+              name={isFollowing ? 'following' : 'follow'}
               size={15}
               color={isFollowing ? Colors.primary : Colors.white}
             />
@@ -112,7 +112,7 @@ export function ProfileActions(props: ProfileActionsProps) {
         onPress={onMessage}
         accessibilityLabel="Mesaj gönder"
       >
-        <Ionicons name="chatbubble-ellipses-outline" size={15} color={Colors.primary} />
+        <Icon name="chatbubbleEllipsesOutline" size={15} color={Colors.primary} />
       </AnimatedPillButton>
     </View>
   );

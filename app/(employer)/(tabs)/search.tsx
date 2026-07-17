@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { View, Text, TextInput, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
-import { MaterialIcons } from '@expo/vector-icons';
+import { Icon } from '../../../components/ui/Icon';
 import { ScreenContainer } from '../../../components/layout/ScreenContainer';
 import { KeyboardAwareScreen } from '../../../components/layout/KeyboardAwareScreen';
 import { CollapsibleFilterPanel } from '../../../components/layout/CollapsibleFilterPanel';
@@ -117,7 +117,7 @@ export default function EmployerSearchTabScreen() {
           </View>
 
           <TouchableOpacity style={styles.searchButton} onPress={() => executeSearch(1, false)} activeOpacity={0.85}>
-            <MaterialIcons name="search" size={20} color={Colors.onPrimary} />
+            <Icon name="search" size={20} color={Colors.onPrimary} />
             <Text style={styles.searchButtonText}>Ara</Text>
           </TouchableOpacity>
         </CollapsibleFilterPanel>
@@ -133,7 +133,7 @@ export default function EmployerSearchTabScreen() {
         <View style={styles.list}>
           {listings.map((listing) => (
             <TouchableOpacity key={listing.id} style={styles.card} onPress={() => router.push(`/(employer)/space/${listing.id}` as any)} activeOpacity={0.85}>
-              <View style={styles.imagePlaceholder}><MaterialIcons name="place" size={24} color={Colors.primary} /></View>
+              <View style={styles.imagePlaceholder}><Icon name="place" size={24} color={Colors.primary} /></View>
               <View style={styles.cardBody}>
                 <Text style={styles.cardTitle}>{listing.title}</Text>
                 <Text style={styles.cardMeta}>{listing.city || 'Şehir belirtilmedi'} · {listing.hourlyPrice} ₺/saat</Text>

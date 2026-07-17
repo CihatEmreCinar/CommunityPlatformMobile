@@ -4,7 +4,7 @@ import {
   ActivityIndicator, RefreshControl, Image, TextInput,
   Modal, KeyboardAvoidingView, Platform, Share, Dimensions, ScrollView,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Icon } from '../../../components/ui/Icon';
 import { useRouter } from 'expo-router';
 import { useFeed } from '../../../hooks/useFeed';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -75,7 +75,7 @@ function CommentsModal({ visible, post, onClose }: { visible: boolean; post: Fee
       <KeyboardAvoidingView style={styles.modalContainer} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <View style={styles.modalHeader}>
           <Text style={styles.modalTitle}>Yorumlar</Text>
-          <TouchableOpacity onPress={onClose}><Ionicons name="close" size={22} color="#374151" /></TouchableOpacity>
+          <TouchableOpacity onPress={onClose}><Icon name="close" size={22} color="#374151" /></TouchableOpacity>
         </View>
         {loading
           ? <View style={styles.centered}><ActivityIndicator color={ACCENT} /></View>
@@ -86,7 +86,7 @@ function CommentsModal({ visible, post, onClose }: { visible: boolean; post: Fee
               contentContainerStyle={styles.commentsList}
               ListEmptyComponent={
                 <View style={styles.commentsEmpty}>
-                  <Ionicons name="chatbubble-outline" size={36} color="#D1D5DB" />
+                  <Icon name="chatbubbleOutline" size={36} color="#D1D5DB" />
                   <Text style={styles.commentsEmptyText}>Henüz yorum yok</Text>
                 </View>
               }
@@ -102,7 +102,7 @@ function CommentsModal({ visible, post, onClose }: { visible: boolean; post: Fee
             onPress={handleSend} disabled={submitting || !text.trim()}
             style={[styles.sendBtn, (!text.trim() || submitting) && styles.sendBtnDisabled]}
           >
-            {submitting ? <ActivityIndicator size="small" color="#FFF" /> : <Ionicons name="send" size={16} color="#FFF" />}
+            {submitting ? <ActivityIndicator size="small" color="#FFF" /> : <Icon name="send" size={16} color="#FFF" />}
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
@@ -180,15 +180,15 @@ function PostCard({ post, onLike, onComment, onShare, isMine, onPressAuthor }: {
 
       <View style={styles.actions}>
         <TouchableOpacity style={styles.actionBtn} onPress={() => onLike(post.id)}>
-          <Ionicons name={post.isLikedByMe ? 'heart' : 'heart-outline'} size={20} color={post.isLikedByMe ? '#EF4444' : '#6B7280'} />
+          <Icon name={post.isLikedByMe ? 'heartFilled' : 'heartOutline'} size={20} color={post.isLikedByMe ? '#EF4444' : '#6B7280'} />
           <Text style={[styles.actionText, post.isLikedByMe && styles.actionTextLiked]}>Beğen</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.actionBtn} onPress={() => onComment(post)}>
-          <Ionicons name="chatbubble-outline" size={20} color="#6B7280" />
+          <Icon name="chatbubbleOutline" size={20} color="#6B7280" />
           <Text style={styles.actionText}>Yorum</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.actionBtn} onPress={() => onShare(post)}>
-          <Ionicons name="share-social-outline" size={20} color="#6B7280" />
+          <Icon name="shareSocialOutline" size={20} color="#6B7280" />
           <Text style={styles.actionText}>Paylaş</Text>
         </TouchableOpacity>
       </View>
@@ -247,7 +247,7 @@ export default function CafeFeedScreen() {
   if (error && posts.length === 0) {
     return (
       <View style={styles.centered}>
-        <Ionicons name="cloud-offline-outline" size={48} color="#D1D5DB" />
+        <Icon name="cloudOfflineOutline" size={48} color="#D1D5DB" />
         <Text style={styles.errorText}>{error}</Text>
         <TouchableOpacity style={styles.retryBtn} onPress={refresh}><Text style={styles.retryText}>Tekrar dene</Text></TouchableOpacity>
       </View>
@@ -259,7 +259,7 @@ export default function CafeFeedScreen() {
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Akış</Text>
         <TouchableOpacity style={styles.createBtn} onPress={() => router.push('/(cafe)/post/create' as any)}>
-          <Ionicons name="add" size={20} color="#FFFFFF" />
+          <Icon name="add" size={20} color="#FFFFFF" />
           <Text style={styles.createBtnText}>Paylaş</Text>
         </TouchableOpacity>
       </View>
@@ -271,7 +271,7 @@ export default function CafeFeedScreen() {
         ListEmptyComponent={
           !loading ? (
             <View style={styles.empty}>
-              <Ionicons name="newspaper-outline" size={52} color="#D1D5DB" />
+              <Icon name="newspaperOutline" size={52} color="#D1D5DB" />
               <Text style={styles.emptyTitle}>Feed boş</Text>
               <Text style={styles.emptyDesc}>İlk paylaşımı sen yap.</Text>
             </View>

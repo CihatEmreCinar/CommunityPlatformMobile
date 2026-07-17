@@ -11,7 +11,7 @@ import {
   Image,
   Share,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Icon } from '../../../components/ui/Icon';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { useAuth } from '../../../contexts/AuthContext';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -120,7 +120,7 @@ export default function EmployeeProfileScreen() {
             ])
           }
         >
-          <Ionicons name="log-out-outline" size={16} color="#6B7280" />
+          <Icon name="logOutOutline" size={16} color="#6B7280" />
           <Text style={styles.logoutText}>Çıkış Yap</Text>
         </TouchableOpacity>
       </View>
@@ -131,12 +131,12 @@ export default function EmployeeProfileScreen() {
 
         <View style={styles.infoCard}>
           <View style={styles.infoRow}>
-            <Ionicons name="mail-outline" size={18} color="#6B7280" />
+            <Icon name="mailOutline" size={18} color="#6B7280" />
             <Text style={styles.infoText}>{user?.email}</Text>
           </View>
           <View style={styles.separator} />
           <View style={styles.infoRow}>
-            <Ionicons name="star-outline" size={18} color="#F59E0B" />
+            <Icon name="starOutline" size={18} color="#F59E0B" />
             <Text style={styles.infoText}>{user?.xpPoints ?? 0} XP</Text>
             <View style={styles.levelChip}>
               <Text style={styles.levelText}>Seviye {user?.rankLevel ?? 1}</Text>
@@ -146,7 +146,7 @@ export default function EmployeeProfileScreen() {
             <>
               <View style={styles.separator} />
               <View style={styles.infoRow}>
-                <Ionicons name="location-outline" size={18} color="#6B7280" />
+                <Icon name="locationOutline" size={18} color="#6B7280" />
                 <Text style={styles.infoText}>{formatCityDistrict(user?.city, user?.district)}</Text>
               </View>
             </>
@@ -155,7 +155,7 @@ export default function EmployeeProfileScreen() {
             <>
               <View style={styles.separator} />
               <View style={styles.infoRow}>
-                <Ionicons name="checkmark-circle-outline" size={18} color="#10B981" />
+                <Icon name="checkmarkCircleOutline" size={18} color="#10B981" />
                 <Text style={styles.infoText}>{user.employeeProfile.totalAttendedWorkshops} tamamlanan atölye</Text>
               </View>
             </>
@@ -172,9 +172,9 @@ export default function EmployeeProfileScreen() {
             onPress={() => router.push('/(employee)/(tabs)/enrollments' as any)}
             activeOpacity={0.7}
           >
-            <Ionicons name="calendar-outline" size={20} color={ACCENT} />
+            <Icon name="calendarOutline" size={20} color={ACCENT} />
             <Text style={styles.quickText}>Kayıtlarım</Text>
-            <Ionicons name="chevron-forward" size={16} color="#9CA3AF" />
+            <Icon name="chevronForward" size={16} color="#9CA3AF" />
           </TouchableOpacity>
           <View style={styles.separator} />
           <TouchableOpacity
@@ -182,9 +182,9 @@ export default function EmployeeProfileScreen() {
             onPress={() => router.push('/(employee)/(tabs)/home' as any)}
             activeOpacity={0.7}
           >
-            <Ionicons name="search-outline" size={20} color={ACCENT} />
+            <Icon name="searchOutline" size={20} color={ACCENT} />
             <Text style={styles.quickText}>Atölyeleri Keşfet</Text>
-            <Ionicons name="chevron-forward" size={16} color="#9CA3AF" />
+            <Icon name="chevronForward" size={16} color="#9CA3AF" />
           </TouchableOpacity>
         </View>
       </View>

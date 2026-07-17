@@ -2,7 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, ScrollView, ActivityIndicator, Alert, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
-import { MaterialIcons } from '@expo/vector-icons';
+import { Icon } from '../../../components/ui/Icon';
 import { ScreenContainer } from '../../../components/layout/ScreenContainer';
 import { SpaceListingForm } from '../../../components/cafe/SpaceListingForm';
 import { Colors, Typography, Spacing, Radius, Shadows } from '../../../constants/theme';

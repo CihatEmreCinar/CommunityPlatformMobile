@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
-import { MaterialIcons } from '@expo/vector-icons';
+import { Icon } from '../ui/Icon';
 import { Colors, Typography, Spacing, Radius } from '../../constants/theme';
 import { locationService } from '../../services/locationService';
 import type { City, District, LocationSelection } from '../../types/location';
@@ -130,7 +130,7 @@ export function CityDistrictPicker({
           {citiesLoading ? (
             <ActivityIndicator size="small" color={Colors.outline} />
           ) : (
-            <MaterialIcons name="expand-more" size={20} color={Colors.outline} />
+            <Icon name="expand" size={20} color={Colors.outline} />
           )}
         </TouchableOpacity>
       </View>
@@ -154,12 +154,12 @@ export function CityDistrictPicker({
           </Text>
           {value.districtName ? (
             <TouchableOpacity onPress={clearDistrict} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-              <MaterialIcons name="close" size={16} color={Colors.outline} />
+              <Icon name="closeModal" size={16} color={Colors.outline} />
             </TouchableOpacity>
           ) : districtsLoading ? (
             <ActivityIndicator size="small" color={Colors.outline} />
           ) : (
-            <MaterialIcons name="expand-more" size={20} color={Colors.outline} />
+            <Icon name="expand" size={20} color={Colors.outline} />
           )}
         </TouchableOpacity>
       </View>

@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, RefreshControl, ActivityIndicator, TouchableOpacity, Alert } from 'react-native';
 import { useFocusEffect } from 'expo-router';
-import { MaterialIcons } from '@expo/vector-icons';
+import { Icon } from '../../../components/ui/Icon';
 import { ScreenContainer } from '../../../components/layout/ScreenContainer';
 import { Colors, Typography, Spacing, Radius, Shadows } from '../../../constants/theme';
 import { spaceBookingService, type SpaceBooking, type SpaceBookingStatus } from '../../../services/spaceBookingService';
@@ -95,7 +95,7 @@ export default function CafeBookingsScreen() {
       >
         {bookings.length === 0 ? (
           <View style={styles.emptyState}>
-            <MaterialIcons name="event-busy" size={40} color={Colors.outline} />
+            <Icon name="eventBusy" size={40} color={Colors.outline} />
             <Text style={styles.emptyTitle}>Henüz talep yok</Text>
             <Text style={styles.emptyText}>İlanlarına gelen rezervasyon talepleri burada görünecek.</Text>
           </View>
@@ -114,7 +114,7 @@ export default function CafeBookingsScreen() {
               </View>
 
               <View style={styles.metaRow}>
-                <MaterialIcons name="event" size={14} color={Colors.outline} />
+                <Icon name="event" size={14} color={Colors.outline} />
                 <Text style={styles.metaText}>
                   {new Date(item.startDateTime).toLocaleDateString('tr-TR', {
                     day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit',
@@ -125,7 +125,7 @@ export default function CafeBookingsScreen() {
               </View>
 
               <View style={styles.metaRow}>
-                <MaterialIcons name="payments" size={14} color={Colors.outline} />
+                <Icon name="payments" size={14} color={Colors.outline} />
                 <Text style={styles.metaText}>{item.totalPrice} ₺</Text>
               </View>
 

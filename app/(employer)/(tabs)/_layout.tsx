@@ -1,5 +1,5 @@
 import { Tabs } from 'expo-router';
-import { MaterialIcons } from '@expo/vector-icons';
+import { Icon, IconName } from '../../../components/ui/Icon';
 import { View, Text, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors, Typography } from '../../../constants/theme';
@@ -7,13 +7,13 @@ import { useUnreadCount } from '../../../hooks/useUnreadCount';
 
 function BadgeIcon({ count, icon, color, size }: {
   count: number;
-  icon: keyof typeof MaterialIcons.glyphMap;
+  icon: IconName;
   color: string;
   size: number;
 }) {
   return (
     <View>
-      <MaterialIcons name={icon} size={size} color={color} />
+      <Icon name={icon} size={size} color={color} />
       {count > 0 && (
         <View style={styles.badge}>
           <Text style={styles.badgeText}>
@@ -60,7 +60,7 @@ export default function EmployerTabsLayout() {
         options={{
           title: 'Panel',
           tabBarIcon: ({ color, size }) => (
-            <MaterialIcons name="dashboard" size={size} color={color} />
+            <Icon name="dashboard" size={size} color={color} />
           ),
         }}
       />
@@ -69,7 +69,7 @@ export default function EmployerTabsLayout() {
         options={{
           title: 'Akış',
           tabBarIcon: ({ color, size }) => (
-            <MaterialIcons name="dynamic-feed" size={size} color={color} />
+            <Icon name="dynamicFeed" size={size} color={color} />
           ),
         }}
       />
@@ -78,7 +78,7 @@ export default function EmployerTabsLayout() {
         options={{
           title: 'Atölyelerim',
           tabBarIcon: ({ color, size }) => (
-            <MaterialIcons name="event-note" size={size} color={color} />
+            <Icon name="eventNote" size={size} color={color} />
           ),
         }}
       />
@@ -87,7 +87,7 @@ export default function EmployerTabsLayout() {
         options={{
           title: 'Mekan Bul',
           tabBarIcon: ({ color, size }) => (
-            <MaterialIcons name="search" size={size} color={color} />
+            <Icon name="search" size={size} color={color} />
           ),
         }}
       />
@@ -110,7 +110,7 @@ export default function EmployerTabsLayout() {
         options={{
           title: 'Profil',
           tabBarIcon: ({ color, size }) => (
-            <MaterialIcons name="person" size={size} color={color} />
+            <Icon name="person" size={size} color={color} />
           ),
         }}
       />

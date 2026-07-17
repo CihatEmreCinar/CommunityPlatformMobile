@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity, Image, Alert, Platform } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { MaterialIcons } from '@expo/vector-icons';
+import { Icon } from '../../../components/ui/Icon';
 import DateTimePicker, { type DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { ScreenContainer } from '../../../components/layout/ScreenContainer';
 import { Colors, Typography, Spacing, Radius, Shadows } from '../../../constants/theme';
@@ -167,7 +167,7 @@ export default function EmployerSpaceDetailScreen() {
             </ScrollView>
           ) : (
             <View style={styles.photoPlaceholder}>
-              <MaterialIcons name="photo-library" size={32} color={Colors.outline} />
+              <Icon name="photoLibrary" size={32} color={Colors.outline} />
               <Text style={styles.photoPlaceholderText}>Fotoğraf yok</Text>
             </View>
           )}
@@ -218,7 +218,7 @@ export default function EmployerSpaceDetailScreen() {
           <Text style={styles.label}>Rezervasyon Talep Et</Text>
 
           <TouchableOpacity style={styles.dateRow} onPress={() => openPicker('start')} activeOpacity={0.7}>
-            <MaterialIcons name="event" size={18} color={Colors.onSurfaceVariant} />
+            <Icon name="event" size={18} color={Colors.onSurfaceVariant} />
             <View style={styles.dateRowText}>
               <Text style={styles.dateRowLabel}>Başlangıç</Text>
               <Text style={styles.dateRowValue}>{formatDateTime(startDateTime)}</Text>
@@ -226,7 +226,7 @@ export default function EmployerSpaceDetailScreen() {
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.dateRow} onPress={() => openPicker('end')} activeOpacity={0.7}>
-            <MaterialIcons name="event" size={18} color={Colors.onSurfaceVariant} />
+            <Icon name="event" size={18} color={Colors.onSurfaceVariant} />
             <View style={styles.dateRowText}>
               <Text style={styles.dateRowLabel}>Bitiş</Text>
               <Text style={styles.dateRowValue}>{formatDateTime(endDateTime)}</Text>

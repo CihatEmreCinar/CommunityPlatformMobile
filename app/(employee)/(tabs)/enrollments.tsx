@@ -9,7 +9,7 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { MaterialIcons } from '@expo/vector-icons';
+import { Icon } from '../../../components/ui/Icon';
 import { enrollmentService } from '../../../services/enrollmentService';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Enrollment } from '../../../types/enrollment';
@@ -91,7 +91,7 @@ export default function EnrollmentsScreen() {
 
       {enrollments.length === 0 ? (
         <View style={styles.empty}>
-          <MaterialIcons name="event-busy" size={40} color={Colors.outline} />
+          <Icon name="eventBusy" size={40} color={Colors.outline} />
           <Text style={styles.emptyText}>Henüz kayıt yok</Text>
         </View>
       ) : (
@@ -145,20 +145,20 @@ function EnrollmentCard({
       </View>
 
       <View style={styles.infoRow}>
-        <MaterialIcons name="calendar-today" size={14} color={Colors.outline} />
+        <Icon name="calendarToday" size={14} color={Colors.outline} />
         <Text style={styles.infoText}>{date}</Text>
       </View>
 
       {e.status === 'pending' && (
         <View style={styles.pendingInfo}>
-          <MaterialIcons name="hourglass-top" size={14} color={Colors.secondary} />
+          <Icon name="hourglassTop" size={14} color={Colors.secondary} />
           <Text style={styles.pendingText}>Onay bekleniyor</Text>
         </View>
       )}
 
       {canOpenTicket && (
         <View style={styles.ticketRow}>
-          <MaterialIcons name="qr-code-2" size={16} color={Colors.primary} />
+          <Icon name="qrCode2" size={16} color={Colors.primary} />
           <Text style={styles.ticketRowText}>Bileti görüntülemek için dokun</Text>
         </View>
       )}

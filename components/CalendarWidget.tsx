@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Modal, ScrollView, ActivityIndicator } from 'react-native';
-import { MaterialIcons } from '@expo/vector-icons';
+import { Icon } from './ui/Icon';
 import { Calendar, type DateData } from 'react-native-calendars';
 import { Colors, Typography, Spacing, Radius, Shadows } from '../constants/theme';
 import type { CalendarEvent } from '../services/calendarService';
@@ -85,7 +85,7 @@ export function CalendarWidget({ events, loading }: CalendarWidgetProps) {
     <>
       <TouchableOpacity style={styles.card} activeOpacity={0.85} onPress={() => setVisible(true)}>
         <View style={styles.cardIconWrap}>
-          <MaterialIcons name="calendar-today" size={22} color={Colors.primary} />
+          <Icon name="calendarToday" size={22} color={Colors.primary} />
         </View>
         <View style={styles.cardTextWrap}>
           <Text style={styles.cardTitle}>{todayLabel}</Text>
@@ -93,7 +93,7 @@ export function CalendarWidget({ events, loading }: CalendarWidgetProps) {
             {loading ? 'Yükleniyor…' : todayEvents.length === 0 ? 'Bugün etkinlik yok' : `Bugün ${todayEvents.length} etkinlik`}
           </Text>
         </View>
-        <MaterialIcons name="chevron-right" size={22} color={Colors.outline} />
+        <Icon name="chevronRight" size={22} color={Colors.outline} />
       </TouchableOpacity>
 
       <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setVisible(false)}>
@@ -101,7 +101,7 @@ export function CalendarWidget({ events, loading }: CalendarWidgetProps) {
           <View style={styles.modalHeader}>
             <Text style={styles.modalTitle}>Takvim</Text>
             <TouchableOpacity onPress={() => setVisible(false)}>
-              <MaterialIcons name="close" size={22} color={Colors.onSurface} />
+              <Icon name="closeModal" size={22} color={Colors.onSurface} />
             </TouchableOpacity>
           </View>
 
@@ -136,7 +136,7 @@ export function CalendarWidget({ events, loading }: CalendarWidgetProps) {
 
               {selectedEvents.length === 0 ? (
                 <View style={styles.emptyDay}>
-                  <MaterialIcons name="event-busy" size={28} color={Colors.outline} />
+                  <Icon name="eventBusy" size={28} color={Colors.outline} />
                   <Text style={styles.emptyDayText}>Bu gün için etkinlik yok</Text>
                 </View>
               ) : (

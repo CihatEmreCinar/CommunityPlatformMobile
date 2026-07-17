@@ -10,7 +10,7 @@ import {
   Alert,
 } from 'react-native';
 import { useRouter, useFocusEffect, useLocalSearchParams } from 'expo-router';
-import { MaterialIcons } from '@expo/vector-icons';
+import { Icon } from '../../../components/ui/Icon';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { workshopService } from '../../../services/workshopService';
 import { Workshop } from '../../../types/workshop';
@@ -108,20 +108,20 @@ export default function MyWorkshopsScreen() {
         {/* Header */}
         <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <MaterialIcons name="arrow-back" size={22} color={Colors.onSurface} />
+          <Icon name="arrowBack" size={22} color={Colors.onSurface} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Atölyelerim</Text>
         <TouchableOpacity
           onPress={() => router.push('/(employer)/workshop/create')}
           style={styles.addButton}
         >
-          <MaterialIcons name="add" size={22} color={Colors.onPrimary} />
+          <Icon name="addAction" size={22} color={Colors.onPrimary} />
         </TouchableOpacity>
       </View>
 
       {workshops.length === 0 ? (
         <View style={styles.emptyState}>
-          <MaterialIcons name="event-note" size={40} color={Colors.outline} />
+          <Icon name="eventNote" size={40} color={Colors.outline} />
           <Text style={styles.emptyTitle}>Henüz atölyen yok</Text>
           <Text style={styles.emptyText}>İlk atölyeni oluşturarak başla</Text>
         </View>
@@ -147,7 +147,7 @@ export default function MyWorkshopsScreen() {
                     onPress={() => router.push(`/(employer)/workshop/edit/${workshop.id}` as any)}
                     hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                   >
-                    <MaterialIcons name="edit" size={16} color={Colors.onSurfaceVariant} />
+                    <Icon name="edit" size={16} color={Colors.onSurfaceVariant} />
                   </TouchableOpacity>
                   <View
                     style={[
@@ -167,14 +167,14 @@ export default function MyWorkshopsScreen() {
 
               <View style={styles.cardMeta}>
                 <View style={styles.metaItem}>
-                  <MaterialIcons name="groups" size={14} color={Colors.outline} />
+                  <Icon name="groups" size={14} color={Colors.outline} />
                   <Text style={styles.metaText}>
                     {workshop.enrolledCount}/{workshop.capacity} kişi
                   </Text>
                 </View>
                 {workshop.avgRating > 0 && (
                   <View style={styles.metaItem}>
-                    <MaterialIcons name="star" size={14} color={Colors.amber} />
+                    <Icon name="star" size={14} color={Colors.amber} />
                     <Text style={styles.metaText}>{workshop.avgRating.toFixed(1)}</Text>
                   </View>
                 )}
@@ -191,7 +191,7 @@ export default function MyWorkshopsScreen() {
                       <ActivityIndicator size="small" color={Colors.onPrimary} />
                     ) : (
                       <>
-                        <MaterialIcons name="publish" size={16} color={Colors.onPrimary} />
+                        <Icon name="publish" size={16} color={Colors.onPrimary} />
                         <Text style={styles.publishButtonText}>Yayınla</Text>
                       </>
                     )}

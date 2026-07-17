@@ -9,7 +9,7 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { MaterialIcons } from '@expo/vector-icons';
+import { Icon, IconName } from '../../../components/ui/Icon';
 import { useAuth } from '../../../contexts/AuthContext';
 import { employerService } from '../../../services/employerService';import { enrollmentService } from '../../../services/enrollmentService';
 import { workshopService } from '../../../services/workshopService';import { EmployerDashboard } from '../../../types/dashboard';
@@ -130,14 +130,14 @@ export default function EmployerDashboardScreen() {
           </Text>
         </View>
         <TouchableOpacity onPress={handleLogout} style={styles.logoutButton}>
-          <MaterialIcons name="logout" size={20} color={Colors.onSurfaceVariant} />
+          <Icon name="logout" size={20} color={Colors.onSurfaceVariant} />
         </TouchableOpacity>
       </View>
 
       {/* Rank Card */}
       <View style={styles.rankCard}>
         <View style={styles.rankBadge}>
-          <MaterialIcons name="workspace-premium" size={28} color={Colors.onPrimary} />
+          <Icon name="workspacePremium" size={28} color={Colors.onPrimary} />
         </View>
         <View style={styles.rankInfo}>
           <Text style={styles.rankLabel}>Atölyeci Seviyesi</Text>
@@ -152,21 +152,21 @@ export default function EmployerDashboardScreen() {
       {/* Stats Grid */}
       <View style={styles.statsGrid}>
         <StatCard
-          icon="event-available"
+          icon="eventAvailable"
           label="Aktif Atölye"
           value={dashboard?.activeWorkshops ?? fallbackCounts.activeWorkshops ?? 0}
           color={Colors.primary}
           onPress={() => router.push('/(employer)/workshop?status=published' as any)}
         />
         <StatCard
-          icon="library-books"
+          icon="libraryBooks"
           label="Toplam Atölye"
           value={dashboard?.totalWorkshops ?? fallbackCounts.totalWorkshops ?? 0}
           color={Colors.secondary}
           onPress={() => router.push('/(employer)/workshop' as any)}
         />
         <StatCard
-          icon="how-to-reg"
+          icon="howToReg"
           label="Bekleyen Kayıt"
           value={dashboard?.pendingEnrollments ?? fallbackCounts.pendingEnrollments ?? 0}
           color={Colors.amber}
@@ -190,7 +190,7 @@ export default function EmployerDashboardScreen() {
           </Text>
         </View>
         <View style={styles.ratingRight}>
-          <MaterialIcons name="star" size={22} color={Colors.amber} />
+          <Icon name="star" size={22} color={Colors.amber} />
           <Text style={styles.ratingValue}>
             {dashboard?.avgRating ? dashboard.avgRating.toFixed(1) : '—'}
           </Text>
@@ -204,7 +204,7 @@ export default function EmployerDashboardScreen() {
       <Text style={styles.sectionTitle}>Hızlı İşlemler</Text>
       <View style={styles.actionsRow}>
         <ActionButton
-          icon="add-circle-outline"
+          icon="addCircleOutline"
           label="Atölye Oluştur"
           onPress={() => router.push('/(employer)/workshop/create')}
         />
@@ -221,14 +221,14 @@ export default function EmployerDashboardScreen() {
           onPress={() => router.push('/(employer)/(tabs)/search')}
         />
         <ActionButton
-          icon="list-alt"
+          icon="listAlt"
           label="Atölyelerim"
           onPress={() => router.push('/(employer)/workshop')}
         />
       </View>
       <View style={styles.actionsRow}>
         <ActionButton
-          icon="event-available"
+          icon="eventAvailable"
           label="Rezervasyonlarım"
           onPress={() => router.push('/(employer)/bookings')}
         />
@@ -244,7 +244,7 @@ function StatCard({
   color,
   onPress,
 }: {
-  icon: keyof typeof MaterialIcons.glyphMap;
+  icon: IconName;
   label: string;
   value: number;
   color: string;
@@ -253,7 +253,7 @@ function StatCard({
   const content = (
     <View style={styles.statCard}>
       <View style={[styles.statIconWrap, { backgroundColor: color + '1A' }]}> 
-        <MaterialIcons name={icon} size={20} color={color} />
+        <Icon name={icon} size={20} color={color} />
       </View>
       <Text style={styles.statValue}>{value}</Text>
       <Text style={styles.statLabel}>{label}</Text>
@@ -276,13 +276,13 @@ function ActionButton({
   label,
   onPress,
 }: {
-  icon: keyof typeof MaterialIcons.glyphMap;
+  icon: IconName;
   label: string;
   onPress: () => void;
 }) {
   return (
     <TouchableOpacity style={styles.actionButton} activeOpacity={0.85} onPress={onPress}>
-      <MaterialIcons name={icon} size={20} color={Colors.primary} />
+      <Icon name={icon} size={20} color={Colors.primary} />
       <Text style={styles.actionLabel}>{label}</Text>
     </TouchableOpacity>
   );

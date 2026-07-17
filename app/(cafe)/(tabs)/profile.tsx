@@ -13,7 +13,7 @@ import type { SpaceBookingReview } from '../../../types/spaceBookingReview';
 import type { UserSocialStats } from '../../../types/post.types';
 import { Colors, Typography, Spacing, Radius, Shadows } from '../../../constants/theme';
 import { useAuth } from '../../../contexts/AuthContext';
-import { Ionicons, MaterialIcons } from '@expo/vector-icons';
+import { Icon } from '../../../components/ui/Icon';
 import type { Category } from '../../../types/category';
 import { EMPTY_LOCATION_SELECTION, type LocationSelection } from '../../../types/location';
 import { useCurrentLocation } from '../../../hooks/useCurrentLocation';
@@ -269,7 +269,7 @@ export default function CafeProfileScreen() {
               {locating ? (
                 <ActivityIndicator size="small" color={Colors.primary} />
               ) : (
-                <MaterialIcons name="my-location" size={16} color={Colors.primary} />
+                <Icon name="myLocation" size={16} color={Colors.primary} />
               )}
               <Text style={styles.locationBtnText}>
                 {latitude != null && longitude != null ? 'Konumu Güncelle' : 'Konumumu Kullan'}
@@ -305,7 +305,7 @@ export default function CafeProfileScreen() {
             extra={
               !!profile?.avgRating && profile.avgRating > 0 ? (
                 <View style={styles.ratingRow}>
-                  <MaterialIcons name="star" size={16} color={Colors.amber} />
+                  <Icon name="star" size={16} color={Colors.amber} />
                   <Text style={styles.ratingText}>
                     {profile.avgRating.toFixed(1)} ({profile.reviewCount ?? 0} değerlendirme)
                   </Text>
@@ -324,7 +324,7 @@ export default function CafeProfileScreen() {
                 ])
               }
             >
-              <Ionicons name="log-out-outline" size={16} color={Colors.onSurfaceVariant} />
+              <Icon name="logOutOutline" size={16} color={Colors.onSurfaceVariant} />
               <Text style={styles.logoutText}>Çıkış Yap</Text>
             </TouchableOpacity>
 
@@ -337,7 +337,7 @@ export default function CafeProfileScreen() {
                   onPress={() => openMapsForCoordinate(profile.latitude!, profile.longitude!, profile.name)}
                   activeOpacity={0.7}
                 >
-                  <MaterialIcons name="map" size={16} color={Colors.primary} />
+                  <Icon name="map" size={16} color={Colors.primary} />
                   <Text style={styles.mapLinkText}>Haritada Göster</Text>
                 </TouchableOpacity>
               )}
@@ -358,9 +358,9 @@ export default function CafeProfileScreen() {
                       <Text style={styles.reviewUserName}>{r.userName}</Text>
                       <View style={{ flexDirection: 'row' }}>
                         {[1, 2, 3, 4, 5].map((star) => (
-                          <MaterialIcons
+                          <Icon
                             key={star}
-                            name={star <= r.rating ? 'star' : 'star-border'}
+                            name={star <= r.rating ? 'star' : 'starEmpty'}
                             size={14}
                             color={Colors.amber}
                           />

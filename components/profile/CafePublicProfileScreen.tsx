@@ -11,7 +11,7 @@ import {
   Share,
   Alert,
 } from 'react-native';
-import { Ionicons, MaterialIcons } from '@expo/vector-icons';
+import { Icon } from '../ui/Icon';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { socialService } from '../../services/socialService';
@@ -60,15 +60,15 @@ function PostCard({ post, onLike }: { post: Post; onLike: (id: string) => void }
       )}
       <View style={styles.postMeta}>
         <TouchableOpacity style={styles.postAction} onPress={() => onLike(post.id)}>
-          <Ionicons
-            name={post.isLikedByMe ? 'heart' : 'heart-outline'}
+          <Icon
+            name={post.isLikedByMe ? 'heartFilled' : 'heartOutline'}
             size={16}
             color={post.isLikedByMe ? '#EF4444' : '#9CA3AF'}
           />
           <Text style={styles.postActionText}>{post.likeCount}</Text>
         </TouchableOpacity>
         <View style={styles.postAction}>
-          <Ionicons name="chatbubble-outline" size={16} color="#9CA3AF" />
+          <Icon name="chatbubbleOutline" size={16} color="#9CA3AF" />
           <Text style={styles.postActionText}>{post.commentCount}</Text>
         </View>
         <Text style={styles.postTime}>{formatNotificationTime(post.publishedAt ?? '')}</Text>
@@ -229,13 +229,13 @@ export function CafePublicProfileScreen({ cafeId }: { cafeId: string }) {
     <View>
       <View style={styles.topBar}>
         <TouchableOpacity onPress={() => router.back()} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-          <Ionicons name="arrow-back" size={24} color="#111827" />
+          <Icon name="arrowBackAlt" size={24} color="#111827" />
         </TouchableOpacity>
         <TouchableOpacity
           onPress={() => Share.share({ message: `Atolium'da bu kafeyi keşfet!` })}
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
         >
-          <Ionicons name="share-social-outline" size={22} color="#374151" />
+          <Icon name="shareSocialOutline" size={22} color="#374151" />
         </TouchableOpacity>
       </View>
 
@@ -261,7 +261,7 @@ export function CafePublicProfileScreen({ cafeId }: { cafeId: string }) {
         extra={
           !!profile?.avgRating && profile.avgRating > 0 ? (
             <View style={styles.ratingRow}>
-              <MaterialIcons name="star" size={16} color={Colors.amber} />
+              <Icon name="star" size={16} color={Colors.amber} />
               <Text style={styles.ratingText}>
                 {profile.avgRating.toFixed(1)} ({profile.reviewCount ?? 0} değerlendirme)
               </Text>
@@ -272,7 +272,7 @@ export function CafePublicProfileScreen({ cafeId }: { cafeId: string }) {
 
       {profile?.address ? (
         <View style={styles.addressRow}>
-          <Ionicons name="location-outline" size={16} color={Colors.onSurfaceVariant} />
+          <Icon name="locationOutline" size={16} color={Colors.onSurfaceVariant} />
           <Text style={styles.addressText}>{profile.address}</Text>
           {profile.latitude != null && profile.longitude != null && (
             <TouchableOpacity
@@ -298,9 +298,9 @@ export function CafePublicProfileScreen({ cafeId }: { cafeId: string }) {
                 <Text style={styles.reviewUserName}>{r.userName}</Text>
                 <View style={{ flexDirection: 'row' }}>
                   {[1, 2, 3, 4, 5].map((star) => (
-                    <MaterialIcons
+                    <Icon
                       key={star}
-                      name={star <= r.rating ? 'star' : 'star-border'}
+                      name={star <= r.rating ? 'star' : 'starEmpty'}
                       size={13}
                       color={Colors.amber}
                     />
@@ -314,7 +314,7 @@ export function CafePublicProfileScreen({ cafeId }: { cafeId: string }) {
       </View>
 
       <View style={styles.postsSectionHeader}>
-        <Ionicons name="grid-outline" size={16} color="#6B7280" />
+        <Icon name="gridOutline" size={16} color="#6B7280" />
         <Text style={styles.postsSectionTitle}>Gönderiler</Text>
       </View>
     </View>
@@ -330,7 +330,7 @@ export function CafePublicProfileScreen({ cafeId }: { cafeId: string }) {
         ListEmptyComponent={
           !loadingPosts ? (
             <View style={styles.empty}>
-              <Ionicons name="newspaper-outline" size={44} color="#D1D5DB" />
+              <Icon name="newspaperOutline" size={44} color="#D1D5DB" />
               <Text style={styles.emptyText}>Henüz gönderi paylaşılmamış</Text>
             </View>
           ) : null

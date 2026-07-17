@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Icon } from '../ui/Icon';
 import { Colors, Typography, Spacing, Radius } from '../../constants/theme';
 import { CoverImage } from './CoverImage';
 import { ProfileAvatar } from './ProfileAvatar';
@@ -102,7 +102,7 @@ export function ProfileHeader({
 
         {city ? (
           <View style={styles.locationRow}>
-            <Ionicons name="location-outline" size={14} color={Colors.onSurfaceVariant} />
+            <Icon name="locationOutline" size={14} color={Colors.onSurfaceVariant} />
             <Text style={styles.locationText}>{city}</Text>
           </View>
         ) : null}

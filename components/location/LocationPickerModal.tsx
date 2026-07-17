@@ -9,7 +9,7 @@ import {
   ActivityIndicator,
   StyleSheet,
 } from 'react-native';
-import { Ionicons, MaterialIcons } from '@expo/vector-icons';
+import { Icon } from '../ui/Icon';
 import { Colors, Typography, Spacing, Radius } from '../../constants/theme';
 
 export interface LocationPickerItem {
@@ -74,12 +74,12 @@ export function LocationPickerModal({
         <View style={styles.header}>
           <Text style={styles.title}>{title}</Text>
           <TouchableOpacity onPress={handleClose} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-            <MaterialIcons name="close" size={22} color={Colors.onSurface} />
+            <Icon name="closeModal" size={22} color={Colors.onSurface} />
           </TouchableOpacity>
         </View>
 
         <View style={styles.searchWrap}>
-          <Ionicons name="search" size={16} color={Colors.outline} style={styles.searchIcon} />
+          <Icon name="searchInput" size={16} color={Colors.outline} style={styles.searchIcon} />
           <TextInput
             style={styles.searchInput}
             placeholder={searchPlaceholder}
@@ -91,7 +91,7 @@ export function LocationPickerModal({
           />
           {query.length > 0 && (
             <TouchableOpacity onPress={() => setQuery('')} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-              <Ionicons name="close-circle" size={16} color={Colors.outline} />
+              <Icon name="closeCircle" size={16} color={Colors.outline} />
             </TouchableOpacity>
           )}
         </View>
@@ -102,7 +102,7 @@ export function LocationPickerModal({
           </View>
         ) : errorMessage ? (
           <View style={styles.centered}>
-            <MaterialIcons name="error-outline" size={28} color={Colors.error} />
+            <Icon name="errorOutline" size={28} color={Colors.error} />
             <Text style={styles.errorText}>{errorMessage}</Text>
           </View>
         ) : (
@@ -128,7 +128,7 @@ export function LocationPickerModal({
                   <Text style={[styles.rowText, isSelected && styles.rowTextSelected]}>{item.name}</Text>
                   {item.subtitle ? <Text style={styles.rowSubtitle}>{item.subtitle}</Text> : null}
                   {isSelected ? (
-                    <MaterialIcons name="check" size={18} color={Colors.primary} style={styles.checkIcon} />
+                    <Icon name="check" size={18} color={Colors.primary} style={styles.checkIcon} />
                   ) : null}
                 </TouchableOpacity>
               );

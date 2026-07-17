@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import * as Location from 'expo-location';
-import { MaterialIcons } from '@expo/vector-icons';
+import { Icon } from '../../../components/ui/Icon';
 import { useAuth } from '../../../contexts/AuthContext';
 import { workshopService } from '../../../services/workshopService';
 import { Workshop } from '../../../types/workshop';
@@ -130,7 +130,7 @@ export default function EmployeeHomeScreen() {
       onPress={() => router.push('/(employee)/profile')}
       style={styles.iconButton}
     >
-      <MaterialIcons
+      <Icon
         name="person"
         size={22}
         color={Colors.onSurfaceVariant}
@@ -141,7 +141,7 @@ export default function EmployeeHomeScreen() {
       onPress={handleLogout}
       style={styles.iconButton}
     >
-      <MaterialIcons
+      <Icon
         name="logout"
         size={20}
         color={Colors.onSurfaceVariant}
@@ -156,14 +156,14 @@ export default function EmployeeHomeScreen() {
           <Text style={styles.subGreeting}>Bugün ne keşfetmek istersin?</Text>
         </View>
         <TouchableOpacity onPress={handleLogout} style={styles.logoutButton}>
-          <MaterialIcons name="logout" size={20} color={Colors.onSurfaceVariant} />
+          <Icon name="logout" size={20} color={Colors.onSurfaceVariant} />
         </TouchableOpacity>
       </View>*/}
 
       {/* XP Card */}
       <View style={styles.xpCard}>
         <View style={styles.xpIconWrap}>
-          <MaterialIcons name="bolt" size={24} color={Colors.onPrimary} />
+          <Icon name="bolt" size={24} color={Colors.onPrimary} />
         </View>
         <View style={styles.xpInfo}>
           <Text style={styles.xpCardLabel}>Toplam Deneyim Puanın</Text>
@@ -207,7 +207,7 @@ export default function EmployeeHomeScreen() {
               {locatingForNearby ? (
                 <ActivityIndicator size="small" color={Colors.primary} />
               ) : (
-                <MaterialIcons name="my-location" size={14} color={Colors.primary} />
+                <Icon name="myLocation" size={14} color={Colors.primary} />
               )}
               <Text style={styles.gpsButtonText}>
                 {nearbyUsingGps ? 'Konumu Güncelle' : 'Konumuma Göre Sırala'}
@@ -237,7 +237,7 @@ export default function EmployeeHomeScreen() {
       <View style={styles.workshopList}>
         {allWorkshops.length === 0 ? (
           <View style={styles.emptyState}>
-            <MaterialIcons name="search-off" size={32} color={Colors.outline} />
+            <Icon name="searchOff" size={32} color={Colors.outline} />
             <Text style={styles.emptyText}>Henüz atölye bulunamadı</Text>
           </View>
         ) : (
@@ -263,14 +263,14 @@ function NearbyCard({ workshop, onPress }: { workshop: Workshop; onPress: () => 
   return (
     <TouchableOpacity style={styles.recCard} onPress={onPress} activeOpacity={0.85}>
       <View style={styles.recImagePlaceholder}>
-        <MaterialIcons name={workshop.locationType === 'online' ? 'videocam' : 'place'} size={28} color={Colors.primary} />
+        <Icon name={workshop.locationType === 'online' ? 'videocam' : 'place'} size={28} color={Colors.primary} />
       </View>
       <Text style={styles.recTitle} numberOfLines={2}>
         {workshop.title}
       </Text>
       {locationLabel ? (
         <View style={styles.nearbyLocationRow}>
-          <MaterialIcons name="location-on" size={11} color={Colors.onSurfaceVariant} />
+          <Icon name="locationOn" size={11} color={Colors.onSurfaceVariant} />
           <Text style={styles.nearbyLocationText} numberOfLines={1}>{locationLabel}</Text>
         </View>
       ) : null}
@@ -278,13 +278,13 @@ function NearbyCard({ workshop, onPress }: { workshop: Workshop; onPress: () => 
         <Text style={styles.recPrice}>{workshop.price} ₺</Text>
         {workshop.distanceKm != null ? (
           <View style={styles.recRating}>
-            <MaterialIcons name="directions-walk" size={12} color={Colors.onSurfaceVariant} />
+            <Icon name="directionsWalk" size={12} color={Colors.onSurfaceVariant} />
             <Text style={styles.recRatingText}>{workshop.distanceKm.toFixed(1)} km</Text>
           </View>
         ) : (
           workshop.avgRating > 0 && (
             <View style={styles.recRating}>
-              <MaterialIcons name="star" size={12} color={Colors.amber} />
+              <Icon name="star" size={12} color={Colors.amber} />
               <Text style={styles.recRatingText}>{workshop.avgRating.toFixed(1)}</Text>
             </View>
           )
@@ -298,7 +298,7 @@ function RecommendedCard({ workshop, onPress }: { workshop: Workshop; onPress: (
   return (
     <TouchableOpacity style={styles.recCard} onPress={onPress} activeOpacity={0.85}>
       <View style={styles.recImagePlaceholder}>
-        <MaterialIcons name="palette" size={28} color={Colors.primary} />
+        <Icon name="palette" size={28} color={Colors.primary} />
       </View>
       <Text style={styles.recTitle} numberOfLines={2}>
         {workshop.title}
@@ -307,7 +307,7 @@ function RecommendedCard({ workshop, onPress }: { workshop: Workshop; onPress: (
         <Text style={styles.recPrice}>{workshop.price} ₺</Text>
         {workshop.avgRating > 0 && (
           <View style={styles.recRating}>
-            <MaterialIcons name="star" size={12} color={Colors.amber} />
+            <Icon name="star" size={12} color={Colors.amber} />
             <Text style={styles.recRatingText}>{workshop.avgRating.toFixed(1)}</Text>
           </View>
         )}
@@ -328,7 +328,7 @@ function WorkshopListItem({ workshop, onPress }: { workshop: Workshop; onPress: 
   return (
     <TouchableOpacity style={styles.listItem} onPress={onPress} activeOpacity={0.85}>
       <View style={styles.listImagePlaceholder}>
-        <MaterialIcons name="event" size={22} color={Colors.primary} />
+        <Icon name="event" size={22} color={Colors.primary} />
       </View>
       <View style={styles.listInfo}>
         <Text style={styles.listTitle} numberOfLines={1}>
@@ -339,11 +339,11 @@ function WorkshopListItem({ workshop, onPress }: { workshop: Workshop; onPress: 
         </Text>
         <View style={styles.listMetaRow}>
           <View style={styles.listMetaItem}>
-            <MaterialIcons name="calendar-today" size={12} color={Colors.outline} />
+            <Icon name="calendarToday" size={12} color={Colors.outline} />
             <Text style={styles.listMetaText}>{formattedDate}</Text>
           </View>
           <View style={styles.listMetaItem}>
-            <MaterialIcons
+            <Icon
               name={workshop.locationType === 'online' ? 'videocam' : 'place'}
               size={12}
               color={Colors.outline}

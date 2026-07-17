@@ -11,7 +11,7 @@ import {
   Alert,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { MaterialIcons } from '@expo/vector-icons';
+import { Icon } from '../../../components/ui/Icon';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ticketService } from '../../../services/ticketService';
@@ -86,13 +86,13 @@ export default function ParticipantsScreen() {
     <SafeAreaView style={styles.flex} edges={['top', 'bottom']}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <MaterialIcons name="arrow-back" size={22} color={Colors.onSurface} />
+          <Icon name="arrowBack" size={22} color={Colors.onSurface} />
         </TouchableOpacity>
         <Text style={styles.headerTitle} numberOfLines={1}>
           {title || 'Katılımcılar'}
         </Text>
         <TouchableOpacity onPress={() => setScannerOpen(true)} style={styles.scanButton}>
-          <MaterialIcons name="qr-code-scanner" size={22} color={Colors.onPrimary} />
+          <Icon name="qrCodeScanner" size={22} color={Colors.onPrimary} />
         </TouchableOpacity>
       </View>
 
@@ -131,14 +131,14 @@ export default function ParticipantsScreen() {
         >
           {filtered.length === 0 ? (
             <View style={styles.empty}>
-              <MaterialIcons name="people-outline" size={40} color={Colors.outline} />
+              <Icon name="peopleOutline" size={40} color={Colors.outline} />
               <Text style={styles.emptyText}>Bu sekmede katılımcı yok</Text>
             </View>
           ) : (
             filtered.map((p) => (
               <View key={p.id} style={styles.card}>
                 <View style={styles.cardRow}>
-                  <MaterialIcons name="person" size={20} color={Colors.onSurfaceVariant} />
+                  <Icon name="person" size={20} color={Colors.onSurfaceVariant} />
                   <Text style={styles.participantName}>{p.userName}</Text>
                 </View>
                 {p.attendedAt && (
@@ -275,7 +275,7 @@ function ScannerModal({
 
         <View style={styles.scannerHeader}>
           <TouchableOpacity onPress={onClose} style={styles.scannerCloseBtn}>
-            <MaterialIcons name="close" size={24} color="#FFFFFF" />
+            <Icon name="closeModal" size={24} color="#FFFFFF" />
           </TouchableOpacity>
           <Text style={styles.scannerTitle}>QR Tara</Text>
           <View style={{ width: 40 }} />
@@ -285,7 +285,7 @@ function ScannerModal({
           <View style={styles.previewSheet}>
             {preview.alreadyUsed && (
               <View style={styles.warningRow}>
-                <MaterialIcons name="warning" size={16} color={Colors.error} />
+                <Icon name="warning" size={16} color={Colors.error} />
                 <Text style={styles.warningText}>Bu bilet zaten kullanılmış</Text>
               </View>
             )}

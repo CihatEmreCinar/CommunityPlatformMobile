@@ -14,7 +14,7 @@ import {
   Platform,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { MaterialIcons } from '@expo/vector-icons';
+import { Icon } from '../../components/ui/Icon';
 import { spaceBookingService, type SpaceBooking, type SpaceBookingStatus } from '../../services/spaceBookingService';
 import { spaceBookingReviewService } from '../../services/spaceBookingReviewService';
 import { Colors, Typography, Spacing, Radius, Shadows } from '../../constants/theme';
@@ -109,7 +109,7 @@ export default function EmployerBookingsScreen() {
       >
         <View style={styles.header}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-            <MaterialIcons name="arrow-back" size={22} color={Colors.onSurface} />
+            <Icon name="arrowBack" size={22} color={Colors.onSurface} />
           </TouchableOpacity>
           <Text style={styles.title}>Rezervasyonlarım</Text>
           <View style={{ width: 40 }} />
@@ -117,7 +117,7 @@ export default function EmployerBookingsScreen() {
 
         {bookings.length === 0 ? (
           <View style={styles.emptyState}>
-            <MaterialIcons name="event-busy" size={40} color={Colors.outline} />
+            <Icon name="eventBusy" size={40} color={Colors.outline} />
             <Text style={styles.emptyTitle}>Rezervasyon yok</Text>
             <Text style={styles.emptyText}>Bir mekan bulup rezervasyon talebi oluşturabilirsin.</Text>
           </View>
@@ -137,7 +137,7 @@ export default function EmployerBookingsScreen() {
                 </View>
 
                 <View style={styles.metaRow}>
-                  <MaterialIcons name="event" size={14} color={Colors.outline} />
+                  <Icon name="event" size={14} color={Colors.outline} />
                   <Text style={styles.metaText}>
                     {new Date(item.startDateTime).toLocaleDateString('tr-TR', {
                       day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit',
@@ -148,7 +148,7 @@ export default function EmployerBookingsScreen() {
                 </View>
 
                 <View style={styles.metaRow}>
-                  <MaterialIcons name="payments" size={14} color={Colors.outline} />
+                  <Icon name="payments" size={14} color={Colors.outline} />
                   <Text style={styles.metaText}>{item.totalPrice} ₺</Text>
                 </View>
 
@@ -170,7 +170,7 @@ export default function EmployerBookingsScreen() {
                       style={[styles.actionButton, styles.reviewButton]}
                       onPress={() => setReviewTarget(item)}
                     >
-                      <MaterialIcons name="star-rate" size={16} color={Colors.onPrimary} />
+                      <Icon name="starRate" size={16} color={Colors.onPrimary} />
                       <Text style={styles.actionText}>Değerlendir</Text>
                     </TouchableOpacity>
                   </View>
@@ -248,7 +248,7 @@ function SpaceBookingReviewModal({
         <View style={styles.modalHeader}>
           <Text style={styles.modalTitle}>Kafeyi Değerlendir</Text>
           <TouchableOpacity onPress={onClose}>
-            <MaterialIcons name="close" size={22} color={Colors.onSurface} />
+            <Icon name="closeModal" size={22} color={Colors.onSurface} />
           </TouchableOpacity>
         </View>
 
@@ -259,8 +259,8 @@ function SpaceBookingReviewModal({
           <View style={styles.starRow}>
             {[1, 2, 3, 4, 5].map((star) => (
               <TouchableOpacity key={star} onPress={() => setRating(star)}>
-                <MaterialIcons
-                  name={star <= rating ? 'star' : 'star-border'}
+                <Icon
+                  name={star <= rating ? 'star' : 'starEmpty'}
                   size={36}
                   color={Colors.amber}
                 />

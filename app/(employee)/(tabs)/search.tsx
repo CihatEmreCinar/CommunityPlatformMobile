@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { View, Text, TextInput, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
-import { MaterialIcons } from '@expo/vector-icons';
+import { Icon } from '../../../components/ui/Icon';
 import { ScreenContainer } from '../../../components/layout/ScreenContainer';
 import { KeyboardAwareScreen } from '../../../components/layout/KeyboardAwareScreen';
 import { CollapsibleFilterPanel } from '../../../components/layout/CollapsibleFilterPanel';
@@ -174,7 +174,7 @@ export default function EmployeeSearchTabScreen() {
           )}
 
           <TouchableOpacity style={styles.searchButton} onPress={() => executeSearch(1, false)} activeOpacity={0.85}>
-            <MaterialIcons name="search" size={20} color={Colors.onPrimary} />
+            <Icon name="search" size={20} color={Colors.onPrimary} />
             <Text style={styles.searchButtonText}>Ara</Text>
           </TouchableOpacity>
         </CollapsibleFilterPanel>
@@ -201,7 +201,7 @@ export default function EmployeeSearchTabScreen() {
                 activeOpacity={0.85}
               >
                 <View style={styles.imagePlaceholder}>
-                  <MaterialIcons name="event" size={24} color={Colors.primary} />
+                  <Icon name="event" size={24} color={Colors.primary} />
                 </View>
                 <View style={styles.cardBody}>
                   <Text style={styles.cardTitle} numberOfLines={1}>{workshop.title}</Text>

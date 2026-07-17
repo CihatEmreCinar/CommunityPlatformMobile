@@ -3,7 +3,7 @@ import {
   View, Text, FlatList, TouchableOpacity, StyleSheet,
   ActivityIndicator, Alert, RefreshControl, ScrollView, Image, Share,
 } from 'react-native';
-import { Ionicons, MaterialIcons } from '@expo/vector-icons';
+import { Icon } from '../../../components/ui/Icon';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../../../contexts/AuthContext';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -43,7 +43,7 @@ function MyPostCard({ post, onEdit, onDelete }: {
         <Text style={styles.postContent} numberOfLines={3}>{post.caption}</Text>
         {post.workshopTitle ? (
           <View style={styles.workshopTag}>
-            <Ionicons name="briefcase-outline" size={11} color="#6B7280" />
+            <Icon name="briefcaseOutline" size={11} color="#6B7280" />
             <Text style={styles.workshopTagText} numberOfLines={1}>{post.workshopTitle}</Text>
           </View>
         ) : null}
@@ -63,9 +63,9 @@ function MyPostCard({ post, onEdit, onDelete }: {
         )}
         <View style={styles.postMeta}>
           <View style={styles.postStats}>
-            <Ionicons name="heart-outline" size={13} color="#9CA3AF" />
+            <Icon name="heartOutline" size={13} color="#9CA3AF" />
             <Text style={styles.postStatText}>{post.likeCount}</Text>
-            <Ionicons name="chatbubble-outline" size={13} color="#9CA3AF" />
+            <Icon name="chatbubbleOutline" size={13} color="#9CA3AF" />
             <Text style={styles.postStatText}>{post.commentCount}</Text>
           </View>
           <Text style={styles.postTime}>{formatNotificationTime(post.publishedAt ?? '')}</Text>
@@ -73,10 +73,10 @@ function MyPostCard({ post, onEdit, onDelete }: {
       </View>
       <View style={styles.postCardActions}>
         <TouchableOpacity onPress={() => onEdit(post.id)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} style={styles.postActionBtn}>
-          <Ionicons name="pencil-outline" size={18} color={ACCENT} />
+          <Icon name="pencilOutline" size={18} color={ACCENT} />
         </TouchableOpacity>
         <TouchableOpacity onPress={() => onDelete(post.id)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} style={styles.postActionBtn}>
-          <Ionicons name="trash-outline" size={18} color="#EF4444" />
+          <Icon name="trashOutline" size={18} color="#EF4444" />
         </TouchableOpacity>
       </View>
     </View>
@@ -212,7 +212,7 @@ export default function EmployerProfileScreen() {
           <>
             {profile?.workshopTitle ? (
               <View style={styles.workshopTitleRow}>
-                <Ionicons name="briefcase-outline" size={13} color="#6B7280" />
+                <Icon name="briefcaseOutline" size={13} color="#6B7280" />
                 <Text style={styles.workshopTitleText}>{profile.workshopTitle}</Text>
               </View>
             ) : null}
@@ -229,7 +229,7 @@ export default function EmployerProfileScreen() {
 
       <View style={styles.quickActionsRow}>
         <TouchableOpacity style={styles.newPostBtn} onPress={() => router.push('/(employer)/post/create' as any)}>
-          <Ionicons name="add" size={16} color="#FFFFFF" />
+          <Icon name="add" size={16} color="#FFFFFF" />
           <Text style={styles.newPostBtnText}>Yeni Gönderi</Text>
         </TouchableOpacity>
         <TouchableOpacity
@@ -239,17 +239,17 @@ export default function EmployerProfileScreen() {
             { text: 'Çıkış', style: 'destructive', onPress: handleLogout },
           ])}
         >
-          <Ionicons name="log-out-outline" size={18} color="#6B7280" />
+          <Icon name="logOutOutline" size={18} color="#6B7280" />
         </TouchableOpacity>
       </View>
 
       <View style={styles.tabBar}>
         <TouchableOpacity style={[styles.tab, activeTab === 'posts' && styles.tabActive]} onPress={() => setActiveTab('posts')}>
-          <MaterialIcons name="grid-on" size={18} color={activeTab === 'posts' ? ACCENT : '#9CA3AF'} />
+          <Icon name="gridOn" size={18} color={activeTab === 'posts' ? ACCENT : '#9CA3AF'} />
           <Text style={[styles.tabText, activeTab === 'posts' && styles.tabTextActive]}>Gönderilerim</Text>
         </TouchableOpacity>
         <TouchableOpacity style={[styles.tab, activeTab === 'info' && styles.tabActive]} onPress={() => setActiveTab('info')}>
-          <Ionicons name="information-circle-outline" size={18} color={activeTab === 'info' ? ACCENT : '#9CA3AF'} />
+          <Icon name="informationCircleOutline" size={18} color={activeTab === 'info' ? ACCENT : '#9CA3AF'} />
           <Text style={[styles.tabText, activeTab === 'info' && styles.tabTextActive]}>Bilgiler</Text>
         </TouchableOpacity>
       </View>
@@ -259,30 +259,30 @@ export default function EmployerProfileScreen() {
   const renderInfo = () => (
     <View style={styles.infoSection}>
       <View style={styles.infoRow}>
-        <Ionicons name="mail-outline" size={18} color="#6B7280" />
+        <Icon name="mailOutline" size={18} color="#6B7280" />
         <Text style={styles.infoText}>{user?.email}</Text>
       </View>
       <View style={styles.infoRow}>
-        <Ionicons name="star-outline" size={18} color="#6B7280" />
+        <Icon name="starOutline" size={18} color="#6B7280" />
         <Text style={styles.infoText}>{user?.xpPoints ?? 0} XP — Seviye {user?.rankLevel ?? 1}</Text>
       </View>
       {/* YENİ: deneyim yılı */}
       {profile?.yearsExperience != null && (
         <View style={styles.infoRow}>
-          <Ionicons name="time-outline" size={18} color="#6B7280" />
+          <Icon name="timeOutline" size={18} color="#6B7280" />
           <Text style={styles.infoText}>{profile.yearsExperience} yıl deneyim</Text>
         </View>
       )}
       {formatCityDistrict(user?.city, user?.district) ? (
         <View style={styles.infoRow}>
-          <Ionicons name="location-outline" size={18} color="#6B7280" />
+          <Icon name="locationOutline" size={18} color="#6B7280" />
           <Text style={styles.infoText}>{formatCityDistrict(user?.city, user?.district)}</Text>
         </View>
       ) : null}
       {/* YENİ: kategoriler */}
       {profile?.categoryNames && profile.categoryNames.length > 0 && (
         <View style={styles.infoRow}>
-          <Ionicons name="pricetags-outline" size={18} color="#6B7280" />
+          <Icon name="pricetagsOutline" size={18} color="#6B7280" />
           <Text style={styles.infoText}>{profile.categoryNames.join(', ')}</Text>
         </View>
       )}
@@ -301,7 +301,7 @@ export default function EmployerProfileScreen() {
           ListEmptyComponent={
             !loadingPosts ? (
               <View style={styles.empty}>
-                <Ionicons name="newspaper-outline" size={44} color="#D1D5DB" />
+                <Icon name="newspaperOutline" size={44} color="#D1D5DB" />
                 <Text style={styles.emptyTitle}>Henüz gönderi yok</Text>
                 <TouchableOpacity style={styles.createPostBtn} onPress={() => router.push('/(employer)/post/create' as any)}>
                   <Text style={styles.createPostBtnText}>İlk gönderini paylaş</Text>

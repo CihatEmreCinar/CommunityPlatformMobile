@@ -7,7 +7,7 @@ import {
   StyleSheet,
   ActivityIndicator,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Icon } from '../ui/Icon';
 import { Colors, Radius } from '../../constants/theme';
 
 export type CoverImageProps = {
@@ -68,7 +68,7 @@ export function CoverImage({
         />
       ) : (
         <View style={styles.placeholder}>
-          <Ionicons name="image-outline" size={30} color={Colors.outlineVariant} />
+          <Icon name="imageOutline" size={30} color={Colors.outlineVariant} />
         </View>
       )}
 
@@ -88,7 +88,7 @@ export function CoverImage({
             <ActivityIndicator size="small" color={Colors.white} />
           ) : (
             <>
-              <Ionicons name="camera" size={14} color={Colors.white} />
+              <Icon name="camera" size={14} color={Colors.white} />
               <Text style={styles.editBadgeText}>Kapağı Değiştir</Text>
             </>
           )}

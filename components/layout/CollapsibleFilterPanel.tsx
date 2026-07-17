@@ -1,6 +1,6 @@
 import { ReactNode, useState } from 'react';
 import { LayoutAnimation, Platform, StyleSheet, Text, TouchableOpacity, UIManager, View } from 'react-native';
-import { MaterialIcons } from '@expo/vector-icons';
+import { Icon } from '../ui/Icon';
 import { Colors, Typography, Spacing, Radius } from '../../constants/theme';
 
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -49,8 +49,8 @@ export function CollapsibleFilterPanel({
             </Text>
           ) : null}
         </View>
-        <MaterialIcons
-          name={open ? 'expand-less' : 'expand-more'}
+        <Icon
+          name={open ? 'collapse' : 'expand'}
           size={24}
           color={Colors.onSurfaceVariant}
         />

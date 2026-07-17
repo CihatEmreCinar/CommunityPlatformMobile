@@ -10,7 +10,7 @@ import {
   TextInput,
 } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
-import { MaterialIcons } from '@expo/vector-icons';
+import { Icon, IconName } from '../../../components/ui/Icon';
 import { workshopService } from '../../../services/workshopService';
 import { enrollmentService } from '../../../services/enrollmentService';
 import { reviewService } from '../../../services/reviewService';
@@ -177,10 +177,10 @@ async function checkEligibility() {
         {/* Header with back button */}
         <View style={styles.headerImage}>
           <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-            <MaterialIcons name="arrow-back" size={22} color={Colors.onSurface} />
+            <Icon name="arrowBack" size={22} color={Colors.onSurface} />
           </TouchableOpacity>
           <View style={styles.headerIconWrap}>
-            <MaterialIcons name="palette" size={48} color={Colors.primary} />
+            <Icon name="palette" size={48} color={Colors.primary} />
           </View>
         </View>
 
@@ -191,15 +191,15 @@ async function checkEligibility() {
             style={styles.employerRow}
             onPress={() => router.push(`/(employee)/employer/${workshop.employerId}` as any)}
           >
-            <MaterialIcons name="person" size={16} color={Colors.onSurfaceVariant} />
+            <Icon name="person" size={16} color={Colors.onSurfaceVariant} />
             <Text style={styles.employerName}>{workshop.employerName}</Text>
-            <MaterialIcons name="chevron-right" size={16} color={Colors.outline} />
+            <Icon name="chevronRight" size={16} color={Colors.outline} />
           </TouchableOpacity>
 
           {/* Rating */}
           {workshop.avgRating > 0 && (
             <View style={styles.ratingRow}>
-              <MaterialIcons name="star" size={16} color={Colors.amber} />
+              <Icon name="star" size={16} color={Colors.amber} />
               <Text style={styles.ratingText}>
                 {workshop.avgRating.toFixed(1)} ({workshop.reviewCount} değerlendirme)
               </Text>
@@ -208,7 +208,7 @@ async function checkEligibility() {
 
           {/* Info Cards */}
           <View style={styles.infoGrid}>
-            <InfoItem icon="calendar-today" label="Tarih" value={formattedDate} />
+            <InfoItem icon="calendarToday" label="Tarih" value={formattedDate} />
             <InfoItem icon="schedule" label="Saat" value={formattedTime} />
             <InfoItem
               icon={workshop.locationType === 'online' ? 'videocam' : 'place'}
@@ -226,7 +226,7 @@ async function checkEligibility() {
             <>
               {formatCityDistrict(workshop.city, workshop.district) && (
                 <View style={styles.locationMetaRow}>
-                  <MaterialIcons name="location-on" size={14} color={Colors.onSurfaceVariant} />
+                  <Icon name="locationOn" size={14} color={Colors.onSurfaceVariant} />
                   <Text style={styles.locationMetaText}>
                     {formatCityDistrict(workshop.city, workshop.district)}
                   </Text>
@@ -240,7 +240,7 @@ async function checkEligibility() {
                   }
                   activeOpacity={0.7}
                 >
-                  <MaterialIcons name="map" size={16} color={Colors.primary} />
+                  <Icon name="map" size={16} color={Colors.primary} />
                   <Text style={styles.mapButtonText}>Haritada Göster</Text>
                 </TouchableOpacity>
               )}
@@ -273,8 +273,8 @@ async function checkEligibility() {
               <View style={styles.starRow}>
                 {[1, 2, 3, 4, 5].map((star) => (
                   <TouchableOpacity key={star} onPress={() => setRating(star)}>
-                    <MaterialIcons
-                      name={star <= rating ? 'star' : 'star-border'}
+                    <Icon
+                      name={star <= rating ? 'star' : 'starEmpty'}
                       size={32}
                       color={Colors.amber}
                     />
@@ -319,9 +319,9 @@ async function checkEligibility() {
                     <Text style={styles.reviewUserName}>{r.userName}</Text>
                     <View style={styles.reviewStars}>
                       {[1, 2, 3, 4, 5].map((star) => (
-                        <MaterialIcons
+                        <Icon
                           key={star}
-                          name={star <= r.rating ? 'star' : 'star-border'}
+                          name={star <= r.rating ? 'star' : 'starEmpty'}
                           size={14}
                           color={Colors.amber}
                         />
@@ -371,14 +371,14 @@ function InfoItem({
   label,
   value,
 }: {
-  icon: keyof typeof MaterialIcons.glyphMap;
+  icon: IconName;
   label: string;
   value: string;
 }) {
   return (
     <View style={styles.infoItem}>
       <View style={styles.infoIconWrap}>
-        <MaterialIcons name={icon} size={18} color={Colors.primary} />
+        <Icon name={icon} size={18} color={Colors.primary} />
       </View>
       <View style={styles.infoTextWrap}>
         <Text style={styles.infoLabel}>{label}</Text>

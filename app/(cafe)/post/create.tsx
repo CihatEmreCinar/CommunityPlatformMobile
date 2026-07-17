@@ -12,7 +12,7 @@ import {
   Platform,
   Image,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Icon } from '../../../components/ui/Icon';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
@@ -133,7 +133,7 @@ export default function CafePostCreateScreen() {
           onPress={() => router.back()}
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
         >
-          <Ionicons name="close" size={24} color="#374151" />
+          <Icon name="close" size={24} color="#374151" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Yeni Gönderi</Text>
         <TouchableOpacity
@@ -160,11 +160,11 @@ export default function CafePostCreateScreen() {
                   <Image source={{ uri: file.uri }} style={styles.mediaImage} />
                 ) : (
                   <View style={styles.mediaVideoPlaceholder}>
-                    <Ionicons name="play-circle" size={28} color="#FFFFFF" />
+                    <Icon name="playCircle" size={28} color="#FFFFFF" />
                   </View>
                 )}
                 <TouchableOpacity style={styles.removeMediaBtn} onPress={() => removeMedia(index)}>
-                  <Ionicons name="close" size={16} color="#FFFFFF" />
+                  <Icon name="close" size={16} color="#FFFFFF" />
                 </TouchableOpacity>
               </View>
             ))}
@@ -174,7 +174,7 @@ export default function CafePostCreateScreen() {
             onPress={pickMedia}
             disabled={mediaFiles.length >= MAX_MEDIA}
           >
-            <Ionicons name="image-outline" size={18} color="#FFFFFF" />
+            <Icon name="imageOutline" size={18} color="#FFFFFF" />
             <Text style={styles.addMediaText}>Medya Ekle</Text>
           </TouchableOpacity>
           <Text style={styles.sectionHint}>{mediaFiles.length}/{MAX_MEDIA} medya eklendi</Text>
@@ -200,7 +200,7 @@ export default function CafePostCreateScreen() {
         <View style={styles.divider} />
 
         <View style={styles.tipsSection}>
-          <Ionicons name="bulb-outline" size={16} color="#9CA3AF" />
+          <Icon name="bulbOutline" size={16} color="#9CA3AF" />
           <Text style={styles.tipsText}>
             Kafenle ilgili duyuruları, etkinlikleri veya atmosferi paylaşarak takipçilerini bilgilendirebilirsin.
           </Text>

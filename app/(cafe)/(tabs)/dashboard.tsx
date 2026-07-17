@@ -9,7 +9,7 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { MaterialIcons } from '@expo/vector-icons';
+import { Icon, IconName } from '../../../components/ui/Icon';
 import { useAuth } from '../../../contexts/AuthContext';
 import { cafeProfileService, type CafeProfile, type CafeDashboardStats } from '../../../services/cafeProfileService';
 import { spaceBookingService } from '../../../services/spaceBookingService';
@@ -111,28 +111,28 @@ export default function CafeDashboardScreen() {
           </Text>
         </View>
         <TouchableOpacity onPress={handleLogout} style={styles.logoutButton}>
-          <MaterialIcons name="logout" size={20} color={Colors.onSurfaceVariant} />
+          <Icon name="logout" size={20} color={Colors.onSurfaceVariant} />
         </TouchableOpacity>
       </View>
 
       {/* Stats Grid */}
       <View style={styles.statsGrid}>
         <StatCard
-          icon="event-available"
+          icon="eventAvailable"
           label="Aktif İlan"
           value={dashboard?.activeListings ?? 0}
           color={Colors.primary}
           onPress={() => router.push('/(cafe)/(tabs)/listings' as any)}
         />
         <StatCard
-          icon="library-books"
+          icon="libraryBooks"
           label="Toplam İlan"
           value={dashboard?.totalListings ?? 0}
           color={Colors.secondary}
           onPress={() => router.push('/(cafe)/(tabs)/listings' as any)}
         />
         <StatCard
-          icon="how-to-reg"
+          icon="howToReg"
           label="Bekleyen Rezervasyon"
           value={bookingCounts.pendingBookings}
           color={Colors.amber}
@@ -154,7 +154,7 @@ export default function CafeDashboardScreen() {
       <Text style={styles.sectionTitle}>Hızlı İşlemler</Text>
       <View style={styles.actionsRow}>
         <ActionButton
-          icon="add-circle-outline"
+          icon="addCircleOutline"
           label="İlan Oluştur"
           onPress={() => router.push('/(cafe)/listing/create' as any)}
         />
@@ -166,12 +166,12 @@ export default function CafeDashboardScreen() {
       </View>
       <View style={styles.actionsRow}>
         <ActionButton
-          icon="list-alt"
+          icon="listAlt"
           label="İlanlarım"
           onPress={() => router.push('/(cafe)/(tabs)/listings' as any)}
         />
         <ActionButton
-          icon="event-available"
+          icon="eventAvailable"
           label="Rezervasyonlar"
           onPress={() => router.push('/(cafe)/(tabs)/bookings' as any)}
         />
@@ -187,7 +187,7 @@ function StatCard({
   color,
   onPress,
 }: {
-  icon: keyof typeof MaterialIcons.glyphMap;
+  icon: IconName;
   label: string;
   value: number;
   color: string;
@@ -196,7 +196,7 @@ function StatCard({
   const content = (
     <View style={styles.statCard}>
       <View style={[styles.statIconWrap, { backgroundColor: color + '1A' }]}> 
-        <MaterialIcons name={icon} size={20} color={color} />
+        <Icon name={icon} size={20} color={color} />
       </View>
       <Text style={styles.statValue}>{value}</Text>
       <Text style={styles.statLabel}>{label}</Text>
@@ -219,13 +219,13 @@ function ActionButton({
   label,
   onPress,
 }: {
-  icon: keyof typeof MaterialIcons.glyphMap;
+  icon: IconName;
   label: string;
   onPress: () => void;
 }) {
   return (
     <TouchableOpacity style={styles.actionButton} activeOpacity={0.85} onPress={onPress}>
-      <MaterialIcons name={icon} size={20} color={Colors.primary} />
+      <Icon name={icon} size={20} color={Colors.primary} />
       <Text style={styles.actionLabel}>{label}</Text>
     </TouchableOpacity>
   );

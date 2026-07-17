@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react';
 import { Image, View, Text, StyleSheet, ScrollView, RefreshControl, ActivityIndicator, TouchableOpacity, Alert } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
-import { MaterialIcons } from '@expo/vector-icons';
+import { Icon } from '../../../components/ui/Icon';
 import { ScreenContainer } from '../../../components/layout/ScreenContainer';
 import { Colors, Typography, Spacing, Radius, Shadows } from '../../../constants/theme';
 import { spaceListingService, type SpaceListing } from '../../../services/spaceListingService';
@@ -41,7 +41,7 @@ export default function CafeListingsScreen() {
       <View style={styles.headerRow}>
         <Text style={styles.title}>İlanlarım</Text>
         <TouchableOpacity onPress={() => router.push('/(cafe)/listing/create')} style={styles.addButton}>
-          <MaterialIcons name="add" size={22} color={Colors.onPrimary} />
+          <Icon name="addAction" size={22} color={Colors.onPrimary} />
         </TouchableOpacity>
       </View>
     }>
@@ -51,7 +51,7 @@ export default function CafeListingsScreen() {
       >
         {listings.length === 0 ? (
           <View style={styles.emptyState}>
-            <MaterialIcons name="event-note" size={40} color={Colors.outline} />
+            <Icon name="eventNote" size={40} color={Colors.outline} />
             <Text style={styles.emptyTitle}>Henüz ilan yok</Text>
             <Text style={styles.emptyText}>İlk ilanını oluşturarak başlayabilirsin.</Text>
             <TouchableOpacity style={styles.emptyAction} onPress={() => router.push('/(cafe)/listing/create')}>
@@ -65,7 +65,7 @@ export default function CafeListingsScreen() {
                 {listing.photoUrls[0] ? (
                   <Image source={{ uri: listing.photoUrls[0] }} style={styles.image} />
                 ) : (
-                  <MaterialIcons name="photo-camera" size={30} color={Colors.outline} />
+                  <Icon name="photoCamera" size={30} color={Colors.outline} />
                 )}
               </View>
               <View style={styles.cardBody}>

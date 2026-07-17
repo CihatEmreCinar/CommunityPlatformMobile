@@ -10,7 +10,7 @@ import {
   Alert,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { MaterialIcons } from '@expo/vector-icons';
+import { Icon } from '../../../components/ui/Icon';
 import { workshopService } from '../../../services/workshopService';
 import { reviewService } from '../../../services/reviewService';
 import { Workshop } from '../../../types/workshop';
@@ -83,7 +83,7 @@ export default function EmployerWorkshopDetailScreen() {
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <MaterialIcons name="arrow-back" size={22} color={Colors.onSurface} />
+          <Icon name="arrowBack" size={22} color={Colors.onSurface} />
         </TouchableOpacity>
         <Text style={styles.headerTitle} numberOfLines={1}>
           {workshop.title}
@@ -115,7 +115,7 @@ export default function EmployerWorkshopDetailScreen() {
       {workshop.locationType === 'in-person' && (workshop.address || workshop.venueName) && (
         <View style={styles.locationCard}>
           <View style={styles.locationCardRow}>
-            <MaterialIcons name="place" size={16} color={Colors.onSurfaceVariant} />
+            <Icon name="place" size={16} color={Colors.onSurfaceVariant} />
             <View style={{ flex: 1 }}>
               {workshop.venueName ? <Text style={styles.locationCardTitle}>{workshop.venueName}</Text> : null}
               {workshop.address ? <Text style={styles.locationCardText}>{workshop.address}</Text> : null}
@@ -132,7 +132,7 @@ export default function EmployerWorkshopDetailScreen() {
               }
               activeOpacity={0.7}
             >
-              <MaterialIcons name="map" size={14} color={Colors.primary} />
+              <Icon name="map" size={14} color={Colors.primary} />
               <Text style={styles.locationCardMapBtnText}>Haritada Göster</Text>
             </TouchableOpacity>
           )}
@@ -149,7 +149,7 @@ export default function EmployerWorkshopDetailScreen() {
           })
         }
       >
-        <MaterialIcons name="qr-code-scanner" size={20} color={Colors.onPrimary} />
+        <Icon name="qrCodeScanner" size={20} color={Colors.onPrimary} />
         <Text style={styles.participantsButtonText}>Katılımcılar</Text>
       </TouchableOpacity>
 
@@ -166,9 +166,9 @@ export default function EmployerWorkshopDetailScreen() {
                 <Text style={styles.reviewUserName}>{r.userName}</Text>
                 <View style={styles.reviewStars}>
                   {[1, 2, 3, 4, 5].map((star) => (
-                    <MaterialIcons
+                    <Icon
                       key={star}
-                      name={star <= r.rating ? 'star' : 'star-border'}
+                      name={star <= r.rating ? 'star' : 'starEmpty'}
                       size={14}
                       color={Colors.amber}
                     />

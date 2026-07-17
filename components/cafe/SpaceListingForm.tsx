@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { Image, ScrollView, Text, TextInput, TouchableOpacity, View, StyleSheet, Alert } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
-import { MaterialIcons } from '@expo/vector-icons';
+import { Icon } from '../ui/Icon';
 import { Colors, Typography, Spacing, Radius, Shadows } from '../../constants/theme';
 import { type SpaceListing, type SpaceListingRequest } from '../../services/spaceListingService';
 
@@ -156,7 +156,7 @@ export function SpaceListingForm({
       <View style={styles.fieldGroup}>
         <Text style={styles.label}>Fotoğraflar</Text>
         <TouchableOpacity style={styles.photoButton} onPress={handlePickPhotos} disabled={submitting}>
-          <MaterialIcons name="photo-library" size={20} color={Colors.primary} />
+          <Icon name="photoLibrary" size={20} color={Colors.primary} />
           <Text style={styles.photoText}>{photoUris.length > 0 ? `${photoUris.length} fotoğraf seçildi` : 'Fotoğraf ekle'}</Text>
         </TouchableOpacity>
         {(existingPhotoUrls.length > 0 || photoUris.length > 0) && (

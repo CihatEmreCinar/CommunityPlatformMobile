@@ -8,7 +8,7 @@ import {
   StyleSheet,
   ActivityIndicator,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Icon } from '../ui/Icon';
 import { Colors } from '../../constants/theme';
 
 export type ProfileAvatarProps = {
@@ -106,7 +106,7 @@ export function ProfileAvatar({
           {uploading ? (
             <ActivityIndicator size="small" color={Colors.white} />
           ) : (
-            <Ionicons name="camera" size={15} color={Colors.white} />
+            <Icon name="camera" size={15} color={Colors.white} />
           )}
         </View>
       ) : null}

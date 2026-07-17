@@ -13,7 +13,7 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { MaterialIcons } from '@expo/vector-icons';
+import { Icon } from '../../components/ui/Icon';
 import { useAuth } from '../../contexts/AuthContext';
 import { Colors, Typography, Spacing, Radius, Shadows } from '../../constants/theme';
 import { ROLES, type RoleValue } from '../../constants/roles';
@@ -95,7 +95,7 @@ export default function RegisterScreen() {
                 onPress={() => setRole(ROLES.EMPLOYEE)}
                 activeOpacity={0.85}
               >
-                <MaterialIcons
+                <Icon
                   name="badge"
                   size={18}
                   color={role === ROLES.EMPLOYEE ? Colors.onAccent : Colors.onSurfaceVariant}
@@ -109,7 +109,7 @@ export default function RegisterScreen() {
                 onPress={() => setRole(ROLES.EMPLOYER)}
                 activeOpacity={0.85}
               >
-                <MaterialIcons
+                <Icon
                   name="business"
                   size={18}
                   color={role === ROLES.EMPLOYER ? Colors.onAccent : Colors.onSurfaceVariant}
@@ -123,8 +123,8 @@ export default function RegisterScreen() {
                 onPress={() => setRole(ROLES.CAFE)}
                 activeOpacity={0.85}
               >
-                <MaterialIcons
-                  name="local-cafe"
+                <Icon
+                  name="localCafe"
                   size={18}
                   color={role === ROLES.CAFE ? Colors.onAccent : Colors.onSurfaceVariant}
                 />
@@ -140,7 +140,7 @@ export default function RegisterScreen() {
             <View style={[styles.fieldGroup, styles.rowItem]}>
               <Text style={styles.label}>Ad</Text>
               <View style={styles.inputWrapper}>
-                <MaterialIcons name="person" size={18} color={Colors.outline} style={styles.inputIcon} />
+                <Icon name="person" size={18} color={Colors.outline} style={styles.inputIcon} />
                 <TextInput
                   style={styles.input}
                   placeholder="Ad"
@@ -170,7 +170,7 @@ export default function RegisterScreen() {
           <View style={styles.fieldGroup}>
             <Text style={styles.label}>E-posta Adresi</Text>
             <View style={styles.inputWrapper}>
-              <MaterialIcons name="mail-outline" size={18} color={Colors.outline} style={styles.inputIcon} />
+              <Icon name="mailInput" size={18} color={Colors.outline} style={styles.inputIcon} />
               <TextInput
                 style={styles.input}
                 placeholder="ad@sirket.com"
@@ -188,7 +188,7 @@ export default function RegisterScreen() {
           <View style={styles.fieldGroup}>
             <Text style={styles.label}>Şifre</Text>
             <View style={styles.inputWrapper}>
-              <MaterialIcons name="lock-outline" size={18} color={Colors.outline} style={styles.inputIcon} />
+              <Icon name="lockOutline" size={18} color={Colors.outline} style={styles.inputIcon} />
               <TextInput
                 style={[styles.input, styles.inputWithAction]}
                 placeholder="En az 6 karakter"
@@ -201,8 +201,8 @@ export default function RegisterScreen() {
                 style={styles.eyeButton}
                 onPress={() => setShowPassword(!showPassword)}
               >
-                <MaterialIcons
-                  name={showPassword ? 'visibility-off' : 'visibility'}
+                <Icon
+                  name={showPassword ? 'passwordHidden' : 'passwordVisible'}
                   size={18}
                   color={Colors.outline}
                 />

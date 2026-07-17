@@ -11,7 +11,7 @@ import {
   Share,
   Alert,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Icon } from '../ui/Icon';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { socialService } from '../../services/socialService';
@@ -59,15 +59,15 @@ function PostCard({ post, onLike }: { post: Post; onLike: (id: string) => void }
       )}
       <View style={styles.postMeta}>
         <TouchableOpacity style={styles.postAction} onPress={() => onLike(post.id)}>
-          <Ionicons
-            name={post.isLikedByMe ? 'heart' : 'heart-outline'}
+          <Icon
+            name={post.isLikedByMe ? 'heartFilled' : 'heartOutline'}
             size={16}
             color={post.isLikedByMe ? '#EF4444' : '#9CA3AF'}
           />
           <Text style={styles.postActionText}>{post.likeCount}</Text>
         </TouchableOpacity>
         <View style={styles.postAction}>
-          <Ionicons name="chatbubble-outline" size={16} color="#9CA3AF" />
+          <Icon name="chatbubbleOutline" size={16} color="#9CA3AF" />
           <Text style={styles.postActionText}>{post.commentCount}</Text>
         </View>
         <Text style={styles.postTime}>{formatNotificationTime(post.publishedAt ?? '')}</Text>
@@ -218,13 +218,13 @@ export function EmployerPublicProfileScreen({ employerId }: { employerId: string
     <View>
       <View style={styles.topBar}>
         <TouchableOpacity onPress={() => router.back()} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-          <Ionicons name="arrow-back" size={24} color="#111827" />
+          <Icon name="arrowBackAlt" size={24} color="#111827" />
         </TouchableOpacity>
         <TouchableOpacity
           onPress={() => Share.share({ message: `Atolium'da bu eğitmeni keşfet!` })}
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
         >
-          <Ionicons name="share-social-outline" size={22} color="#374151" />
+          <Icon name="shareSocialOutline" size={22} color="#374151" />
         </TouchableOpacity>
       </View>
 
@@ -273,7 +273,7 @@ export function EmployerPublicProfileScreen({ employerId }: { employerId: string
       />
 
       <View style={styles.postsSectionHeader}>
-        <Ionicons name="grid-outline" size={16} color="#6B7280" />
+        <Icon name="gridOutline" size={16} color="#6B7280" />
         <Text style={styles.postsSectionTitle}>Gönderiler</Text>
       </View>
     </View>
@@ -289,7 +289,7 @@ export function EmployerPublicProfileScreen({ employerId }: { employerId: string
         ListEmptyComponent={
           !loadingPosts ? (
             <View style={styles.empty}>
-              <Ionicons name="newspaper-outline" size={44} color="#D1D5DB" />
+              <Icon name="newspaperOutline" size={44} color="#D1D5DB" />
               <Text style={styles.emptyText}>Henüz gönderi paylaşılmamış</Text>
             </View>
           ) : null

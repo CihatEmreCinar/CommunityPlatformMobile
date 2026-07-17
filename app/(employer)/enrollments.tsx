@@ -10,7 +10,7 @@ import {
   Alert,
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import { MaterialIcons } from '@expo/vector-icons';
+import { Icon } from '../../components/ui/Icon';
 import { enrollmentService } from '../../services/enrollmentService';
 import { EmployerEnrollment } from '../../types/enrollment';
 import { Colors, Typography, Spacing, Radius, Shadows } from '../../constants/theme';
@@ -97,7 +97,7 @@ export default function EmployerEnrollmentsScreen() {
     >
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <MaterialIcons name="arrow-back" size={22} color={Colors.onSurface} />
+          <Icon name="arrowBack" size={22} color={Colors.onSurface} />
         </TouchableOpacity>
         <Text style={styles.title}>Kayıt Talepleri</Text>
         <View style={{ width: 40 }} />
@@ -105,7 +105,7 @@ export default function EmployerEnrollmentsScreen() {
 
       {enrollments.length === 0 ? (
         <View style={styles.emptyState}>
-          <MaterialIcons name="people-outline" size={40} color={Colors.outline} />
+          <Icon name="peopleOutline" size={40} color={Colors.outline} />
           <Text style={styles.emptyTitle}>Kayıt bulunamadı</Text>
           <Text style={styles.emptyText}>Yeni talepler için atölyelerini kontrol et.</Text>
         </View>
@@ -126,13 +126,13 @@ export default function EmployerEnrollmentsScreen() {
 
               {item.message ? (
                 <View style={styles.messageRow}>
-                  <MaterialIcons name="message" size={16} color={Colors.outline} />
+                  <Icon name="message" size={16} color={Colors.outline} />
                   <Text style={styles.messageText}>{item.message}</Text>
                 </View>
               ) : null}
 
               <View style={styles.metaRow}>
-                <MaterialIcons name="event" size={14} color={Colors.outline} />
+                <Icon name="event" size={14} color={Colors.outline} />
                 <Text style={styles.metaText}>{new Date(item.appliedAt).toLocaleDateString('tr-TR', {
                   day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit',
                 })}</Text>

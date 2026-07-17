@@ -11,7 +11,7 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Icon } from '../../../components/ui/Icon';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { postService } from '../../../services/postService';
@@ -126,7 +126,7 @@ export default function PostEditScreen() {
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-          <Ionicons name="close" size={24} color="#374151" />
+          <Icon name="close" size={24} color="#374151" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Gönderiyi Düzenle</Text>
         <TouchableOpacity
@@ -174,7 +174,7 @@ export default function PostEditScreen() {
                   activeOpacity={0.7}
                 >
                   <Text style={styles.tagText}>#{t}</Text>
-                  <Ionicons name="close-circle" size={14} color={ACCENT} />
+                  <Icon name="closeCircle" size={14} color={ACCENT} />
                 </TouchableOpacity>
               ))}
             </View>
@@ -197,7 +197,7 @@ export default function PostEditScreen() {
                 onPress={addTag}
                 disabled={!tagInput.trim()}
               >
-                <Ionicons name="add" size={20} color="#FFFFFF" />
+                <Icon name="add" size={20} color="#FFFFFF" />
               </TouchableOpacity>
             </View>
           )}
@@ -216,7 +216,7 @@ export default function PostEditScreen() {
             <ActivityIndicator size="small" color="#EF4444" />
           ) : (
             <>
-              <Ionicons name="trash-outline" size={18} color="#EF4444" />
+              <Icon name="trashOutline" size={18} color="#EF4444" />
               <Text style={styles.deleteText}>Gönderiyi Sil</Text>
             </>
           )}

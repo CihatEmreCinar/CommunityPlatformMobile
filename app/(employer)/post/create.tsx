@@ -12,7 +12,7 @@ import {
   Platform,
   Image,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Icon } from '../../../components/ui/Icon';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
@@ -192,7 +192,7 @@ export default function PostCreateScreen() {
           onPress={() => router.back()}
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
         >
-          <Ionicons name="close" size={24} color="#374151" />
+          <Icon name="close" size={24} color="#374151" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Yeni Gönderi</Text>
         <TouchableOpacity
@@ -256,11 +256,11 @@ export default function PostCreateScreen() {
                   <Image source={{ uri: file.uri }} style={styles.mediaImage} />
                 ) : (
                   <View style={styles.mediaVideoPlaceholder}>
-                    <Ionicons name="play-circle" size={28} color="#FFFFFF" />
+                    <Icon name="playCircle" size={28} color="#FFFFFF" />
                   </View>
                 )}
                 <TouchableOpacity style={styles.removeMediaBtn} onPress={() => removeMedia(index)}>
-                  <Ionicons name="close" size={16} color="#FFFFFF" />
+                  <Icon name="close" size={16} color="#FFFFFF" />
                 </TouchableOpacity>
               </View>
             ))}
@@ -270,7 +270,7 @@ export default function PostCreateScreen() {
             onPress={pickMedia}
             disabled={mediaFiles.length >= MAX_MEDIA}
           >
-            <Ionicons name="image-outline" size={18} color="#FFFFFF" />
+            <Icon name="imageOutline" size={18} color="#FFFFFF" />
             <Text style={styles.addMediaText}>Medya Ekle</Text>
           </TouchableOpacity>
           <Text style={styles.sectionHint}>{mediaFiles.length}/{MAX_MEDIA} medya eklendi</Text>
@@ -309,7 +309,7 @@ export default function PostCreateScreen() {
                   activeOpacity={0.7}
                 >
                   <Text style={styles.tagText}>#{t}</Text>
-                  <Ionicons name="close-circle" size={14} color={ACCENT} />
+                  <Icon name="closeCircle" size={14} color={ACCENT} />
                 </TouchableOpacity>
               ))}
             </View>
@@ -334,7 +334,7 @@ export default function PostCreateScreen() {
                 onPress={addTag}
                 disabled={!tagInput.trim()}
               >
-                <Ionicons name="add" size={20} color="#FFFFFF" />
+                <Icon name="add" size={20} color="#FFFFFF" />
               </TouchableOpacity>
             </View>
           )}
@@ -343,7 +343,7 @@ export default function PostCreateScreen() {
         <View style={styles.divider} />
 
         <View style={styles.tipsSection}>
-          <Ionicons name="bulb-outline" size={16} color="#9CA3AF" />
+          <Icon name="bulbOutline" size={16} color="#9CA3AF" />
           <Text style={styles.tipsText}>
             Atölye içerikleri, deneyimlerin ve ipuçlarını paylaşarak takipçilerini bilgilendirebilirsin.
           </Text>

@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { MaterialIcons } from '@expo/vector-icons';
+import { Icon } from '../../../components/ui/Icon';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { enrollmentService } from '../../../services/enrollmentService';
 import { Ticket } from '../../../types/ticket';
@@ -50,13 +50,13 @@ export default function TicketScreen() {
       <SafeAreaView style={styles.flex} edges={['top']}>
         <View style={styles.header}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-            <MaterialIcons name="arrow-back" size={22} color={Colors.onSurface} />
+            <Icon name="arrowBack" size={22} color={Colors.onSurface} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Bilet</Text>
           <View style={{ width: 40 }} />
         </View>
         <View style={styles.center}>
-          <MaterialIcons name="error-outline" size={40} color={Colors.error} />
+          <Icon name="errorOutline" size={40} color={Colors.error} />
           <Text style={styles.errorText}>{error || 'Bilet bulunamadı.'}</Text>
         </View>
       </SafeAreaView>
@@ -73,7 +73,7 @@ export default function TicketScreen() {
       <ScrollView style={styles.flex} contentContainerStyle={styles.container}>
         <View style={styles.header}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-            <MaterialIcons name="arrow-back" size={22} color={Colors.onSurface} />
+            <Icon name="arrowBack" size={22} color={Colors.onSurface} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Bilet</Text>
           <View style={{ width: 40 }} />
@@ -87,21 +87,21 @@ export default function TicketScreen() {
           <Text style={styles.workshopTitle}>{ticket.workshopTitle}</Text>
 
           <View style={styles.infoRow}>
-            <MaterialIcons name="calendar-today" size={16} color={Colors.onSurfaceVariant} />
+            <Icon name="calendarToday" size={16} color={Colors.onSurfaceVariant} />
             <Text style={styles.infoText}>{dateText}</Text>
           </View>
           <View style={styles.infoRow}>
-            <MaterialIcons name="schedule" size={16} color={Colors.onSurfaceVariant} />
+            <Icon name="schedule" size={16} color={Colors.onSurfaceVariant} />
             <Text style={styles.infoText}>{timeText}</Text>
           </View>
           <View style={styles.infoRow}>
-            <MaterialIcons name="place" size={16} color={Colors.onSurfaceVariant} />
+            <Icon name="place" size={16} color={Colors.onSurfaceVariant} />
             <Text style={styles.infoText}>
               {ticket.workshopLocationType === 'online' ? 'Online' : (ticket.workshopLocationDetail || 'Konum belirtilmedi')}
             </Text>
           </View>
           <View style={styles.infoRow}>
-            <MaterialIcons name="badge" size={16} color={Colors.onSurfaceVariant} />
+            <Icon name="badge" size={16} color={Colors.onSurfaceVariant} />
             <Text style={styles.infoText}>{ticket.employerName}</Text>
           </View>
 
@@ -113,7 +113,7 @@ export default function TicketScreen() {
           <View style={styles.qrSection}>
             {ticket.attendanceStatus === 'Attended' ? (
               <View style={styles.attendedBox}>
-                <MaterialIcons name="check-circle" size={48} color="#0F766E" />
+                <Icon name="checkCircle" size={48} color="#0F766E" />
                 <Text style={styles.attendedText}>Bu atölyeye katıldınız</Text>
               </View>
             ) : (

@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Icon } from '../../ui/Icon';
 import type { Category } from '../../../types/category';
 import { CityDistrictPicker } from '../../location/CityDistrictPicker';
 import type { LocationSelection } from '../../../types/location';
@@ -138,7 +138,7 @@ export function ProfileEditForm({
                   activeOpacity={0.7}
                 >
                   <Text style={styles.tagText}>{s}</Text>
-                  <Ionicons name="close-circle" size={14} color={ACCENT} />
+                  <Icon name="closeCircle" size={14} color={ACCENT} />
                 </TouchableOpacity>
               ))}
             </View>
@@ -160,7 +160,7 @@ export function ProfileEditForm({
                 onPress={onAddSpecialization}
                 disabled={!specInput.trim()}
               >
-                <Ionicons name="add" size={20} color="#FFFFFF" />
+                <Icon name="add" size={20} color="#FFFFFF" />
               </TouchableOpacity>
             </View>
           )}
