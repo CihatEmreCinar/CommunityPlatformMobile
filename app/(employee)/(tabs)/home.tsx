@@ -16,7 +16,9 @@ import { AtiInsightCard } from '../../../components/home/AtiInsightCard';
 import { BentoCard } from '../../../components/home/BentoCard';
 import { CityPulseFeed } from '../../../components/home/CityPulseFeed';
 import { GamificationCard } from '../../../components/home/GamificationCard';
-import { LiveTicker } from '../../../components/home/LiveTicker';
+import { BrandHeader } from '../../../components/dashboard/BrandHeader';
+import { DashboardTicker } from '../../../components/dashboard/DashboardTicker';
+import { DashboardHero } from '../../../components/dashboard/DashboardHero';
 import { useAuth } from '../../../contexts/AuthContext';
 import { workshopService } from '../../../services/workshopService';
 import { Workshop } from '../../../types/workshop';
@@ -30,10 +32,9 @@ import {
   pickNearestWorkshop,
   pickTrendingWorkshop,
 } from '../../../utils/dailyBrief';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function EmployeeHomeScreen() {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const router = useRouter();
   const [recommended, setRecommended] = useState<Workshop[]>([]);
   const [allWorkshops, setAllWorkshops] = useState<Workshop[]>([]);
@@ -41,7 +42,6 @@ export default function EmployeeHomeScreen() {
   const [nearbyUsingGps, setNearbyUsingGps] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const insets = useSafeAreaInsets();
   const { getCurrentLocation, loading: locatingForNearby } = useCurrentLocation();
 
   // Daily Brief bölümlerinde "Önerileri Gör" butonu ile Recommended
@@ -108,11 +108,6 @@ export default function EmployeeHomeScreen() {
     await loadNearby(coords);
   }
 
-  async function handleLogout() {
-    await logout();
-    router.replace('/(auth)/login');
-  }
-
   function scrollToRecommended() {
     scrollRef.current?.scrollTo({ y: recommendedOffsetY.current, animated: true });
   }
@@ -132,6 +127,10 @@ export default function EmployeeHomeScreen() {
   );
 
   const pulseItems = useMemo(() => buildCityPulseItems(allWorkshops), [allWorkshops]);
+  const urgentPulseCount = useMemo(
+    () => pulseItems.filter((item) => item.variant === 'urgent').length,
+    [pulseItems]
+  );
 
   const nearestWorkshop = useMemo(() => pickNearestWorkshop(nearby), [nearby]);
   const trendingWorkshop = useMemo(
@@ -151,9 +150,9 @@ export default function EmployeeHomeScreen() {
 
   return (
     <View style={styles.flex}>
-      {/* NOT: Bu ekranın üst safe-area'sı bir üst layout (ör. (employee) Stack)
-          tarafından karşılanmıyorsa, aşağıya paddingTop: insets.top eklenmeli. */}
-      <LiveTicker items={tickerItems} />
+      {/* Status bar/kamera çentiği altında kalan marka başlığı, ticker'ın üzerinde */}
+      <BrandHeader />
+      <DashboardTicker messages={tickerItems} />
 
       <ScrollView
         ref={scrollRef}
@@ -163,23 +162,14 @@ export default function EmployeeHomeScreen() {
           <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} colors={[Colors.primary]} />
         }
       >
-        {/* Header */}
-        <View style={styles.header}>
-          <View>
-            <Text style={styles.greeting}>Merhaba, {user?.firstName}</Text>
-            <Text style={styles.subGreeting}>Bugün ne keşfetmek istersin?</Text>
-          </View>
-
-          <View style={styles.headerActions}>
-            <TouchableOpacity onPress={() => router.push('/(employee)/profile')} style={styles.iconButton}>
-              <Icon name="person" size={22} color={Colors.onSurfaceVariant} />
-            </TouchableOpacity>
-
-            <TouchableOpacity onPress={handleLogout} style={styles.iconButton}>
-              <Icon name="logout" size={20} color={Colors.onSurfaceVariant} />
-            </TouchableOpacity>
-          </View>
-        </View>
+        {/* Hero: ATI maskotu + kişiselleştirilmiş karşılama + keşif çipleri */}
+        <DashboardHero
+          firstName={user?.firstName}
+          chips={[
+            { icon: 'star', label: `${recommended.length} Yeni Keşif` },
+            { icon: 'bolt', label: `${urgentPulseCount} Popüler Etkinlik` },
+          ]}
+        />
 
         {/* Oyunlaştırma — mevcut XP kartının ilerleme çubuklu hali */}
         <GamificationCard
@@ -462,28 +452,6 @@ const styles = StyleSheet.create({
     paddingTop: Spacing.xl,
     paddingBottom: Spacing.xl,
     gap: Spacing.lg,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-  },
-  greeting: {
-    ...Typography.h1Mobile,
-    color: Colors.onSurface,
-  },
-  subGreeting: {
-    ...Typography.bodyMd,
-    color: Colors.onSurfaceVariant,
-    marginTop: 2,
-  },
-  headerActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  iconButton: {
-    padding: 8,
   },
   sectionHeader: {
     marginBottom: Spacing.sm,

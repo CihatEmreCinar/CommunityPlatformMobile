@@ -26,6 +26,7 @@ interface IconRegistryEntry {
 const ICON_REGISTRY = {
   add: { family: 'ion', glyph: 'add' },
   addAction: { family: 'mat', glyph: 'add' },
+  aiMatch: { family: 'mat', glyph: 'smart-toy' },
   addCircleOutline: { family: 'mat', glyph: 'add-circle-outline' },
   alarmOutline: { family: 'ion', glyph: 'alarm-outline' },
   arrowBack: { family: 'mat', glyph: 'arrow-back' },
@@ -116,6 +117,7 @@ const ICON_REGISTRY = {
   search: { family: 'mat', glyph: 'search' },
   searchInput: { family: 'ion', glyph: 'search' },
   searchOff: { family: 'mat', glyph: 'search-off' },
+  share: { family: 'mat', glyph: 'share' },
   searchOutline: { family: 'ion', glyph: 'search-outline' },
   send: { family: 'ion', glyph: 'send' },
   shareSocialOutline: { family: 'ion', glyph: 'share-social-outline' },

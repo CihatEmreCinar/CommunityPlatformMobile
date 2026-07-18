@@ -15,8 +15,7 @@ const HOUR_MS = 60 * 60 * 1000;
 
 export interface TickerItem {
   id: string;
-  /** Icon bileşeninin desteklediği isimlerden biri (bkz. components/ui/Icon) */
-  icon: string;
+  /** Emoji zaten metnin içinde geliyor, ör: "📍 Yakınında 4 atölye var" */
   text: string;
 }
 
@@ -61,7 +60,7 @@ export function buildTickerItems(params: {
   const items: TickerItem[] = [];
 
   if (nearbyCount > 0) {
-    items.push({ id: 'nearby', icon: 'locationOn', text: `Yakınında ${nearbyCount} atölye var` });
+    items.push({ id: 'nearby', text: `📍 Yakınında ${nearbyCount} atölye var` });
   }
 
   allWorkshops
@@ -70,8 +69,7 @@ export function buildTickerItems(params: {
     .forEach((w) =>
       items.push({
         id: `full-${w.id}`,
-        icon: 'bolt',
-        text: `"${w.title}" hızla doluyor! (${spotsLeft(w)} yer kaldı)`,
+        text: `🔥 "${w.title}" hızla doluyor! (${spotsLeft(w)} yer kaldı)`,
       })
     );
 
@@ -82,11 +80,11 @@ export function buildTickerItems(params: {
     })
     .slice(0, 1)
     .forEach((w) =>
-      items.push({ id: `soon-${w.id}`, icon: 'event', text: `"${w.title}" ${formatRelativeStart(w.startAt)} başlıyor` })
+      items.push({ id: `soon-${w.id}`, text: `📢 "${w.title}" ${formatRelativeStart(w.startAt)} başlıyor` })
     );
 
   if (recommendedCount > 0) {
-    items.push({ id: 'recommended', icon: 'star', text: `Senin için ${recommendedCount} yeni öneri hazır` });
+    items.push({ id: 'recommended', text: `⭐ Senin için ${recommendedCount} yeni öneri hazır` });
   }
 
   return items;

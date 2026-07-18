@@ -1,25 +1,25 @@
 import { useEffect, useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  ActivityIndicator,
-  TouchableOpacity,
-  Alert,
-  TextInput,
-} from 'react-native';
+import { View, ScrollView, ActivityIndicator, Share, Alert, StyleSheet } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
-import { Icon, IconName } from '../../../components/ui/Icon';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { workshopService } from '../../../services/workshopService';
 import { enrollmentService } from '../../../services/enrollmentService';
 import { reviewService } from '../../../services/reviewService';
 import { Workshop } from '../../../types/workshop';
 import { Review } from '../../../types/review';
 import { Enrollment } from '../../../types/enrollment';
-import { Colors, Typography, Spacing, Radius, Shadows } from '../../../constants/theme';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { Colors, Spacing } from '../../../constants/theme';
 import { formatCityDistrict, openMapsForCoordinate } from '../../../utils/locationFormat';
+import { WorkshopHero } from '../../../components/workshop/WorkshopHero';
+import { WorkshopHeader } from '../../../components/workshop/WorkshopHeader';
+import { WorkshopUrgencyCard } from '../../../components/workshop/WorkshopUrgencyCard';
+import { WorkshopInfoGrid } from '../../../components/workshop/WorkshopInfoGrid';
+import { WorkshopDescription } from '../../../components/workshop/WorkshopDescription';
+import { WorkshopTags } from '../../../components/workshop/WorkshopTags';
+import { WorkshopGallery } from '../../../components/workshop/WorkshopGallery';
+import { WorkshopLocation } from '../../../components/workshop/WorkshopLocation';
+import { WorkshopReviews } from '../../../components/workshop/WorkshopReviews';
+import { WorkshopStickyCTA } from '../../../components/workshop/WorkshopStickyCTA';
 
 /** Atölyenin konum kartında gösterilecek ana metni oluşturur: önce Mekan Adı
  *  + Adres, o da yoksa eski serbest metin `locationDetail` alanına düşer. */
@@ -33,6 +33,7 @@ function getWorkshopLocationLabel(workshop: Workshop): string {
 export default function WorkshopDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const [workshop, setWorkshop] = useState<Workshop | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isEnrolling, setIsEnrolling] = useState(false);
@@ -72,16 +73,16 @@ export default function WorkshopDetailScreen() {
     }
   }
 
-async function checkEligibility() {
-  try {
-    const enrollments = await enrollmentService.getMine();
-    const myEnrollment = enrollments.find((e) => e.workshopId === id);
-    setCanReview(myEnrollment?.attendanceStatus === 'Attended');
-    setEnrollmentStatus(myEnrollment?.status ?? null);
-  } catch (error) {
-    console.log('Kayıt durumu kontrol edilemedi', error);
+  async function checkEligibility() {
+    try {
+      const enrollments = await enrollmentService.getMine();
+      const myEnrollment = enrollments.find((e) => e.workshopId === id);
+      setCanReview(myEnrollment?.attendanceStatus === 'Attended');
+      setEnrollmentStatus(myEnrollment?.status ?? null);
+    } catch (error) {
+      console.log('Kayıt durumu kontrol edilemedi', error);
+    }
   }
-}
 
   async function handleEnroll() {
     if (!workshop) return;
@@ -94,9 +95,7 @@ async function checkEligibility() {
         created.status === 'pending'
           ? 'Kayıt talebin gönderildi. Onay bekleniyor.'
           : 'Atölyeye kaydoldun!';
-      Alert.alert('Başarılı', message, [
-        { text: 'Tamam' },
-      ]);
+      Alert.alert('Başarılı', message, [{ text: 'Tamam' }]);
     } catch (error: any) {
       const message = error?.response?.data?.message || 'Kayıt işlemi başarısız oldu.';
       Alert.alert('Hata', message);
@@ -127,13 +126,21 @@ async function checkEligibility() {
       setIsSubmittingReview(false);
     }
   }
-  
+
+  async function handleShare() {
+    if (!workshop) return;
+    try {
+      await Share.share({ message: `Atolium'da "${workshop.title}" atölyesine göz at!` });
+    } catch (error) {
+      console.log('Paylaşım başarısız', error);
+    }
+  }
 
   if (isLoading) {
     return (
-      <View style={styles.loadingContainer}>
+      <SafeAreaView style={styles.loadingContainer} edges={['top', 'bottom']}>
         <ActivityIndicator size="large" color={Colors.primary} />
-      </View>
+      </SafeAreaView>
     );
   }
 
@@ -154,521 +161,140 @@ async function checkEligibility() {
 
   const showReviewForm = canReview && !hasReviewed;
   const isEnrolled = enrollmentStatus != null;
-  const enrollmentButtonText =
-    canReview
-      ? 'Katıldın'
-      : enrollmentStatus === 'pending'
-      ? 'Onay Bekleniyor'
-      : enrollmentStatus === 'confirmed'
-      ? 'Kaydın Onaylandı'
-      : enrollmentStatus === 'cancelled'
-      ? 'Kayıt İptal Edildi'
-      : isFull
-      ? 'Kapasite Doldu'
-      : 'Kaydol';
+  const enrollmentButtonText = canReview
+    ? 'Katıldın'
+    : enrollmentStatus === 'pending'
+    ? 'Onay Bekleniyor'
+    : enrollmentStatus === 'confirmed'
+    ? 'Kaydın Onaylandı'
+    : enrollmentStatus === 'cancelled'
+    ? 'Kayıt İptal Edildi'
+    : isFull
+    ? 'Kapasite Doldu'
+    : 'Kaydol';
   const enrollmentButtonDisabled = isFull || isEnrolling || isEnrolled;
 
+  const isOnline = workshop.locationType === 'online';
+  const cityDistrict = !isOnline ? formatCityDistrict(workshop.city, workshop.district) : null;
+  const canOpenMaps = !isOnline && workshop.latitude != null && workshop.longitude != null;
+
   return (
-    <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
     <View style={styles.flex}>
       <Stack.Screen options={{ headerShown: false }} />
 
-      <ScrollView contentContainerStyle={styles.container}>
-        {/* Header with back button */}
-        <View style={styles.headerImage}>
-          <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-            <Icon name="arrowBack" size={22} color={Colors.onSurface} />
-          </TouchableOpacity>
-          <View style={styles.headerIconWrap}>
-            <Icon name="palette" size={48} color={Colors.primary} />
-          </View>
-        </View>
+      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+        <WorkshopHero
+          imageUrl={workshop.coverImageUrl}
+          topInset={insets.top}
+          onBack={() => router.back()}
+          onShare={handleShare}
+        />
 
-        <View style={styles.content}>
-          {/* Title & Employer */}
-          <Text style={styles.title}>{workshop.title}</Text>
-          <TouchableOpacity
-            style={styles.employerRow}
-            onPress={() => router.push(`/(employee)/employer/${workshop.employerId}` as any)}
-          >
-            <Icon name="person" size={16} color={Colors.onSurfaceVariant} />
-            <Text style={styles.employerName}>{workshop.employerName}</Text>
-            <Icon name="chevronRight" size={16} color={Colors.outline} />
-          </TouchableOpacity>
+        <View style={styles.card}>
+          <WorkshopHeader
+            title={workshop.title}
+            employerName={workshop.employerName}
+            onEmployerPress={() => router.push(`/(employee)/employer/${workshop.employerId}` as any)}
+            locationLabel={isOnline ? 'Online' : cityDistrict}
+            avgRating={workshop.avgRating}
+            reviewCount={workshop.reviewCount}
+          />
 
-          {/* Rating */}
-          {workshop.avgRating > 0 && (
-            <View style={styles.ratingRow}>
-              <Icon name="star" size={16} color={Colors.amber} />
-              <Text style={styles.ratingText}>
-                {workshop.avgRating.toFixed(1)} ({workshop.reviewCount} değerlendirme)
-              </Text>
-            </View>
-          )}
-
-          {/* Info Cards */}
-          <View style={styles.infoGrid}>
-            <InfoItem icon="calendarToday" label="Tarih" value={formattedDate} />
-            <InfoItem icon="schedule" label="Saat" value={formattedTime} />
-            <InfoItem
-              icon={workshop.locationType === 'online' ? 'videocam' : 'place'}
-              label="Konum"
-              value={getWorkshopLocationLabel(workshop)}
-            />
-            <InfoItem
-              icon="groups"
-              label="Kapasite"
-              value={`${workshop.enrolledCount}/${workshop.capacity} kişi`}
-            />
+          <View style={styles.section}>
+            <WorkshopUrgencyCard capacity={workshop.capacity} enrolledCount={workshop.enrolledCount} />
           </View>
 
-          {workshop.locationType === 'in-person' && (
-            <>
-              {formatCityDistrict(workshop.city, workshop.district) && (
-                <View style={styles.locationMetaRow}>
-                  <Icon name="locationOn" size={14} color={Colors.onSurfaceVariant} />
-                  <Text style={styles.locationMetaText}>
-                    {formatCityDistrict(workshop.city, workshop.district)}
-                  </Text>
-                </View>
-              )}
-              {workshop.latitude != null && workshop.longitude != null && (
-                <TouchableOpacity
-                  style={styles.mapButton}
-                  onPress={() =>
-                    openMapsForCoordinate(workshop.latitude!, workshop.longitude!, workshop.venueName || workshop.title)
-                  }
-                  activeOpacity={0.7}
-                >
-                  <Icon name="map" size={16} color={Colors.primary} />
-                  <Text style={styles.mapButtonText}>Haritada Göster</Text>
-                </TouchableOpacity>
-              )}
-            </>
-          )}
+          <View style={styles.divider} />
 
-          {/* Description */}
-          {workshop.description && (
-            <View style={styles.descSection}>
-              <Text style={styles.sectionTitle}>Açıklama</Text>
-              <Text style={styles.description}>{workshop.description}</Text>
-            </View>
-          )}
+          <View style={styles.section}>
+            <WorkshopInfoGrid date={formattedDate} time={formattedTime} price={`${workshop.price} ₺`} />
+          </View>
 
-          {/* Tags */}
+          <View style={styles.section}>
+            <WorkshopDescription description={workshop.description} />
+          </View>
+
           {workshop.tags.length > 0 && (
-            <View style={styles.tagsRow}>
-              {workshop.tags.map((tag) => (
-                <View key={tag} style={styles.tag}>
-                  <Text style={styles.tagText}>{tag}</Text>
-                </View>
-              ))}
+            <View style={styles.section}>
+              <WorkshopTags tags={workshop.tags} />
             </View>
           )}
 
-          {/* Review Form */}
-          {showReviewForm && (
-            <View style={styles.reviewFormSection}>
-              <Text style={styles.sectionTitle}>Deneyimini Paylaş</Text>
-              <View style={styles.starRow}>
-                {[1, 2, 3, 4, 5].map((star) => (
-                  <TouchableOpacity key={star} onPress={() => setRating(star)}>
-                    <Icon
-                      name={star <= rating ? 'star' : 'starEmpty'}
-                      size={32}
-                      color={Colors.amber}
-                    />
-                  </TouchableOpacity>
-                ))}
-              </View>
-              <TextInput
-                style={styles.reviewInput}
-                placeholder="Yorumunu yaz (opsiyonel)"
-                placeholderTextColor={Colors.outlineVariant}
-                value={comment}
-                onChangeText={setComment}
-                multiline
-                numberOfLines={3}
-              />
-              <TouchableOpacity
-                style={[styles.submitReviewButton, isSubmittingReview && styles.enrollButtonDisabled]}
-                onPress={handleSubmitReview}
-                disabled={isSubmittingReview}
-                activeOpacity={0.85}
-              >
-                {isSubmittingReview ? (
-                  <ActivityIndicator color={Colors.onPrimary} />
-                ) : (
-                  <Text style={styles.submitReviewButtonText}>Yorumu Gönder</Text>
-                )}
-              </TouchableOpacity>
-            </View>
-          )}
+          <View style={styles.section}>
+            <WorkshopGallery imageUrl={workshop.coverImageUrl} />
+          </View>
 
-          {/* Reviews List */}
-          <View style={styles.reviewsSection}>
-            <Text style={styles.sectionTitle}>
-              Değerlendirmeler {reviews.length > 0 ? `(${reviews.length})` : ''}
-            </Text>
-            {reviews.length === 0 ? (
-              <Text style={styles.emptyReviewText}>Henüz değerlendirme yok.</Text>
-            ) : (
-              reviews.map((r) => (
-                <View key={r.id} style={styles.reviewCard}>
-                  <View style={styles.reviewHeader}>
-                    <Text style={styles.reviewUserName}>{r.userName}</Text>
-                    <View style={styles.reviewStars}>
-                      {[1, 2, 3, 4, 5].map((star) => (
-                        <Icon
-                          key={star}
-                          name={star <= r.rating ? 'star' : 'starEmpty'}
-                          size={14}
-                          color={Colors.amber}
-                        />
-                      ))}
-                    </View>
-                  </View>
-                  {r.comment && <Text style={styles.reviewComment}>{r.comment}</Text>}
-                  {r.employerReply && (
-                    <View style={styles.replyBox}>
-                      <Text style={styles.replyLabel}>Atölyeci Yanıtı</Text>
-                      <Text style={styles.replyText}>{r.employerReply}</Text>
-                    </View>
-                  )}
-                </View>
-              ))
-            )}
+          <View style={styles.section}>
+            <WorkshopLocation
+              isOnline={isOnline}
+              label={getWorkshopLocationLabel(workshop)}
+              cityDistrict={cityDistrict}
+              onOpenMaps={
+                canOpenMaps
+                  ? () =>
+                      openMapsForCoordinate(
+                        workshop.latitude!,
+                        workshop.longitude!,
+                        workshop.venueName || workshop.title
+                      )
+                  : undefined
+              }
+            />
+          </View>
+
+          <View style={styles.section}>
+            <WorkshopReviews
+              reviews={reviews}
+              showReviewForm={showReviewForm}
+              rating={rating}
+              onRatingChange={setRating}
+              comment={comment}
+              onCommentChange={setComment}
+              isSubmittingReview={isSubmittingReview}
+              onSubmitReview={handleSubmitReview}
+            />
           </View>
         </View>
       </ScrollView>
 
-      {/* Bottom Bar */}
-      <View style={styles.bottomBar}>
-        <View>
-          <Text style={styles.priceLabel}>Fiyat</Text>
-          <Text style={styles.priceValue}>{workshop.price} ₺</Text>
-        </View>
-        <TouchableOpacity
-          style={[styles.enrollButton, enrollmentButtonDisabled && styles.enrollButtonDisabled]}
-          onPress={handleEnroll}
-          disabled={enrollmentButtonDisabled}
-          activeOpacity={0.85}
-        >
-          {isEnrolling ? (
-            <ActivityIndicator color={Colors.onPrimary} />
-          ) : (
-            <Text style={styles.enrollButtonText}>{enrollmentButtonText}</Text>
-          )}
-        </TouchableOpacity>
-      </View>
-    </View>
-    </SafeAreaView>
-  );
-}
-
-function InfoItem({
-  icon,
-  label,
-  value,
-}: {
-  icon: IconName;
-  label: string;
-  value: string;
-}) {
-  return (
-    <View style={styles.infoItem}>
-      <View style={styles.infoIconWrap}>
-        <Icon name={icon} size={18} color={Colors.primary} />
-      </View>
-      <View style={styles.infoTextWrap}>
-        <Text style={styles.infoLabel}>{label}</Text>
-        <Text style={styles.infoValue} numberOfLines={1}>
-          {value}
-        </Text>
-      </View>
+      <WorkshopStickyCTA
+        price={workshop.price}
+        buttonText={enrollmentButtonText}
+        disabled={enrollmentButtonDisabled}
+        loading={isEnrolling}
+        onPress={handleEnroll}
+        bottomInset={insets.bottom}
+      />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  flex: { flex: 1, backgroundColor: Colors.background },
-  safeArea: { flex: 1, backgroundColor: Colors.background },
+  flex: { flex: 1, backgroundColor: Colors.surface },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: Colors.background,
+    backgroundColor: Colors.surface,
   },
-  container: { paddingBottom: 100 },
-  headerImage: {
-    height: 220,
-    backgroundColor: Colors.primaryContainer,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  backButton: {
-    position: 'absolute',
-    top: Spacing.xl,
-    left: Spacing.containerMargin,
-    width: 40,
-    height: 40,
-    borderRadius: Radius.full,
-    backgroundColor: Colors.surfaceContainerLowest,
-    justifyContent: 'center',
-    alignItems: 'center',
-    ...Shadows.sm,
-    zIndex: 10,
-  },
-  headerIconWrap: {
-    width: 96,
-    height: 96,
-    borderRadius: Radius.full,
-    backgroundColor: 'rgba(255,255,255,0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  content: {
-    paddingHorizontal: Spacing.containerMargin,
-    paddingTop: Spacing.lg,
-    gap: Spacing.sm,
-  },
-  title: {
-    ...Typography.h1,
-    color: Colors.onSurface,
-  },
-  employerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  employerName: {
-    ...Typography.bodyMd,
-    color: Colors.onSurfaceVariant,
-  },
-  ratingRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  ratingText: {
-    ...Typography.bodyMd,
-    color: Colors.onSurfaceVariant,
-  },
-  infoGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: Spacing.sm,
-    marginTop: Spacing.sm,
-  },
-  locationMetaRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    marginTop: Spacing.sm,
-  },
-  locationMetaText: {
-    ...Typography.labelMd,
-    color: Colors.onSurfaceVariant,
-  },
-  mapButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    alignSelf: 'flex-start',
-    marginTop: Spacing.xs,
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: 6,
-    borderRadius: Radius.md,
-    borderWidth: 1,
-    borderColor: Colors.primaryLighter,
-    backgroundColor: Colors.primaryContainer,
-  },
-  mapButtonText: {
-    ...Typography.labelMd,
-    color: Colors.primaryDarker,
-  },
-  infoItem: {
-    flexBasis: '47%',
+  scrollContent: {
     flexGrow: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.sm,
-    backgroundColor: Colors.surfaceContainerLowest,
-    borderRadius: Radius.lg,
-    borderWidth: 1,
-    borderColor: Colors.surfaceVariant,
-    padding: Spacing.sm,
+    paddingBottom: Spacing.xl,
   },
-  infoIconWrap: {
-    width: 36,
-    height: 36,
-    borderRadius: Radius.md,
-    backgroundColor: Colors.primaryContainer,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  infoTextWrap: { flex: 1 },
-  infoLabel: {
-    ...Typography.labelSm,
-    color: Colors.outline,
-  },
-  infoValue: {
-    ...Typography.labelMd,
-    color: Colors.onSurface,
-    marginTop: 1,
-  },
-  descSection: {
-    marginTop: Spacing.md,
-    gap: Spacing.xs,
-  },
-  sectionTitle: {
-    ...Typography.h3,
-    color: Colors.onSurface,
-  },
-  description: {
-    ...Typography.bodyLg,
-    color: Colors.onSurfaceVariant,
-    lineHeight: 22,
-  },
-  tagsRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: Spacing.xs,
-    marginTop: Spacing.sm,
-  },
-  tag: {
-    backgroundColor: Colors.surfaceContainer,
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: Spacing.xs,
-    borderRadius: Radius.full,
-  },
-  tagText: {
-    ...Typography.labelSm,
-    color: Colors.onSurfaceVariant,
-  },
-  reviewFormSection: {
-    marginTop: Spacing.lg,
-    gap: Spacing.sm,
-    backgroundColor: Colors.surfaceContainerLowest,
-    borderRadius: Radius.lg,
-    borderWidth: 1,
-    borderColor: Colors.surfaceVariant,
-    padding: Spacing.md,
-  },
-  starRow: {
-    flexDirection: 'row',
-    gap: Spacing.xs,
-  },
-  reviewInput: {
-    ...Typography.bodyMd,
-    color: Colors.onSurface,
-    backgroundColor: Colors.surfaceContainerLow,
-    borderWidth: 1,
-    borderColor: Colors.surfaceVariant,
-    borderRadius: Radius.md,
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: Spacing.sm,
-    minHeight: 70,
-    textAlignVertical: 'top',
-  },
-  submitReviewButton: {
-    backgroundColor: Colors.primary,
-    borderRadius: Radius.md,
-    paddingVertical: Spacing.sm,
-    alignItems: 'center',
-  },
-  submitReviewButtonText: {
-    ...Typography.labelMd,
-    color: Colors.onPrimary,
-  },
-  reviewsSection: {
-    marginTop: Spacing.lg,
-    gap: Spacing.sm,
-  },
-  emptyReviewText: {
-    ...Typography.bodyMd,
-    color: Colors.onSurfaceVariant,
-  },
-  reviewCard: {
-    backgroundColor: Colors.surfaceContainerLowest,
-    borderRadius: Radius.lg,
-    borderWidth: 1,
-    borderColor: Colors.surfaceVariant,
-    padding: Spacing.sm,
-    gap: 4,
-  },
-  reviewHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  reviewUserName: {
-    ...Typography.labelMd,
-    fontSize: 14,
-    color: Colors.onSurface,
-  },
-  reviewStars: {
-    flexDirection: 'row',
-  },
-  reviewComment: {
-    ...Typography.bodyMd,
-    color: Colors.onSurfaceVariant,
-  },
-  replyBox: {
-    marginTop: Spacing.xs,
-    backgroundColor: Colors.primaryContainer,
-    borderRadius: Radius.sm,
-    padding: Spacing.sm,
-    gap: 2,
-  },
-  replyLabel: {
-    ...Typography.labelSm,
-    color: Colors.onPrimaryContainer,
-    fontWeight: '700',
-  },
-  replyText: {
-    ...Typography.bodyMd,
-    fontSize: 13,
-    color: Colors.onPrimaryContainer,
-  },
-  bottomBar: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    backgroundColor: Colors.surfaceContainerLowest,
+  card: {
+    marginTop: -32,
+    backgroundColor: Colors.surface,
+    borderTopLeftRadius: 32,
+    borderTopRightRadius: 32,
     paddingHorizontal: Spacing.containerMargin,
-    paddingVertical: Spacing.md,
-    borderTopWidth: 1,
-    borderTopColor: Colors.surfaceVariant,
-    ...Shadows.card,
+    paddingTop: Spacing.sm,
   },
-  priceLabel: {
-    ...Typography.labelSm,
-    color: Colors.outline,
+  section: {
+    marginTop: Spacing.lg,
   },
-  priceValue: {
-    ...Typography.h2,
-    color: Colors.primary,
-  },
-  enrollButton: {
-    backgroundColor: Colors.primary,
-    paddingHorizontal: Spacing.xl,
-    paddingVertical: Spacing.sm,
-    borderRadius: Radius.md,
-    minWidth: 140,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  enrollButtonDisabled: {
-    backgroundColor: Colors.outline,
-  },
-  enrollButtonText: {
-    ...Typography.labelMd,
-    color: Colors.onPrimary,
-    fontSize: 14,
+  divider: {
+    height: 1,
+    backgroundColor: Colors.surfaceVariant,
+    marginTop: Spacing.lg,
   },
 });
