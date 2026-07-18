@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import {
   View,
   Text,
@@ -7,12 +7,16 @@ import {
   RefreshControl,
   ActivityIndicator,
   TouchableOpacity,
-  Image,
   Alert,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import * as Location from 'expo-location';
 import { Icon } from '../../../components/ui/Icon';
+import { AtiInsightCard } from '../../../components/home/AtiInsightCard';
+import { BentoCard } from '../../../components/home/BentoCard';
+import { CityPulseFeed } from '../../../components/home/CityPulseFeed';
+import { GamificationCard } from '../../../components/home/GamificationCard';
+import { LiveTicker } from '../../../components/home/LiveTicker';
 import { useAuth } from '../../../contexts/AuthContext';
 import { workshopService } from '../../../services/workshopService';
 import { Workshop } from '../../../types/workshop';
@@ -20,11 +24,13 @@ import { Colors, Typography, Spacing, Radius, Shadows } from '../../../constants
 import { useCurrentLocation } from '../../../hooks/useCurrentLocation';
 import { formatCityDistrict } from '../../../utils/locationFormat';
 import {
-  SafeAreaView,
-  SafeAreaProvider,
-  SafeAreaInsetsContext,
-  useSafeAreaInsets,
-} from 'react-native-safe-area-context';
+  buildCityPulseItems,
+  buildTickerItems,
+  calculateLevelInfo,
+  pickNearestWorkshop,
+  pickTrendingWorkshop,
+} from '../../../utils/dailyBrief';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function EmployeeHomeScreen() {
   const { user, logout } = useAuth();
@@ -37,6 +43,11 @@ export default function EmployeeHomeScreen() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const insets = useSafeAreaInsets();
   const { getCurrentLocation, loading: locatingForNearby } = useCurrentLocation();
+
+  // Daily Brief bölümlerinde "Önerileri Gör" butonu ile Recommended
+  // bölümüne kaydırmak için kullanılıyor.
+  const scrollRef = useRef<ScrollView>(null);
+  const recommendedOffsetY = useRef(0);
 
   const loadNearby = useCallback(async (coords?: { latitude: number; longitude: number } | null) => {
     try {
@@ -102,6 +113,34 @@ export default function EmployeeHomeScreen() {
     router.replace('/(auth)/login');
   }
 
+  function scrollToRecommended() {
+    scrollRef.current?.scrollTo({ y: recommendedOffsetY.current, animated: true });
+  }
+
+  // --- Daily Brief türetilmiş veriler ---
+  // Not: Hepsi zaten yüklenmiş olan recommended/allWorkshops/nearby'den
+  // hesaplanıyor, yeni bir servis çağrısı gerekmiyor. Ayrıntılar için
+  // utils/dailyBrief.ts ve README_PATCH.md.
+  const tickerItems = useMemo(
+    () =>
+      buildTickerItems({
+        nearbyCount: nearby.length,
+        recommendedCount: recommended.length,
+        allWorkshops,
+      }),
+    [nearby.length, recommended.length, allWorkshops]
+  );
+
+  const pulseItems = useMemo(() => buildCityPulseItems(allWorkshops), [allWorkshops]);
+
+  const nearestWorkshop = useMemo(() => pickNearestWorkshop(nearby), [nearby]);
+  const trendingWorkshop = useMemo(
+    () => pickTrendingWorkshop(allWorkshops, nearestWorkshop?.id),
+    [allWorkshops, nearestWorkshop?.id]
+  );
+
+  const levelInfo = useMemo(() => calculateLevelInfo(user?.xpPoints ?? 0), [user?.xpPoints]);
+
   if (isLoading) {
     return (
       <View style={styles.loadingContainer}>
@@ -111,146 +150,185 @@ export default function EmployeeHomeScreen() {
   }
 
   return (
-    <ScrollView
-    
-      style={styles.flex}
-      contentContainerStyle={styles.container}
-      refreshControl={
-        <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} colors={[Colors.primary]} />
-      }
-    >
-      <View style={styles.header}>
-  <View>
-    <Text style={styles.greeting}>Merhaba, {user?.firstName}</Text>
-    <Text style={styles.subGreeting}>Bugün ne keşfetmek istersin?</Text>
-  </View>
+    <View style={styles.flex}>
+      {/* NOT: Bu ekranın üst safe-area'sı bir üst layout (ör. (employee) Stack)
+          tarafından karşılanmıyorsa, aşağıya paddingTop: insets.top eklenmeli. */}
+      <LiveTicker items={tickerItems} />
 
-  <View style={styles.headerActions}>
-    <TouchableOpacity
-      onPress={() => router.push('/(employee)/profile')}
-      style={styles.iconButton}
-    >
-      <Icon
-        name="person"
-        size={22}
-        color={Colors.onSurfaceVariant}
-      />
-    </TouchableOpacity>
-
-    <TouchableOpacity
-      onPress={handleLogout}
-      style={styles.iconButton}
-    >
-      <Icon
-        name="logout"
-        size={20}
-        color={Colors.onSurfaceVariant}
-      />
-    </TouchableOpacity>
-  </View>
-</View>
-      {/* Header 
-      <View style={styles.header}>
-        <View>
-          <Text style={styles.greeting}>Merhaba, {user?.firstName}</Text>
-          <Text style={styles.subGreeting}>Bugün ne keşfetmek istersin?</Text>
-        </View>
-        <TouchableOpacity onPress={handleLogout} style={styles.logoutButton}>
-          <Icon name="logout" size={20} color={Colors.onSurfaceVariant} />
-        </TouchableOpacity>
-      </View>*/}
-
-      {/* XP Card */}
-      <View style={styles.xpCard}>
-        <View style={styles.xpIconWrap}>
-          <Icon name="bolt" size={24} color={Colors.onPrimary} />
-        </View>
-        <View style={styles.xpInfo}>
-          <Text style={styles.xpCardLabel}>Toplam Deneyim Puanın</Text>
-          <Text style={styles.xpCardValue}>{user?.xpPoints ?? 0} XP</Text>
-        </View>
-      </View>
-
-      {/* Recommended Section */}
-      {recommended.length > 0 && (
-        <>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Senin İçin Önerilenler</Text>
+      <ScrollView
+        ref={scrollRef}
+        style={styles.scrollArea}
+        contentContainerStyle={styles.container}
+        refreshControl={
+          <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} colors={[Colors.primary]} />
+        }
+      >
+        {/* Header */}
+        <View style={styles.header}>
+          <View>
+            <Text style={styles.greeting}>Merhaba, {user?.firstName}</Text>
+            <Text style={styles.subGreeting}>Bugün ne keşfetmek istersin?</Text>
           </View>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.horizontalList}
-          >
-            {recommended.map((workshop) => (
-              <RecommendedCard
-                key={workshop.id}
-                workshop={workshop}
-                onPress={() => router.push(`/(employee)/workshop/${workshop.id}` as any)}
-              />
-            ))}
-          </ScrollView>
-        </>
-      )}
 
-      {/* Nearby Section */}
-      {nearby.length > 0 && (
-        <>
-          <View style={styles.sectionHeaderRow}>
-            <Text style={styles.sectionTitle}>Yakınımdakiler</Text>
-            <TouchableOpacity
-              style={styles.gpsButton}
-              onPress={handleUseGpsForNearby}
-              disabled={locatingForNearby}
-              activeOpacity={0.7}
-            >
-              {locatingForNearby ? (
-                <ActivityIndicator size="small" color={Colors.primary} />
-              ) : (
-                <Icon name="myLocation" size={14} color={Colors.primary} />
-              )}
-              <Text style={styles.gpsButtonText}>
-                {nearbyUsingGps ? 'Konumu Güncelle' : 'Konumuma Göre Sırala'}
-              </Text>
+          <View style={styles.headerActions}>
+            <TouchableOpacity onPress={() => router.push('/(employee)/profile')} style={styles.iconButton}>
+              <Icon name="person" size={22} color={Colors.onSurfaceVariant} />
+            </TouchableOpacity>
+
+            <TouchableOpacity onPress={handleLogout} style={styles.iconButton}>
+              <Icon name="logout" size={20} color={Colors.onSurfaceVariant} />
             </TouchableOpacity>
           </View>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.horizontalList}
-          >
-            {nearby.map((workshop) => (
-              <NearbyCard
+        </View>
+
+        {/* Oyunlaştırma — mevcut XP kartının ilerleme çubuklu hali */}
+        <GamificationCard
+          levelLabel={levelInfo.levelLabel}
+          xp={user?.xpPoints ?? 0}
+          progressPercent={levelInfo.progressPercent}
+          // streakDays / nextBadgeGoal: backend'de henüz karşılığı yok.
+          // Eklendiğinde buraya bağlanacak (README_PATCH.md, Faz 4).
+        />
+
+        {/* ATI Öneri Kartı */}
+        {recommended.length > 0 && (
+          <AtiInsightCard
+            message={`Bu hafta senin için ${recommended.length} atölye önerisi buldum.`}
+            onViewRecommendations={scrollToRecommended}
+            onDismiss={() => {
+              // TODO: kart kapatma tercihini kalıcı yapmak istersen local state / kullanıcı tercihi ekle.
+            }}
+          />
+        )}
+
+        {/* Bento Grid: Yakınımdakiler + Trend */}
+        {(nearestWorkshop || trendingWorkshop) && (
+          <View style={styles.bentoGrid}>
+            {nearestWorkshop && (
+              <BentoCard
+                icon="place"
+                tagLabel="Yakında"
+                title={nearestWorkshop.title}
+                description={
+                  nearestWorkshop.distanceKm != null
+                    ? `${nearestWorkshop.distanceKm.toFixed(1)} km uzaklıkta`
+                    : formatCityDistrict(nearestWorkshop.city, nearestWorkshop.district) || 'Yakınında'
+                }
+                footerLabel={`${nearestWorkshop.price} ₺`}
+                footerActionLabel="Detay"
+                onPress={() => router.push(`/(employee)/workshop/${nearestWorkshop.id}` as any)}
+              />
+            )}
+            {trendingWorkshop && (
+              <BentoCard
+                icon="bolt"
+                tagLabel="Trend"
+                title={trendingWorkshop.title}
+                description={
+                  trendingWorkshop.capacity - trendingWorkshop.enrolledCount > 0
+                    ? `${trendingWorkshop.capacity - trendingWorkshop.enrolledCount} yer kaldı`
+                    : 'Dolu'
+                }
+                footerLabel={new Date(trendingWorkshop.startAt).toLocaleDateString('tr-TR', {
+                  day: 'numeric',
+                  month: 'short',
+                })}
+                footerActionLabel="Katıl"
+                onPress={() => router.push(`/(employee)/workshop/${trendingWorkshop.id}` as any)}
+              />
+            )}
+          </View>
+        )}
+
+        {/* Recommended Section */}
+        {recommended.length > 0 && (
+          <View onLayout={(e) => (recommendedOffsetY.current = e.nativeEvent.layout.y)}>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>Senin İçin Önerilenler</Text>
+            </View>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.horizontalList}
+            >
+              {recommended.map((workshop) => (
+                <RecommendedCard
+                  key={workshop.id}
+                  workshop={workshop}
+                  onPress={() => router.push(`/(employee)/workshop/${workshop.id}` as any)}
+                />
+              ))}
+            </ScrollView>
+          </View>
+        )}
+
+        {/* Nearby Section */}
+        {nearby.length > 0 && (
+          <>
+            <View style={styles.sectionHeaderRow}>
+              <Text style={styles.sectionTitle}>Yakınımdakiler</Text>
+              <TouchableOpacity
+                style={styles.gpsButton}
+                onPress={handleUseGpsForNearby}
+                disabled={locatingForNearby}
+                activeOpacity={0.7}
+              >
+                {locatingForNearby ? (
+                  <ActivityIndicator size="small" color={Colors.primary} />
+                ) : (
+                  <Icon name="myLocation" size={14} color={Colors.primary} />
+                )}
+                <Text style={styles.gpsButtonText}>
+                  {nearbyUsingGps ? 'Konumu Güncelle' : 'Konumuma Göre Sırala'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.horizontalList}
+            >
+              {nearby.map((workshop) => (
+                <NearbyCard
+                  key={workshop.id}
+                  workshop={workshop}
+                  onPress={() => router.push(`/(employee)/workshop/${workshop.id}` as any)}
+                />
+              ))}
+            </ScrollView>
+          </>
+        )}
+
+        {/* Şehrin Nabzı */}
+        {pulseItems.length > 0 && (
+          <CityPulseFeed
+            items={pulseItems}
+            onItemPress={(workshopId) => router.push(`/(employee)/workshop/${workshopId}` as any)}
+          />
+        )}
+
+        {/* All Workshops Section */}
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>Tüm Atölyeler</Text>
+        </View>
+        <View style={styles.workshopList}>
+          {allWorkshops.length === 0 ? (
+            <View style={styles.emptyState}>
+              <Icon name="searchOff" size={32} color={Colors.outline} />
+              <Text style={styles.emptyText}>Henüz atölye bulunamadı</Text>
+            </View>
+          ) : (
+            allWorkshops.map((workshop) => (
+              <WorkshopListItem
                 key={workshop.id}
                 workshop={workshop}
                 onPress={() => router.push(`/(employee)/workshop/${workshop.id}` as any)}
               />
-            ))}
-          </ScrollView>
-        </>
-      )}
-
-      {/* All Workshops Section */}
-      <View style={styles.sectionHeader}>
-        <Text style={styles.sectionTitle}>Tüm Atölyeler</Text>
-      </View>
-      <View style={styles.workshopList}>
-        {allWorkshops.length === 0 ? (
-          <View style={styles.emptyState}>
-            <Icon name="searchOff" size={32} color={Colors.outline} />
-            <Text style={styles.emptyText}>Henüz atölye bulunamadı</Text>
-          </View>
-        ) : (
-          allWorkshops.map((workshop) => (
-            <WorkshopListItem
-              key={workshop.id}
-              workshop={workshop}
-              onPress={() => router.push(`/(employee)/workshop/${workshop.id}` as any)}
-            />
-          ))
-        )}
-      </View>
-    </ScrollView>
+            ))
+          )}
+        </View>
+      </ScrollView>
+    </View>
   );
 }
 
@@ -372,6 +450,7 @@ function WorkshopListItem({ workshop, onPress }: { workshop: Workshop; onPress: 
 
 const styles = StyleSheet.create({
   flex: { flex: 1, backgroundColor: Colors.background },
+  scrollArea: { flex: 1 },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
@@ -382,12 +461,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.containerMargin,
     paddingTop: Spacing.xl,
     paddingBottom: Spacing.xl,
+    gap: Spacing.lg,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: Spacing.md,
   },
   greeting: {
     ...Typography.h1Mobile,
@@ -398,48 +477,13 @@ const styles = StyleSheet.create({
     color: Colors.onSurfaceVariant,
     marginTop: 2,
   },
-  logoutButton: {
-    padding: Spacing.sm,
-    borderRadius: Radius.full,
-    backgroundColor: Colors.surfaceContainerLowest,
-    ...Shadows.sm,
-  },
   headerActions: {
-  flexDirection: 'row',
-  alignItems: 'center',
-  gap: 12,
-},
-
-iconButton: {
-  padding: 8,
-},
-  xpCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.primary,
-    borderRadius: Radius.xl,
-    padding: Spacing.md,
-    gap: Spacing.sm,
-    marginBottom: Spacing.lg,
-    ...Shadows.card,
+    gap: 12,
   },
-  xpIconWrap: {
-    width: 44,
-    height: 44,
-    borderRadius: Radius.full,
-    backgroundColor: 'rgba(255,255,255,0.18)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  xpInfo: { flex: 1 },
-  xpCardLabel: {
-    ...Typography.labelSm,
-    color: 'rgba(255,255,255,0.85)',
-  },
-  xpCardValue: {
-    ...Typography.h2,
-    color: Colors.onPrimary,
-    marginTop: 2,
+  iconButton: {
+    padding: 8,
   },
   sectionHeader: {
     marginBottom: Spacing.sm,
@@ -477,9 +521,13 @@ iconButton: {
     ...Typography.h3,
     color: Colors.onSurface,
   },
+  bentoGrid: {
+    flexDirection: 'row',
+    gap: Spacing.sm,
+  },
   horizontalList: {
     gap: Spacing.sm,
-    paddingBottom: Spacing.lg,
+    paddingBottom: Spacing.sm,
     paddingRight: Spacing.sm,
   },
   recCard: {
