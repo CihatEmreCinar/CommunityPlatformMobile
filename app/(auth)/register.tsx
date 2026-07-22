@@ -37,8 +37,8 @@ export default function RegisterScreen() {
       Alert.alert('Hata', 'Ad, soyad, e-posta ve şifre zorunludur.');
       return;
     }
-    if (password.length < 6) {
-      Alert.alert('Hata', 'Şifre en az 6 karakter olmalıdır.');
+    if (password.length < 8) {
+      Alert.alert('Hata', 'Şifre en az 8 karakter olmalıdır.');
       return;
     }
 
@@ -53,13 +53,10 @@ export default function RegisterScreen() {
         cityId: location.cityId ?? undefined,
         districtId: location.districtId ?? undefined,
       });
-      if (role === ROLES.EMPLOYER) {
-        router.replace('/(employer)/dashboard');
-      } else if (role === ROLES.CAFE) {
-        router.replace('/(cafe)/(tabs)/dashboard');
-      } else {
-        router.replace('/(employee)/home');
-      }
+      router.replace({
+        pathname: '/(auth)/verify-email',
+        params: { email: email.trim().toLowerCase() },
+      });
     } catch (error: any) {
       const message = error?.response?.data?.message || 'Kayıt başarısız. Tekrar deneyin.';
       Alert.alert('Hata', message);
@@ -191,7 +188,7 @@ export default function RegisterScreen() {
               <Icon name="lockOutline" size={18} color={Colors.outline} style={styles.inputIcon} />
               <TextInput
                 style={[styles.input, styles.inputWithAction]}
-                placeholder="En az 6 karakter"
+                placeholder="En az 8 karakter"
                 placeholderTextColor={Colors.outlineVariant}
                 value={password}
                 onChangeText={setPassword}

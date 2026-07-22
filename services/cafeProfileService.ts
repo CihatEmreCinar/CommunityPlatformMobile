@@ -85,8 +85,6 @@ export const cafeProfileService = {
   },
 
   async updateMe(request: CafeProfileRequest): Promise<CafeProfile> {
-    // Log the outgoing payload so runtime network bodies can be inspected in Metro/console
-    console.log('PUT /api/v1/cafe-profiles/me payload:', request);
     const { data } = await apiClient.put<CafeProfile>('/cafe-profiles/me', request);
     return normalizeCafeProfile(data);
   },
@@ -117,9 +115,7 @@ export const cafeProfileService = {
       name: 'avatar.jpg',
       type: 'image/jpeg',
     } as any);
-    const { data } = await apiClient.post<UploadedFileResponseDto>('/cafe-profiles/me/avatar', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    });
+    const { data } = await apiClient.post<UploadedFileResponseDto>('/cafe-profiles/me/avatar', formData);
     return mapUploadedFileResponse(data);
   },
 
@@ -130,9 +126,7 @@ export const cafeProfileService = {
       name: 'cover.jpg',
       type: 'image/jpeg',
     } as any);
-    const { data } = await apiClient.post<UploadedFileResponseDto>('/cafe-profiles/me/cover', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    });
+    const { data } = await apiClient.post<UploadedFileResponseDto>('/cafe-profiles/me/cover', formData);
     return mapUploadedFileResponse(data);
   },
 };

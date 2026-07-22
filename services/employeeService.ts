@@ -74,9 +74,7 @@ export const employeeService = {
    * uploadEmployerCover ile birebir aynı desen.
    */
   uploadEmployeeCover: async (file: FormData): Promise<UploadedFileResponse> => {
-    const { data } = await apiClient.post<UploadedFileResponseDto>(`${BASE_URL}/profile/cover`, file, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    });
+    const { data } = await apiClient.post<UploadedFileResponseDto>(`${BASE_URL}/profile/cover`, file);
     return mapUploadedFileResponse(data);
   },
 };

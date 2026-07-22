@@ -99,9 +99,7 @@ export const employerService = {
   },
 
   async uploadEmployerCover(file: FormData): Promise<UploadedFileResponse> {
-    const { data } = await apiClient.post<UploadedFileResponseDto>('/employer/profile/cover', file, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    });
+    const { data } = await apiClient.post<UploadedFileResponseDto>('/employer/profile/cover', file);
     return mapUploadedFileResponse(data);
   },
 

@@ -91,7 +91,7 @@ export default function LoginScreen() {
           <View style={styles.fieldGroup}>
             <View style={styles.labelRow}>
               <Text style={styles.label}>Şifre</Text>
-              <TouchableOpacity>
+              <TouchableOpacity onPress={() => router.push('/(auth)/forgot-password')}>
                 <Text style={styles.forgotText}>Şifremi Unuttum?</Text>
               </TouchableOpacity>
             </View>

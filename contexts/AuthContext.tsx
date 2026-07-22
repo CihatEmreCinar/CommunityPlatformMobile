@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { authService } from '../services/authService';
 import { tokenStorage } from '../services/tokenStorage';
-import { User, LoginRequest, RegisterRequest } from '../types/auth';
+import { User, LoginRequest, RegisterRequest, RegisterResponse } from '../types/auth';
 import { apiClient } from '../services/apiClient';
 import { userService } from '../services/userService';
 
@@ -9,7 +9,7 @@ interface AuthContextType {
   user: User | null;
   isLoading: boolean;
   login: (request: LoginRequest) => Promise<User>;
-  register: (request: RegisterRequest) => Promise<void>;
+  register: (request: RegisterRequest) => Promise<RegisterResponse>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
 }
@@ -110,9 +110,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return currentUser ?? response.user;
   }
 
-  async function register(request: RegisterRequest) {
-    const response = await authService.register(request);
-    await syncCurrentUser(response.user);
+  async function register(request: RegisterRequest): Promise<RegisterResponse> {
+    return authService.register(request);
   }
 
   async function logout() {

@@ -15,9 +15,7 @@ export const userService = {
   },
 
   async uploadAvatar(file: FormData): Promise<UploadedFileResponse> {
-    const { data } = await apiClient.post<UploadedFileResponseDto>('/users/me/avatar', file, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    });
+    const { data } = await apiClient.post<UploadedFileResponseDto>('/users/me/avatar', file);
     return mapUploadedFileResponse(data);
   },
 };

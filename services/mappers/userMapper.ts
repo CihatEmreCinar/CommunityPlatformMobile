@@ -39,10 +39,6 @@ function mapEmployerProfile(dto: MyEmployerProfileDto | null): UserEmployerProfi
 }
 
 export function mapMyProfile(dto: MyProfileDto): User {
-  if (__DEV__) {
-    console.log('[ME_PROFILE] avatarUrl=', JSON.stringify(dto.avatarUrl), '| coverImageUrl=', JSON.stringify((dto.employerProfile as any)?.coverImageUrl));
-  }
-
   return {
     id: dto.id,
     email: dto.email,
@@ -65,9 +61,6 @@ export function mapMyProfile(dto: MyProfileDto): User {
 }
 
 export function mapUploadedFileResponse(dto: UploadedFileResponseDto): UploadedFileResponse {
-  if (__DEV__) {
-    console.log('[UPLOAD_RESPONSE] raw dto=', JSON.stringify(dto));
-  }
   debugLogMediaUrl('upload.url', dto.url);
   const normalizedUrl = normalizeApiMediaUrl(dto.url);
 

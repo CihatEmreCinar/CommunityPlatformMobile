@@ -54,7 +54,6 @@ export const postService = {
       file,
       {
         params: { orderIndex },
-        headers: { 'Content-Type': 'multipart/form-data' },
       }
     );
     return mapUploadMediaResponse(data);

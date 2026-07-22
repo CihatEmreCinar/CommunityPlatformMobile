@@ -171,9 +171,7 @@ export const spaceListingService = {
       type: 'image/jpeg',
     } as any);
 
-    const { data } = await apiClient.post<UploadPhotoResponse>(`/space-listings/${listingId}/photos`, formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    });
+    const { data } = await apiClient.post<UploadPhotoResponse>(`/space-listings/${listingId}/photos`, formData);
     return data;
   },
 };
