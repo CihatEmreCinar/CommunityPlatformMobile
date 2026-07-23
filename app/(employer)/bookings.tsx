@@ -19,17 +19,13 @@ import { Modal } from '../../components/ui/Modal';
 import { spaceBookingService, type SpaceBooking } from '../../services/spaceBookingService';
 import { spaceBookingReviewService } from '../../services/spaceBookingReviewService';
 import { getSpaceBookingStatusStyle } from '../../utils/spaceBookingStatus';
-import { Colors, Typography, Spacing, Radius, Shadows } from '../../constants/theme';
+import { Colors, Pastel, Typography, Spacing, Radius } from '../../constants/theme';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-// Approved + süresi geçmiş, ya da doğrudan Completed olan ve henüz review'ı olmayan
-// rezervasyonlar değerlendirilebilir.
 function canReview(booking: SpaceBooking): boolean {
   if (booking.hasReview) return false;
   if (booking.status === 'Completed') return true;
-  if (booking.status === 'Approved') {
-    return new Date(booking.endDateTime).getTime() < Date.now();
-  }
+  if (booking.status === 'Approved') return new Date(booking.endDateTime).getTime() < Date.now();
   return false;
 }
 
@@ -43,8 +39,7 @@ export default function EmployerBookingsScreen() {
 
   const loadBookings = useCallback(async () => {
     try {
-      const data = await spaceBookingService.getMine();
-      setBookings(data);
+      setBookings(await spaceBookingService.getMine());
     } catch (error) {
       console.log('Rezervasyonlar yüklenemedi', error);
     } finally {
@@ -53,15 +48,13 @@ export default function EmployerBookingsScreen() {
     }
   }, []);
 
-  useEffect(() => {
-    loadBookings();
-  }, [loadBookings]);
+  useEffect(() => { loadBookings(); }, [loadBookings]);
 
   async function handleCancel(id: string) {
     setActionId(id);
     try {
       await spaceBookingService.cancel(id);
-      setBookings((prev) => prev.map((item) => item.id === id ? { ...item, status: 'Cancelled' } : item));
+      setBookings((prev) => prev.map((item) => (item.id === id ? { ...item, status: 'Cancelled' } : item)));
     } catch (error) {
       console.log('İptal edilemedi', error);
       Alert.alert('Hata', 'Rezervasyonu iptal ederken bir sorun oluştu.');
@@ -76,11 +69,7 @@ export default function EmployerBookingsScreen() {
   }
 
   function handleReviewed(bookingId: string) {
-    // Optimistic güncelleme: "Değerlendir" butonu backend'in hasReview alanı
-    // olmadan da anında kaybolsun diye.
-    setBookings((prev) =>
-      prev.map((item) => (item.id === bookingId ? { ...item, hasReview: true } : item))
-    );
+    setBookings((prev) => prev.map((item) => (item.id === bookingId ? { ...item, hasReview: true } : item)));
     setReviewTarget(null);
   }
 
@@ -97,16 +86,14 @@ export default function EmployerBookingsScreen() {
       <ScrollView
         style={styles.flex}
         contentContainerStyle={styles.container}
-        refreshControl={
-          <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} colors={[Colors.primary]} />
-        }
+        refreshControl={<RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} colors={[Colors.primary]} />}
       >
         <View style={styles.header}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-            <Icon name="arrowBack" size={22} color={Colors.onSurface} />
+            <Icon name="arrowBack" size={20} color={Colors.onSurface} />
           </TouchableOpacity>
           <Text style={styles.title}>Rezervasyonlarım</Text>
-          <View style={{ width: 40 }} />
+          <View style={{ width: 38 }} />
         </View>
 
         {bookings.length === 0 ? (
@@ -121,7 +108,7 @@ export default function EmployerBookingsScreen() {
           bookings.map((item) => {
             const statusStyle = getSpaceBookingStatusStyle(item.status);
             return (
-              <View key={item.id} style={styles.card}>
+              <View key={item.id} style={[styles.card, { backgroundColor: statusStyle.bg.replace('1A', '14') }]}>
                 <View style={styles.cardHeader}>
                   <View style={styles.cardTitleWrap}>
                     <Text style={styles.cardTitle} numberOfLines={2}>{item.spaceListingTitle ?? 'Alan'}</Text>
@@ -131,42 +118,28 @@ export default function EmployerBookingsScreen() {
                 </View>
 
                 <View style={styles.metaRow}>
-                  <Icon name="event" size={14} color={Colors.outline} />
+                  <Icon name="event" size={13} color={Colors.onSurfaceVariant} />
                   <Text style={styles.metaText}>
-                    {new Date(item.startDateTime).toLocaleDateString('tr-TR', {
-                      day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit',
-                    })}
+                    {new Date(item.startDateTime).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
                     {' – '}
                     {new Date(item.endDateTime).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}
                   </Text>
                 </View>
 
                 <View style={styles.metaRow}>
-                  <Icon name="payments" size={14} color={Colors.outline} />
+                  <Icon name="payments" size={13} color={Colors.onSurfaceVariant} />
                   <Text style={styles.metaText}>{item.totalPrice} ₺</Text>
                 </View>
 
                 {item.status === 'Pending' ? (
                   <View style={styles.cardActions}>
-                    <Button
-                      style={styles.flexOne}
-                      color="danger"
-                      label="İptal Et"
-                      disabled={actionId === item.id}
-                      onPress={() => handleCancel(item.id)}
-                    />
+                    <Button style={styles.flexOne} color="danger" label="İptal Et" disabled={actionId === item.id} onPress={() => handleCancel(item.id)} />
                   </View>
                 ) : null}
 
                 {canReview(item) ? (
                   <View style={styles.cardActions}>
-                    <Button
-                      style={styles.flexOne}
-                      color="primary"
-                      icon="starRate"
-                      label="Değerlendir"
-                      onPress={() => setReviewTarget(item)}
-                    />
+                    <Button style={styles.flexOne} color="primary" icon="starRate" label="Değerlendir" onPress={() => setReviewTarget(item)} />
                   </View>
                 ) : null}
               </View>
@@ -175,16 +148,10 @@ export default function EmployerBookingsScreen() {
         )}
       </ScrollView>
 
-      <SpaceBookingReviewModal
-        booking={reviewTarget}
-        onClose={() => setReviewTarget(null)}
-        onSubmitted={handleReviewed}
-      />
+      <SpaceBookingReviewModal booking={reviewTarget} onClose={() => setReviewTarget(null)} onSubmitted={handleReviewed} />
     </SafeAreaView>
   );
 }
-
-// ─── Cafe Review Modal ─────────────────────────────────────────────────────
 
 function SpaceBookingReviewModal({
   booking,
@@ -214,15 +181,11 @@ function SpaceBookingReviewModal({
     }
     setSubmitting(true);
     try {
-      await spaceBookingReviewService.create(booking.id, {
-        rating,
-        comment: comment.trim() || undefined,
-      });
+      await spaceBookingReviewService.create(booking.id, { rating, comment: comment.trim() || undefined });
       Alert.alert('Başarılı', 'Değerlendirmen kaydedildi.');
       onSubmitted(booking.id);
     } catch (error: any) {
-      const message = error?.response?.data?.message || 'Değerlendirme gönderilemedi.';
-      Alert.alert('Hata', message);
+      Alert.alert('Hata', error?.response?.data?.message || 'Değerlendirme gönderilemedi.');
     } finally {
       setSubmitting(false);
     }
@@ -236,7 +199,7 @@ function SpaceBookingReviewModal({
       <View style={styles.starRow}>
         {[1, 2, 3, 4, 5].map((star) => (
           <TouchableOpacity key={star} onPress={() => setRating(star)}>
-            <Icon name={star <= rating ? 'star' : 'starEmpty'} size={36} color={Colors.amber} />
+            <Icon name={star <= rating ? 'star' : 'starEmpty'} size={34} color={Colors.amber} />
           </TouchableOpacity>
         ))}
       </View>
@@ -244,20 +207,14 @@ function SpaceBookingReviewModal({
       <TextInput
         style={styles.reviewInput}
         placeholder="Yorumunu yaz (opsiyonel)"
-        placeholderTextColor={Colors.outlineVariant}
+        placeholderTextColor={Colors.outline}
         value={comment}
         onChangeText={setComment}
         multiline
         numberOfLines={4}
       />
 
-      <Button
-        style={styles.submitReviewButton}
-        color="primary"
-        label="Yorumu Gönder"
-        loading={submitting}
-        onPress={handleSubmit}
-      />
+      <Button style={styles.submitReviewButton} color="primary" label="Yorumu Gönder" loading={submitting} onPress={handleSubmit} />
     </Modal>
   );
 }
@@ -267,53 +224,27 @@ const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: Colors.background },
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: Colors.background },
   container: { padding: Spacing.containerMargin, paddingBottom: Spacing.xl },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: Spacing.lg,
-  },
-  backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: Radius.full,
-    backgroundColor: Colors.surfaceContainerLowest,
-    justifyContent: 'center',
-    alignItems: 'center',
-    ...Shadows.sm,
-  },
-  title: { ...Typography.h3, color: Colors.onSurface },
+  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: Spacing.lg },
+  backButton: { width: 38, height: 38, borderRadius: Radius.full, backgroundColor: Colors.surfaceContainer, justifyContent: 'center', alignItems: 'center' },
+  title: { ...Typography.serifTitleLg, color: Colors.onSurface },
   emptyState: { paddingVertical: Spacing.xl * 1.5, gap: Spacing.sm },
-  card: {
-    backgroundColor: Colors.surfaceContainerLowest,
-    borderRadius: Radius.xl,
-    borderWidth: 1,
-    borderColor: Colors.surfaceVariant,
-    padding: Spacing.md,
-    marginBottom: Spacing.sm,
-    gap: Spacing.sm,
-    ...Shadows.sm,
-  },
+  card: { borderRadius: Radius.xxl, padding: Spacing.md, marginBottom: Spacing.sm, gap: Spacing.sm },
   cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', gap: Spacing.sm },
   cardTitleWrap: { flex: 1 },
-  cardTitle: { ...Typography.h3, color: Colors.onSurface, fontSize: 16 },
+  cardTitle: { ...Typography.labelMd, fontSize: 16, color: Colors.onSurface },
   cardSubtitle: { ...Typography.bodyMd, color: Colors.onSurfaceVariant, marginTop: 2 },
   metaRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.xs },
   metaText: { ...Typography.bodyMd, color: Colors.onSurfaceVariant, fontSize: 13 },
   cardActions: { flexDirection: 'row', gap: Spacing.sm, marginTop: Spacing.sm },
   flexOne: { flex: 1 },
-
-  // Review modal
-  modalCafeName: { ...Typography.h2, color: Colors.onSurface },
+  modalCafeName: { ...Typography.serifTitle, color: Colors.onSurface },
   modalListingTitle: { ...Typography.bodyMd, color: Colors.onSurfaceVariant, marginBottom: Spacing.sm },
   starRow: { flexDirection: 'row', gap: Spacing.xs },
   reviewInput: {
     ...Typography.bodyMd,
     color: Colors.onSurface,
-    backgroundColor: Colors.surfaceContainerLow,
-    borderWidth: 1,
-    borderColor: Colors.surfaceVariant,
-    borderRadius: Radius.md,
+    backgroundColor: Pastel.teal.tint,
+    borderRadius: Radius.lg,
     paddingHorizontal: Spacing.sm,
     paddingVertical: Spacing.sm,
     minHeight: 90,

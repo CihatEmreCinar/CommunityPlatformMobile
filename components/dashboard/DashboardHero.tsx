@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { Animated, StyleSheet, Text, View } from 'react-native';
 import { Icon, IconName } from '../ui/Icon';
-import { Colors, Typography, Spacing, Radius, Shadows } from '../../constants/theme';
+import { Colors, Typography, Spacing, Radius } from '../../constants/theme';
 import { AtiMascot, AtiMascotProps } from './AtiMascot';
 import { WelcomeSection } from './WelcomeSection';
 
@@ -18,8 +18,6 @@ interface DashboardHeroProps {
 }
 
 function DashboardHeroBase({ firstName, subtitle, chips = [], mascotProps }: DashboardHeroProps) {
-  // Spec: "Hero hafif yukarıdan gelsin" — sayfa açılırken tek seferlik
-  // fade + translateY girişi. useNativeDriver: true, JS thread'i bloklamaz.
   const translateY = useRef(new Animated.Value(-16)).current;
   const opacity = useRef(new Animated.Value(0)).current;
 
@@ -38,7 +36,7 @@ function DashboardHeroBase({ firstName, subtitle, chips = [], mascotProps }: Das
         <View style={styles.chipRow}>
           {chips.map((chip, index) => (
             <View key={`${chip.label}-${index}`} style={styles.chip}>
-              <Icon name={chip.icon} size={13} color={Colors.primary} />
+              <Icon name={chip.icon} size={13} color={Colors.primaryDarker} />
               <Text style={styles.chipText}>{chip.label}</Text>
             </View>
           ))}
@@ -48,22 +46,17 @@ function DashboardHeroBase({ firstName, subtitle, chips = [], mascotProps }: Das
   );
 }
 
-// Spec: "Hero component'i gereksiz render olmamalıdır." — parent (DashboardScreen)
-// her state güncellemesinde (ör. scroll) yeniden render olsa da, prop'lar
-// değişmediği sürece Hero atlanır.
 export const DashboardHero = React.memo(DashboardHeroBase);
 
 const styles = StyleSheet.create({
+  // Tier 1 — hero kart: solid doygun pastel (teal 200-300 tonu), koyu ton metin.
   card: {
     alignItems: 'center',
     gap: Spacing.sm,
-    backgroundColor: Colors.surfaceContainerLowest,
-    borderRadius: Radius.xl,
-    borderWidth: 1,
-    borderColor: Colors.surfaceVariant,
+    backgroundColor: Colors.primaryLighter,
+    borderRadius: Radius.xxxl,
     paddingVertical: Spacing.lg,
     paddingHorizontal: Spacing.md,
-    ...Shadows.card,
   },
   chipRow: {
     flexDirection: 'row',
@@ -76,10 +69,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: Colors.background,
+    backgroundColor: 'rgba(255,255,255,0.55)',
     paddingHorizontal: Spacing.sm,
     paddingVertical: 6,
     borderRadius: Radius.full,
   },
-  chipText: { ...Typography.labelSm, color: Colors.onSurfaceVariant, fontWeight: '600' },
+  chipText: { ...Typography.labelSm, color: Colors.primaryDarker, fontWeight: '700' },
 });

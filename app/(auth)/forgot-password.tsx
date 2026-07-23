@@ -1,10 +1,12 @@
 import { useState } from 'react';
-import { ActivityIndicator, Alert, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Alert, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Icon } from '../../components/ui/Icon';
-import { Colors, Radius, Shadows, Spacing, Typography } from '../../constants/theme';
+import { Colors, Pastel, Radius, Spacing, Typography } from '../../constants/theme';
 import { authService } from '../../services/authService';
+import { AuthHeader } from '../../components/auth/AuthHeader';
+import { AuthInput } from '../../components/auth/AuthInput';
+import { AuthButton } from '../../components/auth/AuthButton';
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -38,19 +40,34 @@ export default function ForgotPasswordScreen() {
     <SafeAreaView style={styles.flex} edges={['top', 'bottom']}>
       <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
         <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
-          <View style={styles.header}>
-            <View style={styles.iconCircle}><Icon name="mailOutline" size={32} color={Colors.accent} /></View>
-            <Text style={styles.title}>Parolanı sıfırla</Text>
-            <Text style={styles.subtitle}>E-posta adresini gir; sana parola sıfırlama bağlantısı gönderelim.</Text>
-          </View>
+          <AuthHeader
+            variant="icon"
+            icon="mailOutline"
+            title="Parolanı sıfırla"
+            subtitle="E-posta adresini gir; sana parola sıfırlama bağlantısı gönderelim."
+          />
+
           <View style={styles.card}>
             <Text style={styles.label}>E-posta adresi</Text>
-            <TextInput style={styles.input} value={email} onChangeText={setEmail} placeholder="ad@sirket.com" placeholderTextColor={Colors.outlineVariant} keyboardType="email-address" autoCapitalize="none" autoCorrect={false} editable={!isSubmitting} />
-            <TouchableOpacity style={[styles.primaryButton, isSubmitting && styles.disabled]} onPress={handleSubmit} disabled={isSubmitting} activeOpacity={0.85}>
-              {isSubmitting ? <ActivityIndicator color={Colors.onAccent} /> : <Text style={styles.primaryButtonText}>Sıfırlama Bağlantısı Gönder</Text>}
-            </TouchableOpacity>
+            <AuthInput
+              value={email}
+              onChangeText={setEmail}
+              placeholder="ad@sirket.com"
+              keyboardType="email-address"
+              autoCapitalize="none"
+              autoCorrect={false}
+              editable={!isSubmitting}
+            />
+            <AuthButton label="Sıfırlama Bağlantısı Gönder" onPress={handleSubmit} loading={isSubmitting} />
           </View>
-          <TouchableOpacity style={styles.backButton} onPress={() => router.replace('/(auth)/login')} disabled={isSubmitting}><Text style={styles.backButtonText}>Giriş ekranına dön</Text></TouchableOpacity>
+
+          <AuthButton
+            variant="ghost"
+            label="Giriş ekranına dön"
+            onPress={() => router.replace('/(auth)/login')}
+            disabled={isSubmitting}
+            style={styles.backButton}
+          />
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -60,16 +77,7 @@ export default function ForgotPasswordScreen() {
 const styles = StyleSheet.create({
   flex: { flex: 1, backgroundColor: Colors.background },
   container: { flexGrow: 1, justifyContent: 'center', paddingHorizontal: Spacing.containerMargin, paddingVertical: Spacing.xl },
-  header: { alignItems: 'center', marginBottom: Spacing.xl },
-  iconCircle: { width: 72, height: 72, borderRadius: Radius.full, alignItems: 'center', justifyContent: 'center', backgroundColor: Colors.primaryContainer, marginBottom: Spacing.md },
-  title: { ...Typography.h1, color: Colors.onSurface, marginBottom: Spacing.sm },
-  subtitle: { ...Typography.bodyLg, color: Colors.onSurfaceVariant, textAlign: 'center' },
-  card: { backgroundColor: Colors.surfaceContainerLowest, borderRadius: Radius.xl, padding: Spacing.lg, borderWidth: 1, borderColor: Colors.surfaceVariant, ...Shadows.card, gap: Spacing.md },
+  card: { backgroundColor: Pastel.teal.tint, borderRadius: Radius.xxl, padding: Spacing.lg, gap: Spacing.md },
   label: { ...Typography.labelMd, color: Colors.onSurface },
-  input: { ...Typography.bodyMd, color: Colors.onSurface, backgroundColor: Colors.surfaceBright, borderWidth: 1, borderColor: Colors.surfaceVariant, borderRadius: Radius.md, paddingHorizontal: Spacing.md, paddingVertical: Spacing.md },
-  primaryButton: { backgroundColor: Colors.accent, borderRadius: Radius.md, paddingVertical: Spacing.md, alignItems: 'center', ...Shadows.sm },
-  disabled: { opacity: 0.7 },
-  primaryButtonText: { ...Typography.labelMd, color: Colors.onAccent, fontSize: 14 },
-  backButton: { alignSelf: 'center', marginTop: Spacing.lg, padding: Spacing.sm },
-  backButtonText: { ...Typography.labelMd, color: Colors.accent },
+  backButton: { marginTop: Spacing.lg },
 });

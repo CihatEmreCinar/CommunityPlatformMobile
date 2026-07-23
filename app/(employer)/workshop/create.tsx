@@ -4,9 +4,6 @@ import type { WorkshopRequest } from '../../../types/workshop';
 
 export default function CreateWorkshopScreen() {
   return (
-    <WorkshopForm
-      mode="create"
-      onSubmit={(payload: WorkshopRequest) => workshopService.create(payload).then(() => {})}
-    />
+    <WorkshopForm mode="create" onSubmit={(payload: WorkshopRequest) => workshopService.create(payload).then(() => {})} />
   );
 }

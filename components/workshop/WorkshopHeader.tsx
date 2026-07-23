@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Icon } from '../ui/Icon';
-import { Colors, Typography, Spacing, Radius } from '../../constants/theme';
+import { Colors, Pastel, Typography, Spacing, Radius } from '../../constants/theme';
 
 export interface WorkshopHeaderProps {
   title: string;
@@ -10,10 +10,6 @@ export interface WorkshopHeaderProps {
   locationLabel: string | null;
   avgRating: number;
   reviewCount: number;
-  /**
-   * Yer tutucu — Atolium'da henüz bir öneri/eşleşme algoritması yok.
-   * Gerçek veri bağlanana kadar sabit gösteriliyor (bkz. MANIFEST).
-   */
   matchPercentage?: number;
 }
 
@@ -29,14 +25,14 @@ export function WorkshopHeader({
   return (
     <View style={styles.container}>
       <View style={styles.matchBadge}>
-        <Icon name="aiMatch" size={14} color={Colors.onSecondaryContainer} />
-        <Text style={styles.matchBadgeText}>{matchPercentage}% Match for you</Text>
+        <Icon name="aiMatch" size={14} color={Pastel.purple.text} />
+        <Text style={styles.matchBadgeText}>%{matchPercentage} eşleşme</Text>
       </View>
 
       <Text style={styles.title}>{title}</Text>
 
       <View style={styles.metaRow}>
-        <Text style={styles.metaText}>By </Text>
+        <Text style={styles.metaText}>Eğitmen: </Text>
         <TouchableOpacity onPress={onEmployerPress} hitSlop={{ top: 6, bottom: 6, left: 2, right: 2 }}>
           <Text style={styles.metaLink}>{employerName}</Text>
         </TouchableOpacity>
@@ -47,7 +43,7 @@ export function WorkshopHeader({
           <View style={styles.ratingInline}>
             <Text style={styles.metaText}> {'\u2022'} </Text>
             <Icon name="star" size={14} color={Colors.amber} />
-            <Text style={styles.metaText}> {avgRating.toFixed(1)} ({reviewCount} reviews)</Text>
+            <Text style={styles.metaText}> {avgRating.toFixed(1)} ({reviewCount} değerlendirme)</Text>
           </View>
         ) : null}
       </View>
@@ -64,7 +60,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     alignSelf: 'flex-start',
     gap: 6,
-    backgroundColor: Colors.secondaryContainer,
+    backgroundColor: Pastel.purple.tintStrong,
     paddingHorizontal: Spacing.sm,
     paddingVertical: 6,
     borderRadius: Radius.full,
@@ -72,10 +68,12 @@ const styles = StyleSheet.create({
   },
   matchBadgeText: {
     ...Typography.labelMd,
-    color: Colors.onSecondaryContainer,
+    color: Pastel.purple.text,
   },
   title: {
-    ...Typography.headlineLgMobile,
+    ...Typography.serifHeading,
+    fontSize: 26,
+    lineHeight: 32,
     color: Colors.onSurface,
   },
   metaRow: {

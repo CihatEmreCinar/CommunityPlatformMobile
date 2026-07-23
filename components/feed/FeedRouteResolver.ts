@@ -8,16 +8,10 @@ export function isOwnPost(post: FeedPost, currentUserId: string | null): boolean
     : post.employerId === currentUserId;
 }
 
-// NOT: Akış'ta profillere dokununca ilgili profile yönlendirir. Kendi
-// postuna dokununca kendi profil sekmesine, başkasının postuna dokununca
-// o kullanıcının genel profil ekranına gider.
-//
-// `availableProfileRoutes`, hedef rolün route grubunda o profil tipi için
-// bir ekran olup olmadığını kontrol eder (örn. (employee) grubunda henüz
-// bir cafe public profil ekranı yok). `employee` alanı şu an hiçbir
-// authorType tarafından üretilmiyor (FeedPost.authorType 'Employer' | 'Cafe'),
-// ileride employee'ler de post paylaşabilir hale gelirse diye ayrılmıştır —
-// bu yüzden burada if/else ile değil, config üzerinden kontrol edilir.
+// Akış'ta profillere dokununca ilgili profile yönlendirir. Kendi postuna
+// dokununca kendi profil sekmesine, başkasının postuna dokununca o
+// kullanıcının genel profil ekranına gider. `availableProfileRoutes`, hedef
+// rolün route grubunda o profil tipi için bir ekran olup olmadığını kontrol eder.
 export function resolveAuthorRoute(
   post: FeedPost,
   isMine: boolean,

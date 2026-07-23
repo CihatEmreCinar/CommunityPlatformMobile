@@ -5,11 +5,12 @@ import { Icon } from '../../../components/ui/Icon';
 import { ScreenContainer } from '../../../components/layout/ScreenContainer';
 import { KeyboardAwareScreen } from '../../../components/layout/KeyboardAwareScreen';
 import { CollapsibleFilterPanel } from '../../../components/layout/CollapsibleFilterPanel';
-import { Colors, Typography, Spacing, Radius, Shadows } from '../../../constants/theme';
+import { Colors, Pastel, Typography, Spacing, Radius } from '../../../constants/theme';
 import { workshopService } from '../../../services/workshopService';
 import { categoryService } from '../../../services/categoryService';
 import { Workshop, WorkshopSearchResult } from '../../../types/workshop';
 import { Category } from '../../../types/category';
+import { FLOATING_TAB_BAR_CLEARANCE } from '../../../components/layout/FloatingTabBar';
 
 type LocationFilter = 'all' | 'online' | 'in-person';
 
@@ -79,7 +80,7 @@ export default function EmployeeSearchTabScreen() {
             <TextInput
               style={styles.input}
               placeholder="Atölye adı, konu..."
-              placeholderTextColor={Colors.outlineVariant}
+              placeholderTextColor={Colors.outline}
               value={q}
               onChangeText={setQ}
               returnKeyType="search"
@@ -92,7 +93,7 @@ export default function EmployeeSearchTabScreen() {
             <TextInput
               style={styles.input}
               placeholder="İstanbul"
-              placeholderTextColor={Colors.outlineVariant}
+              placeholderTextColor={Colors.outline}
               value={city}
               onChangeText={setCity}
               returnKeyType="search"
@@ -109,7 +110,7 @@ export default function EmployeeSearchTabScreen() {
                 onChangeText={setMinPrice}
                 keyboardType="number-pad"
                 placeholder="Min"
-                placeholderTextColor={Colors.outlineVariant}
+                placeholderTextColor={Colors.outline}
               />
               <Text style={styles.rangeSeparator}>–</Text>
               <TextInput
@@ -118,7 +119,7 @@ export default function EmployeeSearchTabScreen() {
                 onChangeText={setMaxPrice}
                 keyboardType="number-pad"
                 placeholder="Max"
-                placeholderTextColor={Colors.outlineVariant}
+                placeholderTextColor={Colors.outline}
               />
             </View>
           </View>
@@ -201,7 +202,7 @@ export default function EmployeeSearchTabScreen() {
                 activeOpacity={0.85}
               >
                 <View style={styles.imagePlaceholder}>
-                  <Icon name="event" size={24} color={Colors.primary} />
+                  <Icon name="event" size={24} color={Pastel.teal.text} />
                 </View>
                 <View style={styles.cardBody}>
                   <Text style={styles.cardTitle} numberOfLines={1}>{workshop.title}</Text>
@@ -232,19 +233,17 @@ export default function EmployeeSearchTabScreen() {
 }
 
 const styles = StyleSheet.create({
-  title: { ...Typography.h3, color: Colors.onSurface },
-  content: { padding: Spacing.md, paddingBottom: Spacing.xl, gap: Spacing.md },
+  title: { ...Typography.serifTitleLg, color: Colors.onSurface },
+  content: { padding: Spacing.md, paddingBottom: Spacing.xl + FLOATING_TAB_BAR_CLEARANCE, gap: Spacing.md },
 
   filterGroup: { gap: Spacing.xs },
   filterLabel: { ...Typography.labelSm, color: Colors.onSurfaceVariant },
   input: {
-    backgroundColor: Colors.surfaceBright,
+    backgroundColor: Colors.surfaceContainer,
     borderRadius: Radius.full,
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.sm,
     color: Colors.onSurface,
-    borderWidth: 1,
-    borderColor: Colors.surfaceVariant,
   },
 
   rangeRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm },
@@ -252,8 +251,8 @@ const styles = StyleSheet.create({
   rangeSeparator: { ...Typography.bodyMd, color: Colors.onSurfaceVariant },
 
   segmentRow: { flexDirection: 'row', gap: Spacing.xs },
-  segmentItem: { flex: 1, alignItems: 'center', paddingVertical: Spacing.sm, borderRadius: Radius.full, borderWidth: 1, borderColor: Colors.surfaceVariant, backgroundColor: Colors.surfaceBright },
-  segmentItemActive: { backgroundColor: Colors.primary, borderColor: Colors.primary },
+  segmentItem: { flex: 1, alignItems: 'center', paddingVertical: Spacing.sm, borderRadius: Radius.full, backgroundColor: Colors.surfaceContainer },
+  segmentItemActive: { backgroundColor: Colors.primary },
   segmentText: { ...Typography.labelSm, color: Colors.onSurfaceVariant },
   segmentTextActive: { color: Colors.onPrimary },
 
@@ -268,11 +267,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: Spacing.md,
     borderRadius: Radius.full,
-    borderWidth: 1,
-    borderColor: Colors.surfaceVariant,
-    backgroundColor: Colors.surfaceBright,
+    backgroundColor: Colors.surfaceContainer,
   },
-  chipActive: { backgroundColor: Colors.primary, borderColor: Colors.primary },
+  chipActive: { backgroundColor: Colors.primary },
   chipText: { ...Typography.labelSm, color: Colors.onSurfaceVariant },
   chipTextActive: { color: Colors.onPrimary },
 
@@ -281,15 +278,15 @@ const styles = StyleSheet.create({
 
   list: { gap: Spacing.md },
   resultInfo: { ...Typography.bodyMd, color: Colors.onSurfaceVariant },
-  card: { flexDirection: 'row', alignItems: 'center', gap: Spacing.md, backgroundColor: Colors.surfaceContainerLowest, borderRadius: Radius.lg, padding: Spacing.md, ...Shadows.sm },
-  imagePlaceholder: { width: 56, height: 56, borderRadius: Radius.full, backgroundColor: Colors.surfaceContainer, alignItems: 'center', justifyContent: 'center' },
+  card: { flexDirection: 'row', alignItems: 'center', gap: Spacing.md, backgroundColor: Pastel.teal.tint, borderRadius: Radius.xxl, padding: Spacing.md },
+  imagePlaceholder: { width: 56, height: 56, borderRadius: Radius.full, backgroundColor: Pastel.teal.tintStrong, alignItems: 'center', justifyContent: 'center' },
   cardBody: { flex: 1, gap: 4 },
   cardTitle: { ...Typography.labelMd, color: Colors.onSurface },
   cardMeta: { ...Typography.bodyMd, color: Colors.onSurfaceVariant },
-  cardText: { ...Typography.bodyMd, color: Colors.primary },
+  cardText: { ...Typography.bodyMd, color: Pastel.teal.text, fontWeight: '700' },
   fullBadge: { backgroundColor: Colors.errorContainer, borderRadius: Radius.full, paddingHorizontal: Spacing.sm, paddingVertical: 4 },
   fullBadgeText: { ...Typography.labelSm, color: Colors.error },
   emptyText: { ...Typography.bodyMd, color: Colors.onSurfaceVariant, textAlign: 'center', marginTop: Spacing.md },
-  loadMoreButton: { alignSelf: 'center', backgroundColor: Colors.surfaceContainerLowest, borderRadius: Radius.full, paddingHorizontal: Spacing.md, paddingVertical: Spacing.sm, borderWidth: 1, borderColor: Colors.surfaceVariant, marginTop: Spacing.sm },
-  loadMoreText: { ...Typography.labelMd, color: Colors.primary },
+  loadMoreButton: { alignSelf: 'center', backgroundColor: Pastel.teal.tint, borderRadius: Radius.full, paddingHorizontal: Spacing.md, paddingVertical: Spacing.sm, marginTop: Spacing.sm },
+  loadMoreText: { ...Typography.labelMd, color: Pastel.teal.text },
 });

@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, TextInput, TouchableOpacity, ActivityIndicator, StyleSheet } from 'react-native';
 import { Icon } from '../ui/Icon';
-import { Colors, Typography, Spacing, Radius, Shadows } from '../../constants/theme';
+import { Colors, Pastel, Typography, Spacing, Radius } from '../../constants/theme';
 import type { Review } from '../../types/review';
 
 export interface WorkshopReviewsProps {
@@ -40,7 +40,7 @@ export function WorkshopReviews({
           <TextInput
             style={styles.reviewInput}
             placeholder="Yorumunu yaz (opsiyonel)"
-            placeholderTextColor={Colors.outlineVariant}
+            placeholderTextColor={Colors.outline}
             value={comment}
             onChangeText={onCommentChange}
             multiline
@@ -98,17 +98,14 @@ const styles = StyleSheet.create({
     gap: Spacing.lg,
   },
   sectionTitle: {
-    ...Typography.titleLg,
+    ...Typography.serifTitle,
     color: Colors.onSurface,
   },
   formCard: {
-    backgroundColor: Colors.surfaceContainerLowest,
-    borderRadius: Radius.xl,
-    borderWidth: 1,
-    borderColor: Colors.surfaceVariant,
+    backgroundColor: Pastel.teal.tint,
+    borderRadius: Radius.xxl,
     padding: Spacing.md,
     gap: Spacing.sm,
-    ...Shadows.sm,
   },
   starRow: {
     flexDirection: 'row',
@@ -117,7 +114,7 @@ const styles = StyleSheet.create({
   reviewInput: {
     ...Typography.bodyMd,
     color: Colors.onSurface,
-    backgroundColor: Colors.surfaceContainer,
+    backgroundColor: Colors.surfaceContainerLowest,
     borderRadius: Radius.md,
     padding: Spacing.sm,
     minHeight: 72,
@@ -144,10 +141,8 @@ const styles = StyleSheet.create({
     color: Colors.onSurfaceVariant,
   },
   reviewCard: {
-    backgroundColor: Colors.surfaceContainerLowest,
-    borderRadius: Radius.lg,
-    borderWidth: 1,
-    borderColor: Colors.surfaceVariant,
+    backgroundColor: Pastel.teal.tint,
+    borderRadius: Radius.xl,
     padding: Spacing.sm,
     gap: 4,
   },
@@ -170,7 +165,7 @@ const styles = StyleSheet.create({
     color: Colors.onSurfaceVariant,
   },
   replyBox: {
-    backgroundColor: Colors.surfaceContainer,
+    backgroundColor: Colors.surfaceContainerLowest,
     borderRadius: Radius.sm,
     padding: Spacing.xs,
     marginTop: 4,

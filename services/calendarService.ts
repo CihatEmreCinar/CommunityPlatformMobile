@@ -1,5 +1,6 @@
 import { workshopService } from './workshopService';
 import { spaceBookingService } from './spaceBookingService';
+import { Colors, Pastel } from '../constants/theme';
 
 export type CalendarEventType = 'workshop' | 'booking' | 'booking-pending';
 
@@ -12,10 +13,12 @@ export interface CalendarEvent {
   color: string;
 }
 
+// Sistem paletiyle hizalı — mavi/mor gibi tema dışı renkler yerine
+// teal (atölye) / mor (rezervasyon) / amber (bekleyen) metin tonları.
 export const CALENDAR_EVENT_COLORS: Record<CalendarEventType, string> = {
-  workshop: '#3B82F6',
-  booking: '#8B5CF6',
-  'booking-pending': '#F59E0B',
+  workshop: Colors.primary,
+  booking: Pastel.purple.text,
+  'booking-pending': Pastel.amber.text,
 };
 
 export const calendarService = {

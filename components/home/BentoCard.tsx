@@ -1,7 +1,7 @@
 import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Icon } from '../ui/Icon';
-import { Colors, Typography, Spacing, Radius, Shadows } from '../../constants/theme';
+import { Colors, Pastel, Typography, Spacing, Radius } from '../../constants/theme';
 
 interface BentoCardProps {
   icon: string;
@@ -11,14 +11,10 @@ interface BentoCardProps {
   footerLabel: string;
   footerActionLabel?: string;
   onPress?: () => void;
+  /** Kategori rengi: 'teal' (yakın/atölye) veya 'coral' (trend/popüler). */
+  variant?: 'teal' | 'coral';
 }
 
-/**
- * NOT: Workshop tipinde henüz bir görsel/foto alanı kullanılmadığı için
- * (mevcut RecommendedCard/NearbyCard da ikon-kutu placeholder kullanıyor),
- * bu bento kart da aynı görsel dili sürdürüyor — gerçek fotoğraf desteği
- * eklendiğinde `imageUri` prop'u ile genişletilebilir.
- */
 export function BentoCard({
   icon,
   tagLabel,
@@ -27,12 +23,14 @@ export function BentoCard({
   footerLabel,
   footerActionLabel,
   onPress,
+  variant = 'teal',
 }: BentoCardProps) {
+  const palette = Pastel[variant];
   return (
-    <Pressable style={({ pressed }) => [styles.card, pressed && styles.pressed]} onPress={onPress}>
+    <Pressable style={({ pressed }) => [styles.card, { backgroundColor: palette.tint }, pressed && styles.pressed]} onPress={onPress}>
       <View style={styles.headerRow}>
-        <View style={styles.iconChip}>
-          <Icon name={icon as any} size={20} color={Colors.primary} />
+        <View style={[styles.iconChip, { backgroundColor: palette.tintStrong }]}>
+          <Icon name={icon as any} size={20} color={palette.text} />
         </View>
         <View style={styles.tag}>
           <Text style={styles.tagText}>{tagLabel}</Text>
@@ -45,11 +43,11 @@ export function BentoCard({
         {description}
       </Text>
       <View style={styles.footer}>
-        <Text style={styles.footerLabel} numberOfLines={1}>
+        <Text style={[styles.footerLabel, { color: palette.text }]} numberOfLines={1}>
           {footerLabel}
         </Text>
         {footerActionLabel && (
-          <View style={styles.footerBtn}>
+          <View style={[styles.footerBtn, { backgroundColor: palette.text }]}>
             <Text style={styles.footerBtnText}>{footerActionLabel}</Text>
           </View>
         )}
@@ -59,14 +57,11 @@ export function BentoCard({
 }
 
 const styles = StyleSheet.create({
+  // Tier 2 — ikincil kart: kategori pastel tint, border yok.
   card: {
     flex: 1,
-    backgroundColor: Colors.surfaceContainerLowest,
-    borderRadius: Radius.lg,
-    borderWidth: 1,
-    borderColor: Colors.surfaceVariant,
+    borderRadius: Radius.xl,
     padding: Spacing.sm,
-    ...Shadows.sm,
   },
   pressed: { opacity: 0.9 },
   headerRow: {
@@ -79,12 +74,11 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: Radius.md,
-    backgroundColor: Colors.primaryContainer,
     alignItems: 'center',
     justifyContent: 'center',
   },
   tag: {
-    backgroundColor: Colors.background,
+    backgroundColor: 'rgba(255,255,255,0.6)',
     paddingHorizontal: Spacing.xs,
     paddingVertical: 3,
     borderRadius: Radius.full,
@@ -99,12 +93,11 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.sm,
   },
   footer: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  footerLabel: { ...Typography.labelSm, color: Colors.primary, fontWeight: '700', flexShrink: 1 },
+  footerLabel: { ...Typography.labelSm, fontWeight: '700', flexShrink: 1 },
   footerBtn: {
-    backgroundColor: Colors.primary,
     borderRadius: Radius.full,
     paddingHorizontal: Spacing.xs,
     paddingVertical: 3,
   },
-  footerBtnText: { ...Typography.labelSm, color: Colors.onPrimary, fontWeight: '700' },
+  footerBtnText: { ...Typography.labelSm, color: Colors.white, fontWeight: '700' },
 });

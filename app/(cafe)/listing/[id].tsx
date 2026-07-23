@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, ScrollView, ActivityIndicator, Alert, Touchable
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Icon } from '../../../components/ui/Icon';
 import { ScreenContainer } from '../../../components/layout/ScreenContainer';
-import { Colors, Typography, Spacing, Radius, Shadows } from '../../../constants/theme';
+import { Colors, Pastel, Typography, Spacing, Radius } from '../../../constants/theme';
 import { SpaceListingForm } from '../../../components/cafe/SpaceListingForm';
 import { spaceListingService, type SpaceListing, type SpaceListingRequest } from '../../../services/spaceListingService';
 
@@ -16,18 +16,11 @@ export default function SpaceListingDetailScreen() {
   const [submitting, setSubmitting] = useState(false);
 
   const loadListing = useCallback(async (showLoading = true) => {
-    if (!id) {
-      console.log('fetching listing: missing id', id);
-      return;
-    }
+    if (!id) return;
     const resolvedId = Array.isArray(id) ? id[0] : String(id);
-    if (!resolvedId || resolvedId === 'undefined') {
-      console.log('fetching listing: invalid id', id);
-      return;
-    }
+    if (!resolvedId || resolvedId === 'undefined') return;
     try {
       if (showLoading) setLoading(true);
-      console.log('fetching listing', resolvedId);
       const data = await spaceListingService.getById(resolvedId);
       setListing(data);
     } catch (error) {
@@ -51,8 +44,7 @@ export default function SpaceListingDetailScreen() {
             await spaceListingService.delete(id);
             router.back();
           } catch (error: any) {
-            const message = error?.response?.data?.message || 'Silme işlemi başarısız.';
-            Alert.alert('Hata', message);
+            Alert.alert('Hata', error?.response?.data?.message || 'Silme işlemi başarısız.');
           }
         },
       },
@@ -71,8 +63,7 @@ export default function SpaceListingDetailScreen() {
       setEditing(false);
       Alert.alert('Güncellendi', 'İlan başarıyla güncellendi.');
     } catch (error: any) {
-      const message = error?.response?.data?.message || 'İlan güncellenemedi.';
-      Alert.alert('Hata', message);
+      Alert.alert('Hata', error?.response?.data?.message || 'İlan güncellenemedi.');
     } finally {
       setSubmitting(false);
     }
@@ -91,7 +82,7 @@ export default function SpaceListingDetailScreen() {
   if (!listing) {
     return (
       <ScreenContainer edges={['top', 'bottom']}>
-        <View style={styles.centered}><Text>İlan bulunamadı.</Text></View>
+        <View style={styles.centered}><Text style={styles.value}>İlan bulunamadı.</Text></View>
       </ScreenContainer>
     );
   }
@@ -100,11 +91,12 @@ export default function SpaceListingDetailScreen() {
     return (
       <ScreenContainer
         edges={['top', 'bottom']}
+        scroll={false}
         header={
           <View style={styles.headerRow}>
             <Text style={styles.title}>İlanı Düzenle</Text>
-            <TouchableOpacity onPress={() => setEditing(false)}>
-              <Icon name="closeModal" size={24} color={Colors.onSurface} />
+            <TouchableOpacity onPress={() => setEditing(false)} style={styles.iconCircle}>
+              <Icon name="closeModal" size={18} color={Colors.onSurface} />
             </TouchableOpacity>
           </View>
         }
@@ -125,21 +117,21 @@ export default function SpaceListingDetailScreen() {
       edges={['top', 'bottom']}
       header={
         <View style={styles.headerRow}>
-          <Text style={styles.title}>{listing.title}</Text>
+          <Text style={styles.title} numberOfLines={1}>{listing.title}</Text>
           <View style={styles.headerActions}>
-            <TouchableOpacity onPress={() => setEditing(true)} style={styles.iconButton}>
-              <Icon name="edit" size={22} color={Colors.primary} />
+            <TouchableOpacity onPress={() => setEditing(true)} style={[styles.iconCircle, { backgroundColor: Pastel.teal.tint }]}>
+              <Icon name="edit" size={17} color={Pastel.teal.text} />
             </TouchableOpacity>
-            <TouchableOpacity onPress={handleDelete} style={styles.iconButton}>
-              <Icon name="delete" size={22} color={Colors.error} />
+            <TouchableOpacity onPress={handleDelete} style={[styles.iconCircle, { backgroundColor: Pastel.coral.tint }]}>
+              <Icon name="delete" size={17} color={Pastel.coral.text} />
             </TouchableOpacity>
           </View>
         </View>
       }
     >
-      <ScrollView contentContainerStyle={styles.content}>
+      <View style={styles.content}>
         {listing.photoUrls && listing.photoUrls.length > 0 ? (
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.photoGallery} contentContainerStyle={styles.photoGalleryContent}>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.photoGalleryContent}>
             {listing.photoUrls.map((uri) => (
               <Image key={uri} source={{ uri }} style={styles.photoItem} />
             ))}
@@ -153,13 +145,15 @@ export default function SpaceListingDetailScreen() {
           <Text style={styles.label}>Açıklama</Text>
           <Text style={styles.value}>{listing.description || 'Açıklama yok.'}</Text>
         </View>
-        <View style={styles.card}>
-          <Text style={styles.label}>Kapasite</Text>
-          <Text style={styles.value}>{listing.capacity} kişi</Text>
-        </View>
-        <View style={styles.card}>
-          <Text style={styles.label}>Saatlik fiyat</Text>
-          <Text style={styles.value}>{listing.hourlyPrice} ₺</Text>
+        <View style={styles.row}>
+          <View style={[styles.card, styles.rowItem]}>
+            <Text style={styles.label}>Kapasite</Text>
+            <Text style={styles.value}>{listing.capacity} kişi</Text>
+          </View>
+          <View style={[styles.card, styles.rowItem]}>
+            <Text style={styles.label}>Saatlik fiyat</Text>
+            <Text style={styles.value}>{listing.hourlyPrice} ₺</Text>
+          </View>
         </View>
         <View style={styles.card}>
           <Text style={styles.label}>Şehir</Text>
@@ -171,22 +165,23 @@ export default function SpaceListingDetailScreen() {
             <Text style={styles.value}>{listing.amenities.join(', ')}</Text>
           </View>
         ) : null}
-      </ScrollView>
+      </View>
     </ScreenContainer>
   );
 }
 
 const styles = StyleSheet.create({
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', width: '100%' },
+  headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', width: '100%', gap: Spacing.sm },
   headerActions: { flexDirection: 'row', gap: Spacing.sm },
-  iconButton: { padding: Spacing.xs },
-  title: { ...Typography.h3, color: Colors.onSurface },
-  content: { padding: Spacing.md, gap: Spacing.md },
-  photoGallery: { marginVertical: Spacing.sm },
-  photoGalleryContent: { gap: Spacing.sm, paddingHorizontal: Spacing.sm },
-  photoItem: { width: 260, height: 180, borderRadius: Radius.lg, marginRight: Spacing.sm, backgroundColor: Colors.surfaceContainerLowest },
-  card: { backgroundColor: Colors.surfaceContainerLowest, borderRadius: Radius.lg, padding: Spacing.md, gap: Spacing.xs, ...Shadows.sm },
+  iconCircle: { width: 34, height: 34, borderRadius: 17, backgroundColor: Colors.surfaceContainer, alignItems: 'center', justifyContent: 'center' },
+  title: { ...Typography.serifTitle, color: Colors.onSurface, flex: 1 },
+  content: { padding: Spacing.md, gap: Spacing.sm },
+  row: { flexDirection: 'row', gap: Spacing.sm },
+  rowItem: { flex: 1 },
+  photoGalleryContent: { gap: Spacing.sm, paddingBottom: Spacing.xs },
+  photoItem: { width: 260, height: 180, borderRadius: Radius.xxl, backgroundColor: Colors.surfaceContainer },
+  card: { backgroundColor: Pastel.coral.tint, borderRadius: Radius.xxl, padding: Spacing.md, gap: Spacing.xs },
   label: { ...Typography.labelMd, color: Colors.onSurfaceVariant },
   value: { ...Typography.bodyMd, color: Colors.onSurface },
 });

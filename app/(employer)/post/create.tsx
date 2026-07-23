@@ -19,18 +19,14 @@ import * as ImagePicker from 'expo-image-picker';
 import { postService } from '../../../services/postService';
 import { workshopService } from '../../../services/workshopService';
 import type { Workshop } from '../../../types/workshop';
+import { Colors, Pastel, Typography, Spacing, Radius } from '../../../constants/theme';
 
-const ACCENT = '#0F766E';
+const ACCENT = Colors.primary;
 const MAX_CONTENT = 1000;
 const MAX_TAGS = 5;
 const MAX_MEDIA = 4;
 
-type LocalMediaItem = {
-  uri: string;
-  type: 'image' | 'video';
-  name: string;
-  mime: string;
-};
+type LocalMediaItem = { uri: string; type: 'image' | 'video'; name: string; mime: string };
 
 export default function PostCreateScreen() {
   const router = useRouter();
@@ -48,35 +44,23 @@ export default function PostCreateScreen() {
 
   useEffect(() => {
     let isMounted = true;
-
     (async () => {
       try {
         const list = await workshopService.getMyWorkshops();
         if (!isMounted) return;
         setWorkshops(list);
-
         if (routeWorkshopId && list.some((workshop) => workshop.id === routeWorkshopId)) {
           setSelectedWorkshopId(routeWorkshopId);
           return;
         }
-
-        if (!routeWorkshopId && list.length === 1) {
-          setSelectedWorkshopId(list[0].id);
-        }
+        if (!routeWorkshopId && list.length === 1) setSelectedWorkshopId(list[0].id);
       } catch {
-        if (isMounted) {
-          Alert.alert('Hata', 'Atölyelerin yüklenmesi sırasında bir sorun oluştu.');
-        }
+        if (isMounted) Alert.alert('Hata', 'Atölyelerin yüklenmesi sırasında bir sorun oluştu.');
       } finally {
-        if (isMounted) {
-          setLoadingWorkshops(false);
-        }
+        if (isMounted) setLoadingWorkshops(false);
       }
     })();
-
-    return () => {
-      isMounted = false;
-    };
+    return () => { isMounted = false; };
   }, [routeWorkshopId]);
 
   const selectedWorkshop = workshops.find((w) => w.id === selectedWorkshopId) ?? null;
@@ -85,14 +69,8 @@ export default function PostCreateScreen() {
   const addTag = useCallback(() => {
     const clean = tagInput.trim().replace(/^#/, '').toLowerCase();
     if (!clean) return;
-    if (tags.includes(clean)) {
-      setTagInput('');
-      return;
-    }
-    if (tags.length >= MAX_TAGS) {
-      Alert.alert('En fazla 5 etiket ekleyebilirsin.');
-      return;
-    }
+    if (tags.includes(clean)) { setTagInput(''); return; }
+    if (tags.length >= MAX_TAGS) { Alert.alert('En fazla 5 etiket ekleyebilirsin.'); return; }
     if (availableWorkshopTags.length > 0 && !availableWorkshopTags.includes(clean)) {
       Alert.alert('Etiket yalnızca seçili atölyenin etiketleri arasında olabilir.');
       return;
@@ -106,32 +84,17 @@ export default function PostCreateScreen() {
   }, []);
 
   const pickMedia = useCallback(async () => {
-    if (mediaFiles.length >= MAX_MEDIA) {
-      Alert.alert('En fazla 4 medya ekleyebilirsin.');
-      return;
-    }
-
+    if (mediaFiles.length >= MAX_MEDIA) { Alert.alert('En fazla 4 medya ekleyebilirsin.'); return; }
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== 'granted') {
-      Alert.alert('İzin gerekli', 'Medya eklemek için medya erişim izni vermelisiniz.');
-      return;
-    }
-
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ['images', 'videos'],
-      quality: 0.7,
-    });
-
+    if (status !== 'granted') { Alert.alert('İzin gerekli', 'Medya eklemek için medya erişim izni vermelisiniz.'); return; }
+    const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images', 'videos'], quality: 0.7 });
     if (result.canceled) return;
-
     const asset = result.assets?.[0];
     if (!asset?.uri) return;
-
     const type = (asset.type ?? 'image') as 'image' | 'video';
     const extension = asset.uri.split('.').pop()?.split('?')[0] ?? (type === 'video' ? 'mp4' : 'jpg');
     const mime = type === 'video' ? 'video/mp4' : 'image/jpeg';
     const name = `media_${Date.now()}.${extension}`;
-
     setMediaFiles((prev) => [...prev, { uri: asset.uri, type, name, mime }]);
   }, [mediaFiles.length]);
 
@@ -140,36 +103,17 @@ export default function PostCreateScreen() {
   }, []);
 
   const handleSubmit = useCallback(async () => {
-    if (!content.trim()) {
-      Alert.alert('İçerik boş olamaz.');
-      return;
-    }
-
-    if (!selectedWorkshop) {
-      Alert.alert('Hata', 'Bir atölye seçmelisin.');
-      return;
-    }
-
+    if (!content.trim()) { Alert.alert('İçerik boş olamaz.'); return; }
+    if (!selectedWorkshop) { Alert.alert('Hata', 'Bir atölye seçmelisin.'); return; }
     setSubmitting(true);
-
     try {
-      const post = await postService.create({
-        workshopId: selectedWorkshop.id,
-        caption: content.trim(),
-        tagSlugs: tags,
-      });
-
+      const post = await postService.create({ workshopId: selectedWorkshop.id, caption: content.trim(), tagSlugs: tags });
       for (let index = 0; index < mediaFiles.length; index += 1) {
         const media = mediaFiles[index];
         const formData = new FormData();
-        formData.append('file', {
-          uri: media.uri,
-          name: media.name,
-          type: media.mime,
-        } as any);
+        formData.append('file', { uri: media.uri, name: media.name, type: media.mime } as any);
         await postService.uploadMedia(post.id, formData, index);
       }
-
       router.back();
     } catch {
       Alert.alert('Hata', 'Gönderi paylaşılamadı. Tekrar dene.');
@@ -182,41 +126,24 @@ export default function PostCreateScreen() {
 
   return (
     <SafeAreaView style={styles.root} edges={['top', 'bottom']}>
-    <KeyboardAvoidingView
-      style={styles.root}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-    >
-      {/* Header */}
+    <KeyboardAvoidingView style={styles.root} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <View style={styles.header}>
-        <TouchableOpacity
-          onPress={() => router.back()}
-          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-        >
-          <Icon name="close" size={24} color="#374151" />
+        <TouchableOpacity onPress={() => router.back()} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} style={styles.closeBtn}>
+          <Icon name="close" size={19} color={Colors.onSurface} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Yeni Gönderi</Text>
-        <TouchableOpacity
-          style={[styles.publishBtn, !canSubmit && styles.publishBtnDisabled]}
-          onPress={handleSubmit}
-          disabled={!canSubmit}
-        >
-          {submitting ? (
-            <ActivityIndicator size="small" color="#FFFFFF" />
-          ) : (
-            <Text style={styles.publishBtnText}>Paylaş</Text>
-          )}
+        <TouchableOpacity style={[styles.publishBtn, !canSubmit && styles.publishBtnDisabled]} onPress={handleSubmit} disabled={!canSubmit}>
+          {submitting ? <ActivityIndicator size="small" color="#FFFFFF" /> : <Text style={styles.publishBtnText}>Paylaş</Text>}
         </TouchableOpacity>
       </View>
 
-      <ScrollView style={styles.body} keyboardShouldPersistTaps="handled">
+      <ScrollView style={styles.body} keyboardShouldPersistTaps="handled" contentContainerStyle={styles.bodyContent}>
         <View style={styles.section}>
           <Text style={styles.sectionLabel}>Atölye</Text>
           {loadingWorkshops ? (
             <ActivityIndicator color={ACCENT} />
           ) : workshops.length === 0 ? (
-            <Text style={styles.sectionHint}>
-              Henüz bir atölyen yok. Atölye oluşturduktan sonra gönderi paylaşabilirsin.
-            </Text>
+            <Text style={styles.sectionHint}>Henüz bir atölyen yok. Atölye oluşturduktan sonra gönderi paylaşabilirsin.</Text>
           ) : (
             <View style={styles.workshopList}>
               {workshops.map((workshop) => {
@@ -228,9 +155,7 @@ export default function PostCreateScreen() {
                     onPress={() => setSelectedWorkshopId(workshop.id)}
                     activeOpacity={0.8}
                   >
-                    <Text style={[styles.workshopName, selected && styles.workshopNameSelected]} numberOfLines={1}>
-                      {workshop.title}
-                    </Text>
+                    <Text style={[styles.workshopName, selected && styles.workshopNameSelected]} numberOfLines={1}>{workshop.title}</Text>
                     {selected && <Text style={styles.workshopSelectedLabel}>Seçili</Text>}
                   </TouchableOpacity>
                 );
@@ -244,8 +169,6 @@ export default function PostCreateScreen() {
           ) : null}
         </View>
 
-        <View style={styles.divider} />
-
         <View style={styles.section}>
           <Text style={styles.sectionLabel}>Medya</Text>
           <Text style={styles.sectionHint}>Fotoğraf veya video ekleyebilirsin.</Text>
@@ -256,34 +179,28 @@ export default function PostCreateScreen() {
                   <Image source={{ uri: file.uri }} style={styles.mediaImage} />
                 ) : (
                   <View style={styles.mediaVideoPlaceholder}>
-                    <Icon name="playCircle" size={28} color="#FFFFFF" />
+                    <Icon name="playCircle" size={26} color="#FFFFFF" />
                   </View>
                 )}
                 <TouchableOpacity style={styles.removeMediaBtn} onPress={() => removeMedia(index)}>
-                  <Icon name="close" size={16} color="#FFFFFF" />
+                  <Icon name="close" size={15} color="#FFFFFF" />
                 </TouchableOpacity>
               </View>
             ))}
           </View>
-          <TouchableOpacity
-            style={[styles.addMediaBtn, mediaFiles.length >= MAX_MEDIA && styles.addMediaBtnDisabled]}
-            onPress={pickMedia}
-            disabled={mediaFiles.length >= MAX_MEDIA}
-          >
-            <Icon name="imageOutline" size={18} color="#FFFFFF" />
+          <TouchableOpacity style={[styles.addMediaBtn, mediaFiles.length >= MAX_MEDIA && styles.addMediaBtnDisabled]} onPress={pickMedia} disabled={mediaFiles.length >= MAX_MEDIA}>
+            <Icon name="imageOutline" size={17} color="#FFFFFF" />
             <Text style={styles.addMediaText}>Medya Ekle</Text>
           </TouchableOpacity>
           <Text style={styles.sectionHint}>{mediaFiles.length}/{MAX_MEDIA} medya eklendi</Text>
         </View>
-
-        <View style={styles.divider} />
 
         <View style={styles.section}>
           <Text style={styles.sectionLabel}>İçerik</Text>
           <TextInput
             style={[styles.contentInput, styles.contentInputSmall]}
             placeholder="Ne paylaşmak istiyorsun?"
-            placeholderTextColor="#9CA3AF"
+            placeholderTextColor={Colors.outline}
             value={content}
             onChangeText={setContent}
             multiline
@@ -293,8 +210,6 @@ export default function PostCreateScreen() {
           <Text style={styles.charCount}>{content.length}/{MAX_CONTENT}</Text>
         </View>
 
-        <View style={styles.divider} />
-
         <View style={styles.section}>
           <Text style={styles.sectionLabel}>Etiketler</Text>
           <Text style={styles.sectionHint}>En fazla 5 etiket ekleyebilirsin</Text>
@@ -302,14 +217,9 @@ export default function PostCreateScreen() {
           {tags.length > 0 && (
             <View style={styles.tagList}>
               {tags.map((t) => (
-                <TouchableOpacity
-                  key={t}
-                  style={styles.tagChip}
-                  onPress={() => removeTag(t)}
-                  activeOpacity={0.7}
-                >
+                <TouchableOpacity key={t} style={styles.tagChip} onPress={() => removeTag(t)} activeOpacity={0.7}>
                   <Text style={styles.tagText}>#{t}</Text>
-                  <Icon name="closeCircle" size={14} color={ACCENT} />
+                  <Icon name="closeCircle" size={13} color={ACCENT} />
                 </TouchableOpacity>
               ))}
             </View>
@@ -321,7 +231,7 @@ export default function PostCreateScreen() {
                 ref={tagInputRef}
                 style={styles.tagInput}
                 placeholder="Etiket ekle..."
-                placeholderTextColor="#9CA3AF"
+                placeholderTextColor={Colors.outline}
                 value={tagInput}
                 onChangeText={setTagInput}
                 onSubmitEditing={addTag}
@@ -329,24 +239,16 @@ export default function PostCreateScreen() {
                 autoCapitalize="none"
                 maxLength={30}
               />
-              <TouchableOpacity
-                style={[styles.addTagBtn, !tagInput.trim() && styles.addTagBtnDisabled]}
-                onPress={addTag}
-                disabled={!tagInput.trim()}
-              >
-                <Icon name="add" size={20} color="#FFFFFF" />
+              <TouchableOpacity style={[styles.addTagBtn, !tagInput.trim() && styles.addTagBtnDisabled]} onPress={addTag} disabled={!tagInput.trim()}>
+                <Icon name="add" size={19} color="#FFFFFF" />
               </TouchableOpacity>
             </View>
           )}
         </View>
 
-        <View style={styles.divider} />
-
         <View style={styles.tipsSection}>
-          <Icon name="bulbOutline" size={16} color="#9CA3AF" />
-          <Text style={styles.tipsText}>
-            Atölye içerikleri, deneyimlerin ve ipuçlarını paylaşarak takipçilerini bilgilendirebilirsin.
-          </Text>
+          <Icon name="bulbOutline" size={15} color={Colors.outline} />
+          <Text style={styles.tipsText}>Atölye içerikleri, deneyimlerin ve ipuçlarını paylaşarak takipçilerini bilgilendirebilirsin.</Text>
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
@@ -355,248 +257,42 @@ export default function PostCreateScreen() {
 }
 
 const styles = StyleSheet.create({
-  root: {
-    flex: 1,
-    backgroundColor: '#FFFFFF',
-  },
-  // ─── Header ────────────────────────────────────────────────────────────────
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: '#E5E7EB',
-  },
-  headerTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#111827',
-  },
-  publishBtn: {
-    backgroundColor: ACCENT,
-    borderRadius: 20,
-    paddingHorizontal: 18,
-    paddingVertical: 8,
-    minWidth: 72,
-    alignItems: 'center',
-  },
-  publishBtnDisabled: {
-    backgroundColor: '#99D6D0',
-  },
-  publishBtnText: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#FFFFFF',
-  },
-  // ─── Body ──────────────────────────────────────────────────────────────────
-  body: {
-    flex: 1,
-  },
-  section: {
-    padding: 16,
-  },
-  sectionLabel: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#374151',
-    marginBottom: 4,
-  },
-  sectionHint: {
-    fontSize: 12,
-    color: '#9CA3AF',
-    marginTop: 4,
-  },
-  divider: {
-    height: 8,
-    backgroundColor: '#F3F4F6',
-  },
-  contentInput: {
-    fontSize: 16,
-    color: '#111827',
-    lineHeight: 24,
-    minHeight: 160,
-    textAlignVertical: 'top',
-  },
-  contentInputSmall: {
-    minHeight: 120,
-  },
-  charCount: {
-    fontSize: 12,
-    color: '#9CA3AF',
-    textAlign: 'right',
-    marginTop: 8,
-  },
-  tagList: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-    marginBottom: 12,
-  },
-  tagChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    backgroundColor: '#F0FDFA',
-    borderWidth: 1,
-    borderColor: '#99D6D0',
-    borderRadius: 16,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-  },
-  tagText: {
-    fontSize: 13,
-    color: ACCENT,
-    fontWeight: '500',
-  },
-  tagInputRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  tagInput: {
-    flex: 1,
-    backgroundColor: '#F9FAFB',
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-    borderRadius: 10,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    fontSize: 14,
-    color: '#111827',
-  },
-  addTagBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: ACCENT,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  addTagBtnDisabled: {
-    backgroundColor: '#99D6D0',
-  },
-  workshopList: {
-    gap: 8,
-  },
-  workshopItem: {
-    padding: 12,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-    backgroundColor: '#F9FAFB',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  workshopItemSelected: {
-    borderColor: ACCENT,
-    backgroundColor: '#ECFDF5',
-  },
-  workshopName: {
-    flex: 1,
-    fontSize: 14,
-    color: '#111827',
-    fontWeight: '600',
-  },
-  workshopNameSelected: {
-    color: ACCENT,
-  },
-  workshopSelectedLabel: {
-    fontSize: 12,
-    color: ACCENT,
-    fontWeight: '700',
-  },
-  mediaRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-    marginTop: 12,
-  },
-  mediaPreview: {
-    width: 88,
-    height: 88,
-    borderRadius: 12,
-    overflow: 'hidden',
-    position: 'relative',
-    backgroundColor: '#F3F4F6',
-  },
-  mediaImage: {
-    width: '100%',
-    height: '100%',
-  },
-  mediaVideoPlaceholder: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#111827',
-  },
-  removeMediaBtn: {
-    position: 'absolute',
-    top: 6,
-    right: 6,
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: 'rgba(0,0,0,0.6)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  addMediaBtn: {
-    marginTop: 12,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    backgroundColor: ACCENT,
-    borderRadius: 14,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    alignSelf: 'flex-start',
-  },
-  addMediaBtnDisabled: {
-    opacity: 0.5,
-  },
-  addMediaText: {
-    color: '#FFFFFF',
-    fontWeight: '700',
-    fontSize: 14,
-  },
-  commentToggle: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    borderRadius: 14,
-    padding: 12,
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-  },
-  commentToggleActive: {
-    backgroundColor: ACCENT,
-    borderColor: ACCENT,
-  },
-  commentToggleInactive: {
-    backgroundColor: '#F9FAFB',
-  },
-  commentToggleText: {
-    fontSize: 14,
-    color: '#374151',
-    fontWeight: '600',
-  },
-  commentToggleTextActive: {
-    color: '#FFFFFF',
-  },
-  tipsSection: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 8,
-    padding: 16,
-    paddingTop: 12,
-  },
-  tipsText: {
-    flex: 1,
-    fontSize: 12,
-    color: '#9CA3AF',
-    lineHeight: 18,
-  },
+  root: { flex: 1, backgroundColor: Colors.background },
+  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: Spacing.md, paddingVertical: Spacing.sm + 2 },
+  closeBtn: { width: 34, height: 34, borderRadius: 17, backgroundColor: Colors.surfaceContainer, alignItems: 'center', justifyContent: 'center' },
+  headerTitle: { ...Typography.serifTitle, color: Colors.onSurface },
+  publishBtn: { backgroundColor: ACCENT, borderRadius: Radius.full, paddingHorizontal: 18, paddingVertical: 8, minWidth: 72, alignItems: 'center' },
+  publishBtnDisabled: { backgroundColor: Colors.outlineVariant },
+  publishBtnText: { ...Typography.labelMd, color: '#FFFFFF' },
+  body: { flex: 1 },
+  bodyContent: { paddingBottom: Spacing.xl, gap: Spacing.sm },
+  section: { padding: Spacing.md, backgroundColor: Pastel.teal.tint, borderRadius: Radius.xxl, marginHorizontal: Spacing.md, marginTop: Spacing.sm },
+  sectionLabel: { ...Typography.labelMd, color: Colors.onSurface, marginBottom: 4 },
+  sectionHint: { ...Typography.labelSm, color: Colors.onSurfaceVariant, marginTop: 4 },
+  contentInput: { ...Typography.bodyLg, color: Colors.onSurface, lineHeight: 24, minHeight: 160, textAlignVertical: 'top' },
+  contentInputSmall: { minHeight: 120 },
+  charCount: { ...Typography.labelSm, color: Colors.outline, textAlign: 'right', marginTop: 8 },
+  tagList: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 12 },
+  tagChip: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: Pastel.teal.tintStrong, borderRadius: Radius.full, paddingHorizontal: 10, paddingVertical: 5 },
+  tagText: { ...Typography.labelSm, color: ACCENT, fontWeight: '600' },
+  tagInputRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  tagInput: { flex: 1, backgroundColor: Colors.surfaceContainerLowest, borderRadius: Radius.lg, paddingHorizontal: Spacing.md, paddingVertical: Spacing.sm, ...Typography.bodyMd, color: Colors.onSurface },
+  addTagBtn: { width: 40, height: 40, borderRadius: Radius.full, backgroundColor: ACCENT, alignItems: 'center', justifyContent: 'center' },
+  addTagBtnDisabled: { backgroundColor: Colors.outlineVariant },
+  workshopList: { gap: 8 },
+  workshopItem: { padding: 12, borderRadius: Radius.lg, backgroundColor: Colors.surfaceContainerLowest, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  workshopItemSelected: { backgroundColor: Pastel.teal.tintStrong },
+  workshopName: { flex: 1, ...Typography.bodyMd, fontWeight: '600', color: Colors.onSurface },
+  workshopNameSelected: { color: ACCENT },
+  workshopSelectedLabel: { ...Typography.labelSm, color: ACCENT, fontWeight: '700' },
+  mediaRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 12 },
+  mediaPreview: { width: 84, height: 84, borderRadius: Radius.lg, overflow: 'hidden', position: 'relative', backgroundColor: Colors.surfaceContainerLowest },
+  mediaImage: { width: '100%', height: '100%' },
+  mediaVideoPlaceholder: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: Colors.onSurface },
+  removeMediaBtn: { position: 'absolute', top: 6, right: 6, width: 22, height: 22, borderRadius: 11, backgroundColor: 'rgba(0,0,0,0.55)', alignItems: 'center', justifyContent: 'center' },
+  addMediaBtn: { marginTop: 12, flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: ACCENT, borderRadius: Radius.lg, paddingHorizontal: 14, paddingVertical: 12, alignSelf: 'flex-start' },
+  addMediaBtnDisabled: { opacity: 0.5 },
+  addMediaText: { ...Typography.labelMd, color: '#FFFFFF' },
+  tipsSection: { flexDirection: 'row', alignItems: 'flex-start', gap: 8, padding: Spacing.md },
+  tipsText: { flex: 1, ...Typography.labelSm, color: Colors.onSurfaceVariant, lineHeight: 18 },
 });

@@ -1,6 +1,7 @@
 import React from 'react';
 import { Dimensions, Image, ScrollView, StyleSheet } from 'react-native';
 import type { MediaStripProps } from './types';
+import { Radius } from '../../constants/theme';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -21,7 +22,7 @@ export function MediaStrip({ media }: MediaStripProps) {
 }
 
 const styles = StyleSheet.create({
-  strip: { gap: 4 },
-  single: { width: '100%', height: 220 },
-  thumb: { width: SCREEN_WIDTH * 0.65, height: 200, borderRadius: 8 },
+  strip: { gap: 4, paddingHorizontal: 2 },
+  single: { width: '100%', height: 220, borderRadius: Radius.lg },
+  thumb: { width: SCREEN_WIDTH * 0.65, height: 200, borderRadius: Radius.lg },
 });

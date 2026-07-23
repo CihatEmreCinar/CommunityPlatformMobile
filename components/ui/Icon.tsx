@@ -1,5 +1,5 @@
 import React from 'react';
-import { Ionicons, MaterialIcons } from '@expo/vector-icons';
+import { Ionicons, MaterialIcons, MaterialCommunityIcons } from '@expo/vector-icons';
 import type { StyleProp, TextStyle } from 'react-native';
 
 /**
@@ -16,7 +16,7 @@ import type { StyleProp, TextStyle } from 'react-native';
  * Böylece görsel çıktı değişmez.
  */
 
-type IconFamily = 'ion' | 'mat';
+type IconFamily = 'ion' | 'mat' | 'mci';
 
 interface IconRegistryEntry {
   family: IconFamily;
@@ -36,6 +36,7 @@ const ICON_REGISTRY = {
   briefcaseOutline: { family: 'ion', glyph: 'briefcase-outline' },
   bulbOutline: { family: 'ion', glyph: 'bulb-outline' },
   business: { family: 'mat', glyph: 'business' },
+  cakeSlice: { family: 'mci', glyph: 'cake-variant-outline' },
   calendarOutline: { family: 'ion', glyph: 'calendar-outline' },
   calendarToday: { family: 'mat', glyph: 'calendar-today' },
   camera: { family: 'ion', glyph: 'camera' },
@@ -74,7 +75,7 @@ const ICON_REGISTRY = {
   groups: { family: 'mat', glyph: 'groups' },
   heartFilled: { family: 'ion', glyph: 'heart' },
   heartOutline: { family: 'ion', glyph: 'heart-outline' },
-  home: { family: 'mat', glyph: 'home' },
+  house: { family: 'mci', glyph: 'home-variant-outline' },
   hourglassTop: { family: 'mat', glyph: 'hourglass-top' },
   howToReg: { family: 'mat', glyph: 'how-to-reg' },
   imageOutline: { family: 'ion', glyph: 'image-outline' },
@@ -110,6 +111,7 @@ const ICON_REGISTRY = {
   place: { family: 'mat', glyph: 'place' },
   playCircle: { family: 'ion', glyph: 'play-circle' },
   pricetagsOutline: { family: 'ion', glyph: 'pricetags-outline' },
+  projectorOutline: { family: 'mci', glyph: 'projector' },
   publish: { family: 'mat', glyph: 'publish' },
   qrCode2: { family: 'mat', glyph: 'qr-code-2' },
   qrCodeScanner: { family: 'mat', glyph: 'qr-code-scanner' },
@@ -148,6 +150,10 @@ export function Icon({ name, size = 24, color = '#000000', style }: IconProps) {
 
   if (entry.family === 'ion') {
     return <Ionicons name={entry.glyph as any} size={size} color={color} style={style} />;
+  }
+
+  if (entry.family === 'mci') {
+    return <MaterialCommunityIcons name={entry.glyph as any} size={size} color={color} style={style} />;
   }
 
   return <MaterialIcons name={entry.glyph as any} size={size} color={color} style={style} />;

@@ -1,13 +1,12 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Icon } from '../ui/Icon';
-import { Colors, Typography, Spacing, Radius, Shadows } from '../../constants/theme';
+import { Colors, Pastel, Typography, Spacing, Radius } from '../../constants/theme';
 
 export interface WorkshopLocationProps {
   isOnline: boolean;
   label: string;
   cityDistrict: string | null;
-  /** yalnızca in-person + koordinat mevcutsa verilir; verilmezse "Haritada Aç" gösterilmez. */
   onOpenMaps?: () => void;
 }
 
@@ -17,7 +16,7 @@ export function WorkshopLocation({ isOnline, label, cityDistrict, onOpenMaps }: 
       <Text style={styles.sectionTitle}>Konum</Text>
       <View style={styles.card}>
         <View style={styles.iconWrap}>
-          <Icon name={isOnline ? 'videocam' : 'locationOn'} size={20} color={Colors.primary} />
+          <Icon name={isOnline ? 'videocam' : 'locationOn'} size={20} color={Pastel.teal.text} />
         </View>
         <View style={styles.textWrap}>
           <Text style={styles.label}>{label}</Text>
@@ -40,25 +39,22 @@ const styles = StyleSheet.create({
     gap: Spacing.sm,
   },
   sectionTitle: {
-    ...Typography.titleLg,
+    ...Typography.serifTitle,
     color: Colors.onSurface,
   },
   card: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.sm,
-    backgroundColor: Colors.surfaceContainerLowest,
-    borderRadius: Radius.xl,
-    borderWidth: 1,
-    borderColor: Colors.surfaceVariant,
+    backgroundColor: Pastel.teal.tint,
+    borderRadius: Radius.xxl,
     padding: Spacing.md,
-    ...Shadows.sm,
   },
   iconWrap: {
     width: 40,
     height: 40,
     borderRadius: Radius.md,
-    backgroundColor: Colors.primaryContainer,
+    backgroundColor: Pastel.teal.tintStrong,
     alignItems: 'center',
     justifyContent: 'center',
   },

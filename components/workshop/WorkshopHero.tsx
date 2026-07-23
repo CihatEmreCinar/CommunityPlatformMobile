@@ -3,7 +3,7 @@ import { View, Image, TouchableOpacity, StyleSheet } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Icon } from '../ui/Icon';
-import { Colors, Spacing } from '../../constants/theme';
+import { Colors, Pastel, Spacing } from '../../constants/theme';
 
 export interface WorkshopHeroProps {
   imageUrl: string | null;
@@ -22,7 +22,7 @@ export function WorkshopHero({ imageUrl, topInset, onBack, onShare }: WorkshopHe
       ) : (
         <View style={styles.imageFallback}>
           <View style={styles.fallbackIconWrap}>
-            <Icon name="imageOutline" size={32} color={Colors.primary} />
+            <Icon name="imageOutline" size={32} color={Pastel.teal.text} />
           </View>
         </View>
       )}
@@ -72,7 +72,7 @@ const styles = StyleSheet.create({
     width: 72,
     height: 72,
     borderRadius: 36,
-    backgroundColor: Colors.primaryContainer,
+    backgroundColor: Pastel.teal.tintStrong,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -91,13 +91,9 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: Spacing.containerMargin,
   },
+  // Flat yön: gölge kaldırıldı, sadece blur/translucency ile ayrışıyor.
   glassButtonTouchable: {
     borderRadius: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.12,
-    shadowRadius: 8,
-    elevation: 3,
   },
   glassButton: {
     width: 40,

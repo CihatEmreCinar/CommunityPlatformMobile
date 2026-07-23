@@ -17,7 +17,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { ticketService } from '../../../services/ticketService';
 import { enrollmentService } from '../../../services/enrollmentService';
 import { Participant } from '../../../types/ticket';
-import { Colors, Typography, Spacing, Radius, Shadows } from '../../../constants/theme';
+import { Colors, Pastel, Typography, Spacing, Radius } from '../../../constants/theme';
 
 type TabKey = 'pending' | 'confirmed' | 'attended' | 'noshow';
 
@@ -47,8 +47,7 @@ export default function ParticipantsScreen() {
 
   const load = useCallback(async () => {
     try {
-      const data = await ticketService.getWorkshopParticipants(id);
-      setParticipants(data);
+      setParticipants(await ticketService.getWorkshopParticipants(id));
     } catch (e) {
       console.log('Katılımcılar yüklenemedi', e);
     } finally {
@@ -57,9 +56,7 @@ export default function ParticipantsScreen() {
     }
   }, [id]);
 
-  useEffect(() => {
-    load();
-  }, [load]);
+  useEffect(() => { load(); }, [load]);
 
   const filtered = useMemo(() => participants.filter((p) => matchesTab(p, activeTab)), [participants, activeTab]);
 
@@ -86,26 +83,18 @@ export default function ParticipantsScreen() {
     <SafeAreaView style={styles.flex} edges={['top', 'bottom']}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <Icon name="arrowBack" size={22} color={Colors.onSurface} />
+          <Icon name="arrowBack" size={20} color={Colors.onSurface} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle} numberOfLines={1}>
-          {title || 'Katılımcılar'}
-        </Text>
+        <Text style={styles.headerTitle} numberOfLines={1}>{title || 'Katılımcılar'}</Text>
         <TouchableOpacity onPress={() => setScannerOpen(true)} style={styles.scanButton}>
-          <Icon name="qrCodeScanner" size={22} color={Colors.onPrimary} />
+          <Icon name="qrCodeScanner" size={19} color={Colors.onPrimary} />
         </TouchableOpacity>
       </View>
 
       <View style={styles.tabRow}>
         {TABS.map((t) => (
-          <TouchableOpacity
-            key={t.key}
-            style={[styles.tab, activeTab === t.key && styles.tabActive]}
-            onPress={() => setActiveTab(t.key)}
-          >
-            <Text style={[styles.tabText, activeTab === t.key && styles.tabTextActive]}>
-              {t.label} ({counts[t.key]})
-            </Text>
+          <TouchableOpacity key={t.key} style={[styles.tab, activeTab === t.key && styles.tabActive]} onPress={() => setActiveTab(t.key)}>
+            <Text style={[styles.tabText, activeTab === t.key && styles.tabTextActive]}>{t.label} ({counts[t.key]})</Text>
           </TouchableOpacity>
         ))}
       </View>
@@ -118,34 +107,21 @@ export default function ParticipantsScreen() {
         <ScrollView
           style={styles.flex}
           contentContainerStyle={styles.list}
-          refreshControl={
-            <RefreshControl
-              refreshing={isRefreshing}
-              onRefresh={() => {
-                setIsRefreshing(true);
-                load();
-              }}
-              colors={[Colors.primary]}
-            />
-          }
+          refreshControl={<RefreshControl refreshing={isRefreshing} onRefresh={() => { setIsRefreshing(true); load(); }} colors={[Colors.primary]} />}
         >
           {filtered.length === 0 ? (
             <View style={styles.empty}>
-              <Icon name="peopleOutline" size={40} color={Colors.outline} />
+              <Icon name="peopleOutline" size={36} color={Colors.outline} />
               <Text style={styles.emptyText}>Bu sekmede katılımcı yok</Text>
             </View>
           ) : (
             filtered.map((p) => (
               <View key={p.id} style={styles.card}>
                 <View style={styles.cardRow}>
-                  <Icon name="person" size={20} color={Colors.onSurfaceVariant} />
+                  <Icon name="person" size={19} color={Pastel.teal.text} />
                   <Text style={styles.participantName}>{p.userName}</Text>
                 </View>
-                {p.attendedAt && (
-                  <Text style={styles.attendedAtText}>
-                    {new Date(p.attendedAt).toLocaleString('tr-TR')}
-                  </Text>
-                )}
+                {p.attendedAt && <Text style={styles.attendedAtText}>{new Date(p.attendedAt).toLocaleString('tr-TR')}</Text>}
                 {activeTab === 'confirmed' && (
                   <TouchableOpacity style={styles.manualBtn} onPress={() => handleManualAttend(p.id)}>
                     <Text style={styles.manualBtnText}>Manuel işaretle</Text>
@@ -157,34 +133,16 @@ export default function ParticipantsScreen() {
         </ScrollView>
       )}
 
-      <ScannerModal
-        visible={scannerOpen}
-        onClose={() => setScannerOpen(false)}
-        onCheckedIn={() => {
-          setScannerOpen(false);
-          load();
-        }}
-      />
+      <ScannerModal visible={scannerOpen} onClose={() => setScannerOpen(false)} onCheckedIn={() => { setScannerOpen(false); load(); }} />
     </SafeAreaView>
   );
 }
 
-function ScannerModal({
-  visible,
-  onClose,
-  onCheckedIn,
-}: {
-  visible: boolean;
-  onClose: () => void;
-  onCheckedIn: () => void;
-}) {
+function ScannerModal({ visible, onClose, onCheckedIn }: { visible: boolean; onClose: () => void; onCheckedIn: () => void }) {
   const [permission, requestPermission] = useCameraPermissions();
   const [scanned, setScanned] = useState(false);
   const [preview, setPreview] = useState<{ qrPayload: string; participantName: string; workshopTitle: string; alreadyUsed: boolean } | null>(null);
   const [processing, setProcessing] = useState(false);
-  // useState yerine ref: CameraView aynı kare için onBarcodeScanned'i art arda birkaç kez
-  // tetikleyebiliyor; state güncellemesi bir sonraki render'a kadar gecikir, bu da aynı
-  // QR için birden fazla /tickets/verify çağrısına yol açardı. Ref senkron ve anında geçerli.
   const lockRef = useRef(false);
 
   useEffect(() => {
@@ -203,31 +161,12 @@ function ScannerModal({
     setProcessing(true);
     try {
       const result = await ticketService.verify(data);
-      setPreview({
-        qrPayload: data,
-        participantName: result.participantName,
-        workshopTitle: result.workshopTitle,
-        alreadyUsed: result.alreadyUsed,
-      });
+      setPreview({ qrPayload: data, participantName: result.participantName, workshopTitle: result.workshopTitle, alreadyUsed: result.alreadyUsed });
     } catch (e: any) {
       const status = e?.response?.status;
       const backendMessage = e?.response?.data?.message;
-      const detail =
-        status === 403
-          ? 'Bu atölye bu işletmeye ait değil.'
-          : status === 429
-          ? 'Çok fazla deneme yapıldı, birkaç saniye bekleyip tekrar deneyin.'
-          : backendMessage || 'Bu QR kod doğrulanamadı.';
-
-      Alert.alert('Geçersiz Bilet', `[${status ?? 'network'}] ${detail}`, [
-        {
-          text: 'Tamam',
-          onPress: () => {
-            lockRef.current = false;
-            setScanned(false);
-          },
-        },
-      ]);
+      const detail = status === 403 ? 'Bu atölye bu işletmeye ait değil.' : status === 429 ? 'Çok fazla deneme yapıldı, birkaç saniye bekleyip tekrar deneyin.' : backendMessage || 'Bu QR kod doğrulanamadı.';
+      Alert.alert('Geçersiz Bilet', `[${status ?? 'network'}] ${detail}`, [{ text: 'Tamam', onPress: () => { lockRef.current = false; setScanned(false); } }]);
     } finally {
       setProcessing(false);
     }
@@ -244,8 +183,7 @@ function ScannerModal({
       if (e?.response?.status === 409) {
         Alert.alert('Zaten Okutulmuş', 'Bu bilet daha önce kullanılmış.');
       } else {
-        const status = e?.response?.status;
-        Alert.alert('Hata', `[${status ?? 'network'}] ${e?.response?.data?.message || 'Check-in başarısız.'}`);
+        Alert.alert('Hata', `[${e?.response?.status ?? 'network'}] ${e?.response?.data?.message || 'Check-in başarısız.'}`);
       }
       lockRef.current = false;
       setScanned(false);
@@ -261,21 +199,17 @@ function ScannerModal({
         {!permission?.granted ? (
           <View style={styles.center}>
             <Text style={styles.permissionText}>Kamera izni gerekiyor</Text>
-            <TouchableOpacity style={styles.manualBtn} onPress={requestPermission}>
-              <Text style={styles.manualBtnText}>İzin ver</Text>
+            <TouchableOpacity style={styles.manualBtnDark} onPress={requestPermission}>
+              <Text style={styles.manualBtnDarkText}>İzin ver</Text>
             </TouchableOpacity>
           </View>
         ) : (
-          <CameraView
-            style={StyleSheet.absoluteFillObject}
-            barcodeScannerSettings={{ barcodeTypes: ['qr'] }}
-            onBarcodeScanned={scanned ? undefined : handleScan}
-          />
+          <CameraView style={StyleSheet.absoluteFillObject} barcodeScannerSettings={{ barcodeTypes: ['qr'] }} onBarcodeScanned={scanned ? undefined : handleScan} />
         )}
 
         <View style={styles.scannerHeader}>
           <TouchableOpacity onPress={onClose} style={styles.scannerCloseBtn}>
-            <Icon name="closeModal" size={24} color="#FFFFFF" />
+            <Icon name="closeModal" size={22} color="#FFFFFF" />
           </TouchableOpacity>
           <Text style={styles.scannerTitle}>QR Tara</Text>
           <View style={{ width: 40 }} />
@@ -285,32 +219,18 @@ function ScannerModal({
           <View style={styles.previewSheet}>
             {preview.alreadyUsed && (
               <View style={styles.warningRow}>
-                <Icon name="warning" size={16} color={Colors.error} />
+                <Icon name="warning" size={15} color={Pastel.coral.text} />
                 <Text style={styles.warningText}>Bu bilet zaten kullanılmış</Text>
               </View>
             )}
             <Text style={styles.previewName}>{preview.participantName}</Text>
             <Text style={styles.previewWorkshop}>{preview.workshopTitle}</Text>
             <View style={styles.previewActions}>
-              <TouchableOpacity
-                style={styles.previewCancelBtn}
-                onPress={() => {
-                  setScanned(false);
-                  setPreview(null);
-                }}
-              >
+              <TouchableOpacity style={styles.previewCancelBtn} onPress={() => { setScanned(false); setPreview(null); }}>
                 <Text style={styles.previewCancelText}>Vazgeç</Text>
               </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.previewConfirmBtn, preview.alreadyUsed && styles.previewConfirmBtnDisabled]}
-                onPress={handleConfirm}
-                disabled={processing || preview.alreadyUsed}
-              >
-                {processing ? (
-                  <ActivityIndicator color={Colors.onPrimary} />
-                ) : (
-                  <Text style={styles.previewConfirmText}>Onayla</Text>
-                )}
+              <TouchableOpacity style={[styles.previewConfirmBtn, preview.alreadyUsed && styles.previewConfirmBtnDisabled]} onPress={handleConfirm} disabled={processing || preview.alreadyUsed}>
+                {processing ? <ActivityIndicator color={Colors.onPrimary} /> : <Text style={styles.previewConfirmText}>Onayla</Text>}
               </TouchableOpacity>
             </View>
           </View>
@@ -323,129 +243,40 @@ function ScannerModal({
 const styles = StyleSheet.create({
   flex: { flex: 1, backgroundColor: Colors.background },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center', gap: Spacing.sm },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: Spacing.containerMargin,
-    paddingVertical: Spacing.sm,
-    gap: Spacing.sm,
-  },
-  backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: Radius.full,
-    backgroundColor: Colors.surfaceContainerLowest,
-    justifyContent: 'center',
-    alignItems: 'center',
-    ...Shadows.sm,
-  },
-  headerTitle: { ...Typography.h3, color: Colors.onSurface, flex: 1, textAlign: 'center' },
-  scanButton: {
-    width: 40,
-    height: 40,
-    borderRadius: Radius.full,
-    backgroundColor: Colors.primary,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  tabRow: {
-    flexDirection: 'row',
-    paddingHorizontal: Spacing.containerMargin,
-    gap: Spacing.xs,
-    marginBottom: Spacing.sm,
-  },
-  tab: {
-    flex: 1,
-    paddingVertical: Spacing.xs,
-    borderRadius: Radius.md,
-    backgroundColor: Colors.surfaceContainer,
-    alignItems: 'center',
-  },
+  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: Spacing.containerMargin, paddingVertical: Spacing.sm, gap: Spacing.sm },
+  backButton: { width: 38, height: 38, borderRadius: Radius.full, backgroundColor: Colors.surfaceContainer, justifyContent: 'center', alignItems: 'center' },
+  headerTitle: { ...Typography.serifTitle, color: Colors.onSurface, flex: 1, textAlign: 'center' },
+  scanButton: { width: 38, height: 38, borderRadius: Radius.full, backgroundColor: Colors.primary, justifyContent: 'center', alignItems: 'center' },
+  tabRow: { flexDirection: 'row', paddingHorizontal: Spacing.containerMargin, gap: Spacing.xs, marginBottom: Spacing.sm },
+  tab: { flex: 1, paddingVertical: Spacing.xs, borderRadius: Radius.full, backgroundColor: Colors.surfaceContainer, alignItems: 'center' },
   tabActive: { backgroundColor: Colors.primary },
   tabText: { ...Typography.labelSm, color: Colors.onSurfaceVariant, fontSize: 11 },
   tabTextActive: { color: Colors.onPrimary, fontWeight: '600' },
   list: { paddingHorizontal: Spacing.containerMargin, paddingBottom: Spacing.xl },
   empty: { alignItems: 'center', paddingVertical: Spacing.xl, gap: Spacing.sm },
   emptyText: { ...Typography.bodyMd, color: Colors.onSurfaceVariant },
-  card: {
-    backgroundColor: Colors.surfaceContainerLowest,
-    borderRadius: Radius.lg,
-    borderWidth: 1,
-    borderColor: Colors.outlineVariant,
-    padding: Spacing.sm,
-    marginBottom: Spacing.sm,
-    gap: Spacing.xs,
-    ...Shadows.sm,
-  },
+  card: { backgroundColor: Pastel.teal.tint, borderRadius: Radius.xl, padding: Spacing.sm, marginBottom: Spacing.sm, gap: Spacing.xs },
   cardRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.xs },
   participantName: { ...Typography.labelMd, fontSize: 15, color: Colors.onSurface },
   attendedAtText: { ...Typography.labelSm, color: Colors.onSurfaceVariant },
-  manualBtn: {
-    marginTop: Spacing.xs,
-    paddingVertical: Spacing.xs,
-    borderRadius: Radius.md,
-    borderWidth: 1,
-    borderColor: Colors.primary,
-    alignItems: 'center',
-  },
-  manualBtnText: { ...Typography.labelMd, color: Colors.primary },
-
-  // Scanner
+  manualBtn: { marginTop: Spacing.xs, paddingVertical: Spacing.xs, borderRadius: Radius.md, backgroundColor: Pastel.teal.tintStrong, alignItems: 'center' },
+  manualBtnText: { ...Typography.labelMd, color: Pastel.teal.text },
   scannerContainer: { flex: 1, backgroundColor: '#000000' },
-  scannerHeader: {
-    position: 'absolute',
-    top: 50,
-    left: 0,
-    right: 0,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: Spacing.containerMargin,
-  },
-  scannerCloseBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: Radius.full,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
+  scannerHeader: { position: 'absolute', top: 50, left: 0, right: 0, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: Spacing.containerMargin },
+  scannerCloseBtn: { width: 40, height: 40, borderRadius: Radius.full, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' },
   scannerTitle: { ...Typography.h3, color: '#FFFFFF' },
   permissionText: { ...Typography.bodyMd, color: '#FFFFFF' },
-  previewSheet: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: Colors.surfaceContainerLowest,
-    borderTopLeftRadius: Radius.xl,
-    borderTopRightRadius: Radius.xl,
-    padding: Spacing.lg,
-    gap: Spacing.xs,
-    ...Shadows.card,
-  },
+  manualBtnDark: { paddingVertical: Spacing.sm, paddingHorizontal: Spacing.md, borderRadius: Radius.full, backgroundColor: Colors.primary },
+  manualBtnDarkText: { ...Typography.labelMd, color: '#FFFFFF' },
+  previewSheet: { position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: Colors.surfaceContainerLowest, borderTopLeftRadius: Radius.xxxl, borderTopRightRadius: Radius.xxxl, padding: Spacing.lg, gap: Spacing.xs },
   warningRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.xs },
-  warningText: { ...Typography.labelMd, color: Colors.error },
-  previewName: { ...Typography.h2, color: Colors.onSurface },
+  warningText: { ...Typography.labelMd, color: Pastel.coral.text },
+  previewName: { ...Typography.serifTitle, color: Colors.onSurface },
   previewWorkshop: { ...Typography.bodyMd, color: Colors.onSurfaceVariant, marginBottom: Spacing.sm },
   previewActions: { flexDirection: 'row', gap: Spacing.sm },
-  previewCancelBtn: {
-    flex: 1,
-    paddingVertical: Spacing.sm,
-    borderRadius: Radius.md,
-    borderWidth: 1,
-    borderColor: Colors.outline,
-    alignItems: 'center',
-  },
+  previewCancelBtn: { flex: 1, paddingVertical: Spacing.sm, borderRadius: Radius.full, backgroundColor: Colors.surfaceContainer, alignItems: 'center' },
   previewCancelText: { ...Typography.labelMd, color: Colors.onSurface },
-  previewConfirmBtn: {
-    flex: 1,
-    paddingVertical: Spacing.sm,
-    borderRadius: Radius.md,
-    backgroundColor: Colors.primary,
-    alignItems: 'center',
-  },
+  previewConfirmBtn: { flex: 1, paddingVertical: Spacing.sm, borderRadius: Radius.full, backgroundColor: Colors.primary, alignItems: 'center' },
   previewConfirmBtnDisabled: { backgroundColor: Colors.outline },
   previewConfirmText: { ...Typography.labelMd, color: Colors.onPrimary },
 });

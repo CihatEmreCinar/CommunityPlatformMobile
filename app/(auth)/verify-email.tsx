@@ -1,21 +1,12 @@
 import { useState } from 'react';
-import {
-  ActivityIndicator,
-  Alert,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { ActivityIndicator, Alert, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Icon } from '../../components/ui/Icon';
-import { Colors, Radius, Shadows, Spacing, Typography } from '../../constants/theme';
+import { Colors, Pastel, Radius, Spacing, Typography } from '../../constants/theme';
 import { authService } from '../../services/authService';
+import { AuthHeader } from '../../components/auth/AuthHeader';
+import { AuthInput } from '../../components/auth/AuthInput';
+import { AuthButton } from '../../components/auth/AuthButton';
 
 function getErrorMessage(error: any, fallback: string) {
   return error?.response?.data?.message || fallback;
@@ -70,46 +61,46 @@ export default function VerifyEmailScreen() {
     <SafeAreaView style={styles.flex} edges={['top', 'bottom']}>
       <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
         <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
-          <View style={styles.logoSection}>
-            <View style={styles.iconCircle}>
-              <Icon name="mailOutline" size={32} color={Colors.accent} />
-            </View>
-            <Text style={styles.title}>E-postanı doğrula</Text>
-            <Text style={styles.subtitle}>
-              {email ? `${email} adresine bir doğrulama e-postası gönderdik.` : 'E-postana bir doğrulama e-postası gönderdik.'}
-            </Text>
-          </View>
+          <AuthHeader
+            variant="icon"
+            icon="mailOutline"
+            title="E-postanı doğrula"
+            subtitle={email ? `${email} adresine bir doğrulama e-postası gönderdik.` : 'E-postana bir doğrulama e-postası gönderdik.'}
+          />
 
           <View style={styles.card}>
             <Text style={styles.label}>Doğrulama değeri</Text>
-            <TextInput
-              style={styles.input}
+            <AuthInput
               value={token}
               onChangeText={setToken}
               placeholder="E-postadaki kod veya token"
-              placeholderTextColor={Colors.outlineVariant}
               autoCapitalize="none"
               autoCorrect={false}
               editable={!isVerifying}
               textContentType="oneTimeCode"
             />
-            <Text style={styles.helperText}>E-postadaki doğrulama değerini kopyalayıp buraya yapıştırabilirsin.</Text>
 
-            <TouchableOpacity style={[styles.primaryButton, isVerifying && styles.disabled]} onPress={handleVerify} disabled={isVerifying} activeOpacity={0.85}>
-              {isVerifying ? <ActivityIndicator color={Colors.onAccent} /> : <Text style={styles.primaryButtonText}>E-postayı Doğrula</Text>}
-            </TouchableOpacity>
+            <View style={styles.helperCard}>
+              <Text style={styles.helperText}>E-postadaki doğrulama değerini kopyalayıp buraya yapıştırabilirsin.</Text>
+            </View>
+
+            <AuthButton label="E-postayı Doğrula" onPress={handleVerify} loading={isVerifying} />
 
             <View style={styles.resendRow}>
               <Text style={styles.resendText}>E-posta gelmedi mi?</Text>
               <TouchableOpacity onPress={handleResend} disabled={isResending || isVerifying}>
-                {isResending ? <ActivityIndicator size="small" color={Colors.accent} /> : <Text style={styles.resendLink}>Tekrar gönder</Text>}
+                {isResending ? <ActivityIndicator size="small" color={Colors.primary} /> : <Text style={styles.resendLink}>Tekrar gönder</Text>}
               </TouchableOpacity>
             </View>
           </View>
 
-          <TouchableOpacity style={styles.backButton} onPress={() => router.replace('/(auth)/register')} disabled={isVerifying || isResending}>
-            <Text style={styles.backButtonText}>Farklı bir e-posta ile kayıt ol</Text>
-          </TouchableOpacity>
+          <AuthButton
+            variant="ghost"
+            label="Farklı bir e-posta ile kayıt ol"
+            onPress={() => router.replace('/(auth)/register')}
+            disabled={isVerifying || isResending}
+            style={styles.backButton}
+          />
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -119,20 +110,12 @@ export default function VerifyEmailScreen() {
 const styles = StyleSheet.create({
   flex: { flex: 1, backgroundColor: Colors.background },
   container: { flexGrow: 1, justifyContent: 'center', paddingHorizontal: Spacing.containerMargin, paddingVertical: Spacing.xl },
-  logoSection: { alignItems: 'center', marginBottom: Spacing.xl },
-  iconCircle: { width: 72, height: 72, borderRadius: Radius.full, alignItems: 'center', justifyContent: 'center', backgroundColor: Colors.primaryContainer, marginBottom: Spacing.md },
-  title: { ...Typography.h1, color: Colors.onSurface, marginBottom: Spacing.sm },
-  subtitle: { ...Typography.bodyLg, color: Colors.onSurfaceVariant, textAlign: 'center' },
-  card: { backgroundColor: Colors.surfaceContainerLowest, borderRadius: Radius.xl, padding: Spacing.lg, borderWidth: 1, borderColor: Colors.surfaceVariant, ...Shadows.card, gap: Spacing.md },
+  card: { backgroundColor: Pastel.teal.tint, borderRadius: Radius.xxl, padding: Spacing.lg, gap: Spacing.md },
   label: { ...Typography.labelMd, color: Colors.onSurface },
-  input: { ...Typography.bodyMd, color: Colors.onSurface, backgroundColor: Colors.surfaceBright, borderWidth: 1, borderColor: Colors.surfaceVariant, borderRadius: Radius.md, paddingHorizontal: Spacing.md, paddingVertical: Spacing.md },
-  helperText: { ...Typography.bodyMd, color: Colors.onSurfaceVariant, marginTop: -Spacing.sm },
-  primaryButton: { backgroundColor: Colors.accent, borderRadius: Radius.md, paddingVertical: Spacing.md, alignItems: 'center', justifyContent: 'center', ...Shadows.sm },
-  disabled: { opacity: 0.7 },
-  primaryButtonText: { ...Typography.labelMd, color: Colors.onAccent, fontSize: 14 },
-  resendRow: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: Spacing.xs, marginTop: Spacing.xs },
+  helperCard: { backgroundColor: Pastel.amber.tint, borderRadius: Radius.lg, padding: Spacing.sm },
+  helperText: { ...Typography.bodyMd, color: Pastel.amber.text },
+  resendRow: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: Spacing.xs },
   resendText: { ...Typography.bodyMd, color: Colors.onSurfaceVariant },
-  resendLink: { ...Typography.labelMd, color: Colors.accent },
-  backButton: { alignSelf: 'center', marginTop: Spacing.lg, padding: Spacing.sm },
-  backButtonText: { ...Typography.labelMd, color: Colors.accent },
+  resendLink: { ...Typography.labelMd, color: Colors.primary },
+  backButton: { marginTop: Spacing.lg },
 });

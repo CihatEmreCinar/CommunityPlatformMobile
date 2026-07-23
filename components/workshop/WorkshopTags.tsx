@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { Colors, Typography, Spacing, Radius } from '../../constants/theme';
+import { Pastel, Typography, Spacing, Radius } from '../../constants/theme';
 
 export interface WorkshopTagsProps {
   tags: string[];
@@ -27,13 +27,13 @@ const styles = StyleSheet.create({
     gap: Spacing.xs,
   },
   chip: {
-    backgroundColor: Colors.primary + '1A',
+    backgroundColor: Pastel.teal.tintStrong,
     paddingHorizontal: Spacing.sm,
     paddingVertical: 6,
     borderRadius: Radius.full,
   },
   chipText: {
     ...Typography.labelMd,
-    color: Colors.primary,
+    color: Pastel.teal.text,
   },
 });

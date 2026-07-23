@@ -1,140 +1,45 @@
-import { Tabs } from 'expo-router';
-import { Icon, IconName } from '../../../components/ui/Icon';
-import { View, Text, StyleSheet } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Colors, Typography } from '../../../constants/theme';
-import { useUnreadCount } from '../../../hooks/useUnreadCount';
+import { Tabs, useRouter } from 'expo-router';
+import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
+import { FloatingTabBar, type FloatingTabItem } from '../../../components/layout/FloatingTabBar';
 
-function BadgeIcon({ count, icon, color, size }: {
-  count: number;
-  icon: IconName;
-  color: string;
-  size: number;
-}) {
+// Mekan Bul (search) ve Bildirimler tab bar'da değil — search dashboard'daki
+// "Mekan Bul" hızlı işleminden, bildirimler header zil ikonundan erişiliyor
+// (FloatingTabBar tam olarak 4 sekme için tasarlandı).
+const VISIBLE_TABS: FloatingTabItem[] = [
+  { key: 'dashboard', icon: 'dashboard' },
+  { key: 'feed', icon: 'dynamicFeed' },
+  { key: 'workshop', icon: 'projectorOutline' },
+  { key: 'profile', icon: 'person' },
+];
+
+function EmployerTabBar({ state, navigation }: BottomTabBarProps) {
+  const router = useRouter();
+  const activeRouteName = state.routes[state.index].name;
+  const activeKey = VISIBLE_TABS.some((t) => t.key === activeRouteName) ? activeRouteName : VISIBLE_TABS[0].key;
+
   return (
-    <View>
-      <Icon name={icon} size={size} color={color} />
-      {count > 0 && (
-        <View style={styles.badge}>
-          <Text style={styles.badgeText}>
-            {count > 99 ? '99+' : count}
-          </Text>
-        </View>
-      )}
-    </View>
+    <FloatingTabBar
+      tabs={VISIBLE_TABS}
+      activeKey={activeKey}
+      onTabPress={(key) => navigation.navigate(key)}
+      showCreateButton
+      onCreatePress={() => router.push('/(employer)/post/create')}
+    />
   );
 }
 
 export default function EmployerTabsLayout() {
-  const { unreadCount } = useUnreadCount(30000);
-  const insets = useSafeAreaInsets();
-  const tabBarHeight = 60 + Math.max(insets.bottom, 0);
-  const tabBarPaddingBottom = Math.max(insets.bottom, 8);
-
   return (
     <Tabs
-      screenOptions={{
-        headerShown: false,
-        tabBarActiveTintColor: Colors.primary,
-        tabBarInactiveTintColor: Colors.outline,
-        tabBarStyle: {
-          backgroundColor: Colors.surfaceContainerLowest,
-          borderTopColor: Colors.surfaceVariant,
-          borderTopWidth: 1,
-          height: tabBarHeight,
-          paddingBottom: tabBarPaddingBottom,
-          paddingTop: 8,
-        },
-        tabBarItemStyle: {
-          paddingTop: 4,
-          paddingBottom: 2,
-        },
-        tabBarLabelStyle: {
-          ...Typography.labelSm,
-          marginTop: 0,
-        },
-      }}
+      tabBar={(props) => <EmployerTabBar {...props} />}
+      screenOptions={{ headerShown: false }}
     >
-      <Tabs.Screen
-        name="dashboard"
-        options={{
-          title: 'Panel',
-          tabBarIcon: ({ color, size }) => (
-            <Icon name="dashboard" size={size} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="feed"
-        options={{
-          title: 'Akış',
-          tabBarIcon: ({ color, size }) => (
-            <Icon name="dynamicFeed" size={size} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="workshop"
-        options={{
-          title: 'Atölyelerim',
-          tabBarIcon: ({ color, size }) => (
-            <Icon name="eventNote" size={size} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="search"
-        options={{
-          title: 'Mekan Bul',
-          tabBarIcon: ({ color, size }) => (
-            <Icon name="search" size={size} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="notifications"
-        options={{
-          title: 'Bildirimler',
-          tabBarIcon: ({ color, size }) => (
-            <BadgeIcon
-              icon="notifications"
-              count={unreadCount}
-              color={color}
-              size={size}
-            />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="profile"
-        options={{
-          title: 'Profil',
-          tabBarIcon: ({ color, size }) => (
-            <Icon name="person" size={size} color={color} />
-          ),
-        }}
-      />
+      <Tabs.Screen name="dashboard" />
+      <Tabs.Screen name="feed" />
+      <Tabs.Screen name="workshop" />
+      <Tabs.Screen name="search" />
+      <Tabs.Screen name="notifications" />
+      <Tabs.Screen name="profile" />
     </Tabs>
   );
 }
-
-const styles = StyleSheet.create({
-  badge: {
-    position: 'absolute',
-    top: -4,
-    right: -6,
-    minWidth: 16,
-    height: 16,
-    borderRadius: 8,
-    backgroundColor: '#EF4444',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 3,
-  },
-  badgeText: {
-    fontSize: 9,
-    fontWeight: '700',
-    color: '#FFFFFF',
-    lineHeight: 12,
-  },
-});

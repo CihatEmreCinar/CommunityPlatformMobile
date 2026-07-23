@@ -41,10 +41,9 @@ export function WorkshopStickyCTA({
 }
 
 const styles = StyleSheet.create({
+  // Flat yön: üst hairline kaldırıldı — blur/translucency tek başına ayrıştırıyor.
   wrapper: {
-    borderTopWidth: 1,
-    borderTopColor: Colors.surfaceVariant,
-    backgroundColor: 'rgba(246,250,249,0.85)',
+    backgroundColor: 'rgba(253,252,250,0.88)',
     overflow: 'hidden',
   },
   content: {

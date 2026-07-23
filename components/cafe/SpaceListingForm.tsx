@@ -2,7 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { Image, ScrollView, Text, TextInput, TouchableOpacity, View, StyleSheet, Alert } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { Icon } from '../ui/Icon';
-import { Colors, Typography, Spacing, Radius, Shadows } from '../../constants/theme';
+import { Colors, Pastel, Typography, Spacing, Radius } from '../../constants/theme';
 import { type SpaceListing, type SpaceListingRequest } from '../../services/spaceListingService';
 
 type SpaceListingFormProps = {
@@ -82,7 +82,7 @@ export function SpaceListingForm({
 
   return (
     <ScrollView contentContainerStyle={styles.formContent} keyboardShouldPersistTaps="handled">
-      <View style={styles.fieldGroup}>
+      <View style={styles.section}>
         <Text style={styles.label}>Başlık *</Text>
         <TextInput
           style={styles.input}
@@ -93,7 +93,7 @@ export function SpaceListingForm({
         />
       </View>
 
-      <View style={styles.fieldGroup}>
+      <View style={styles.section}>
         <Text style={styles.label}>Açıklama</Text>
         <TextInput
           style={[styles.input, styles.textArea]}
@@ -106,8 +106,8 @@ export function SpaceListingForm({
         />
       </View>
 
-      <View style={styles.row}>
-        <View style={[styles.fieldGroup, styles.rowItem]}>
+      <View style={[styles.section, styles.row]}>
+        <View style={styles.rowItem}>
           <Text style={styles.label}>Kapasite *</Text>
           <TextInput
             style={styles.input}
@@ -118,7 +118,7 @@ export function SpaceListingForm({
             placeholderTextColor={Colors.outlineVariant}
           />
         </View>
-        <View style={[styles.fieldGroup, styles.rowItem]}>
+        <View style={styles.rowItem}>
           <Text style={styles.label}>Saatlik Fiyat *</Text>
           <TextInput
             style={styles.input}
@@ -131,7 +131,7 @@ export function SpaceListingForm({
         </View>
       </View>
 
-      <View style={styles.fieldGroup}>
+      <View style={styles.section}>
         <Text style={styles.label}>Şehir</Text>
         <TextInput
           style={styles.input}
@@ -142,7 +142,7 @@ export function SpaceListingForm({
         />
       </View>
 
-      <View style={styles.fieldGroup}>
+      <View style={styles.section}>
         <Text style={styles.label}>Olanaklar</Text>
         <TextInput
           style={styles.input}
@@ -153,10 +153,10 @@ export function SpaceListingForm({
         />
       </View>
 
-      <View style={styles.fieldGroup}>
+      <View style={styles.section}>
         <Text style={styles.label}>Fotoğraflar</Text>
         <TouchableOpacity style={styles.photoButton} onPress={handlePickPhotos} disabled={submitting}>
-          <Icon name="photoLibrary" size={20} color={Colors.primary} />
+          <Icon name="photoLibrary" size={20} color={Pastel.coral.text} />
           <Text style={styles.photoText}>{photoUris.length > 0 ? `${photoUris.length} fotoğraf seçildi` : 'Fotoğraf ekle'}</Text>
         </TouchableOpacity>
         {(existingPhotoUrls.length > 0 || photoUris.length > 0) && (
@@ -179,18 +179,18 @@ export function SpaceListingForm({
 }
 
 const styles = StyleSheet.create({
-  formContent: { padding: Spacing.md, gap: Spacing.md },
-  fieldGroup: { gap: Spacing.xs },
+  formContent: { padding: Spacing.md, gap: Spacing.sm },
+  section: { backgroundColor: Pastel.coral.tint, borderRadius: Radius.xxl, padding: Spacing.md, gap: Spacing.xs },
   row: { flexDirection: 'row', gap: Spacing.sm },
-  rowItem: { flex: 1 },
-  label: { ...Typography.labelMd, color: Colors.onSurfaceVariant },
-  input: { backgroundColor: Colors.surfaceBright, borderWidth: 1, borderColor: Colors.surfaceVariant, borderRadius: Radius.md, paddingHorizontal: Spacing.sm, paddingVertical: Spacing.sm, color: Colors.onSurface },
+  rowItem: { flex: 1, gap: Spacing.xs },
+  label: { ...Typography.labelMd, color: Colors.onSurface },
+  input: { backgroundColor: Colors.surfaceContainerLowest, borderRadius: Radius.lg, paddingHorizontal: Spacing.md, paddingVertical: Spacing.sm + 2, ...Typography.bodyMd, color: Colors.onSurface },
   textArea: { minHeight: 100 },
-  photoButton: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm, borderWidth: 1, borderStyle: 'dashed', borderColor: Colors.primary, borderRadius: Radius.md, paddingVertical: Spacing.md, paddingHorizontal: Spacing.sm, backgroundColor: Colors.surfaceContainerLowest },
-  photoText: { ...Typography.labelMd, color: Colors.primary },
+  photoButton: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm, borderRadius: Radius.lg, paddingVertical: Spacing.md, paddingHorizontal: Spacing.sm, backgroundColor: Colors.surfaceContainerLowest },
+  photoText: { ...Typography.labelMd, color: Pastel.coral.text },
   photoPreviewRow: { marginTop: Spacing.sm, gap: Spacing.sm },
-  photoPreview: { width: 100, height: 80, borderRadius: Radius.md, marginRight: Spacing.sm, backgroundColor: Colors.surfaceContainer },
-  submitButton: { backgroundColor: Colors.primary, borderRadius: Radius.md, paddingVertical: Spacing.md, alignItems: 'center', justifyContent: 'center' },
+  photoPreview: { width: 100, height: 80, borderRadius: Radius.lg, marginRight: Spacing.sm, backgroundColor: Colors.surfaceContainer },
+  submitButton: { backgroundColor: Colors.primary, borderRadius: Radius.full, paddingVertical: Spacing.md, alignItems: 'center', justifyContent: 'center', marginTop: Spacing.xs },
   submitButtonDisabled: { opacity: 0.65 },
   submitButtonText: { ...Typography.labelMd, color: Colors.onPrimary },
 });

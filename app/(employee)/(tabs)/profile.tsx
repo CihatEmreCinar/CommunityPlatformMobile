@@ -5,10 +5,8 @@ import {
   ScrollView,
   TouchableOpacity,
   StyleSheet,
-  ActivityIndicator,
   Alert,
   RefreshControl,
-  Image,
   Share,
 } from 'react-native';
 import { Icon } from '../../../components/ui/Icon';
@@ -20,11 +18,12 @@ import { employeeService } from '../../../services/employeeService';
 import type { EmployeeProfile } from '../../../services/employeeService';
 import type { UserSocialStats } from '../../../types/post.types';
 import { ProfileHeader } from '../../../components/profile/ProfileHeader';
-import { Colors } from '../../../constants/theme';
+import { FLOATING_TAB_BAR_CLEARANCE } from '../../../components/layout/FloatingTabBar';
+import { Colors, Pastel, Typography, Spacing, Radius } from '../../../constants/theme';
 import { formatCityDistrict } from '../../../utils/locationFormat';
 
 const ACCENT = Colors.primary;
-const COVER_HEIGHT = 168; // spec: kapak alanı varsayılan 210px'den biraz kısaltıldı
+const COVER_HEIGHT = 168;
 
 export default function EmployeeProfileScreen() {
   const router = useRouter();
@@ -74,8 +73,6 @@ export default function EmployeeProfileScreen() {
 
   useEffect(() => { fetchStats(); fetchProfile(); }, []);
 
-  // Profili düzenle ekranından dönüldüğünde (kapak/avatar/bio/interests
-  // güncellenmiş olabilir) güncel veriyi tazele.
   useFocusEffect(
     useCallback(() => {
       fetchProfile();
@@ -86,10 +83,10 @@ export default function EmployeeProfileScreen() {
     <SafeAreaView style={styles.safeArea} edges={['top']}>
     <ScrollView
       style={styles.container}
+      contentContainerStyle={styles.scrollContent}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refresh} tintColor={ACCENT} />}
       showsVerticalScrollIndicator={false}
     >
-      {/* Profil üst */}
       <ProfileHeader
         coverUrl={profile?.coverImageUrl}
         coverHeight={COVER_HEIGHT}
@@ -120,45 +117,38 @@ export default function EmployeeProfileScreen() {
             ])
           }
         >
-          <Icon name="logOutOutline" size={16} color="#6B7280" />
+          <Icon name="logOutOutline" size={15} color={Pastel.coral.text} />
           <Text style={styles.logoutText}>Çıkış Yap</Text>
         </TouchableOpacity>
       </View>
 
-      {/* Bilgiler */}
+      {/* İkincil kart — hesap özeti (teal tint, border yok) */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Hesap Bilgileri</Text>
 
         <View style={styles.infoCard}>
           <View style={styles.infoRow}>
-            <Icon name="mailOutline" size={18} color="#6B7280" />
+            <Icon name="mailOutline" size={18} color={Colors.onSurfaceVariant} />
             <Text style={styles.infoText}>{user?.email}</Text>
           </View>
-          <View style={styles.separator} />
           <View style={styles.infoRow}>
-            <Icon name="starOutline" size={18} color="#F59E0B" />
+            <Icon name="starOutline" size={18} color={Pastel.amber.text} />
             <Text style={styles.infoText}>{user?.xpPoints ?? 0} XP</Text>
             <View style={styles.levelChip}>
               <Text style={styles.levelText}>Seviye {user?.rankLevel ?? 1}</Text>
             </View>
           </View>
           {formatCityDistrict(user?.city, user?.district) ? (
-            <>
-              <View style={styles.separator} />
-              <View style={styles.infoRow}>
-                <Icon name="locationOutline" size={18} color="#6B7280" />
-                <Text style={styles.infoText}>{formatCityDistrict(user?.city, user?.district)}</Text>
-              </View>
-            </>
+            <View style={styles.infoRow}>
+              <Icon name="locationOutline" size={18} color={Colors.onSurfaceVariant} />
+              <Text style={styles.infoText}>{formatCityDistrict(user?.city, user?.district)}</Text>
+            </View>
           ) : null}
           {user?.employeeProfile ? (
-            <>
-              <View style={styles.separator} />
-              <View style={styles.infoRow}>
-                <Icon name="checkmarkCircleOutline" size={18} color="#10B981" />
-                <Text style={styles.infoText}>{user.employeeProfile.totalAttendedWorkshops} tamamlanan atölye</Text>
-              </View>
-            </>
+            <View style={styles.infoRow}>
+              <Icon name="checkmarkCircleOutline" size={18} color={Pastel.teal.text} />
+              <Text style={styles.infoText}>{user.employeeProfile.totalAttendedWorkshops} tamamlanan atölye</Text>
+            </View>
           ) : null}
         </View>
       </View>
@@ -174,9 +164,8 @@ export default function EmployeeProfileScreen() {
           >
             <Icon name="calendarOutline" size={20} color={ACCENT} />
             <Text style={styles.quickText}>Kayıtlarım</Text>
-            <Icon name="chevronForward" size={16} color="#9CA3AF" />
+            <Icon name="chevronForward" size={16} color={Colors.outline} />
           </TouchableOpacity>
-          <View style={styles.separator} />
           <TouchableOpacity
             style={styles.quickRow}
             onPress={() => router.push('/(employee)/(tabs)/home' as any)}
@@ -184,7 +173,7 @@ export default function EmployeeProfileScreen() {
           >
             <Icon name="searchOutline" size={20} color={ACCENT} />
             <Text style={styles.quickText}>Atölyeleri Keşfet</Text>
-            <Icon name="chevronForward" size={16} color="#9CA3AF" />
+            <Icon name="chevronForward" size={16} color={Colors.outline} />
           </TouchableOpacity>
         </View>
       </View>
@@ -194,28 +183,40 @@ export default function EmployeeProfileScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F9FAFB' },
-  safeArea: { flex: 1, backgroundColor: '#F9FAFB' },
+  container: { flex: 1, backgroundColor: Colors.background },
+  scrollContent: { paddingBottom: FLOATING_TAB_BAR_CLEARANCE },
+  safeArea: { flex: 1, backgroundColor: Colors.background },
 
-  // ─── Çıkış ─────────────────────────────────────────────────────────────────
-  logoutRow: { backgroundColor: '#FFFFFF', paddingHorizontal: 20, paddingBottom: 16 },
-  logoutBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'flex-start', borderWidth: 1, borderColor: '#E5E7EB', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 7 },
-  logoutText: { fontSize: 13, fontWeight: '600', color: '#6B7280' },
+  logoutRow: { backgroundColor: Colors.background, paddingHorizontal: Spacing.lg, paddingBottom: Spacing.md },
+  logoutBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    alignSelf: 'flex-start',
+    backgroundColor: Pastel.coral.tint,
+    borderRadius: Radius.full,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+  },
+  logoutText: { ...Typography.labelSm, fontWeight: '600', color: Pastel.coral.text },
 
-  // ─── Section ───────────────────────────────────────────────────────────────
-  section: { padding: 16, gap: 8 },
-  sectionTitle: { fontSize: 12, fontWeight: '600', color: '#9CA3AF', letterSpacing: 0.5, textTransform: 'uppercase', marginBottom: 4 },
+  section: { paddingHorizontal: Spacing.lg, paddingBottom: Spacing.md, gap: Spacing.sm },
+  sectionTitle: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: Colors.outline,
+    letterSpacing: 0.5,
+    textTransform: 'uppercase',
+    marginBottom: 2,
+  },
 
-  // ─── Info card ─────────────────────────────────────────────────────────────
-  infoCard: { backgroundColor: '#FFFFFF', borderRadius: 12, overflow: 'hidden' },
-  infoRow: { flexDirection: 'row', alignItems: 'center', gap: 10, padding: 14 },
-  infoText: { flex: 1, fontSize: 14, color: '#374151' },
-  levelChip: { backgroundColor: '#FEF3C7', borderRadius: 6, paddingHorizontal: 8, paddingVertical: 2 },
-  levelText: { fontSize: 11, fontWeight: '600', color: '#D97706' },
-  separator: { height: StyleSheet.hairlineWidth, backgroundColor: '#F3F4F6', marginHorizontal: 14 },
+  infoCard: { backgroundColor: Pastel.teal.tint, borderRadius: Radius.xxl, overflow: 'hidden', gap: 2 },
+  infoRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: Spacing.md, paddingVertical: Spacing.sm + 4 },
+  infoText: { flex: 1, ...Typography.bodyMd, color: Colors.onSurface },
+  levelChip: { backgroundColor: Pastel.amber.tintStrong, borderRadius: Radius.sm, paddingHorizontal: 8, paddingVertical: 2 },
+  levelText: { ...Typography.labelSm, fontWeight: '700', color: Pastel.amber.text },
 
-  // ─── Quick access ──────────────────────────────────────────────────────────
-  quickCard: { backgroundColor: '#FFFFFF', borderRadius: 12, overflow: 'hidden' },
-  quickRow: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14 },
-  quickText: { flex: 1, fontSize: 14, color: '#374151', fontWeight: '500' },
+  quickCard: { backgroundColor: Pastel.teal.tint, borderRadius: Radius.xxl, overflow: 'hidden', gap: 2 },
+  quickRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: Spacing.md, paddingVertical: Spacing.sm + 4 },
+  quickText: { flex: 1, ...Typography.bodyMd, fontWeight: '500', color: Colors.onSurface },
 });

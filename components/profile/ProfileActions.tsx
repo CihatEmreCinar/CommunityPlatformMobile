@@ -1,7 +1,7 @@
 import React, { useRef } from 'react';
 import { View, Text, Animated, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
 import { Icon } from '../ui/Icon';
-import { Colors, Radius } from '../../constants/theme';
+import { Colors, Pastel, Radius } from '../../constants/theme';
 
 export type ProfileActionsProps =
   | {
@@ -76,7 +76,7 @@ export function ProfileActions(props: ProfileActionsProps) {
           onPress={props.onShareProfile}
           accessibilityLabel="Profili paylaş"
         >
-          <Icon name="shareSocialOutline" size={15} color={Colors.primary} />
+          <Icon name="shareSocialOutline" size={15} color={Pastel.teal.text} />
         </AnimatedPillButton>
       </View>
     );
@@ -93,13 +93,13 @@ export function ProfileActions(props: ProfileActionsProps) {
         accessibilityLabel={isFollowing ? 'Takibi bırak' : 'Takip et'}
       >
         {followLoading ? (
-          <ActivityIndicator size="small" color={isFollowing ? Colors.primary : Colors.white} />
+          <ActivityIndicator size="small" color={isFollowing ? Pastel.teal.text : Colors.white} />
         ) : (
           <>
             <Icon
               name={isFollowing ? 'following' : 'follow'}
               size={15}
-              color={isFollowing ? Colors.primary : Colors.white}
+              color={isFollowing ? Pastel.teal.text : Colors.white}
             />
             <Text style={[styles.primaryBtnText, isFollowing && styles.primaryBtnTextOutlined]}>
               {isFollowing ? 'Takip Ediliyor' : 'Takip Et'}
@@ -112,7 +112,7 @@ export function ProfileActions(props: ProfileActionsProps) {
         onPress={onMessage}
         accessibilityLabel="Mesaj gönder"
       >
-        <Icon name="chatbubbleEllipsesOutline" size={15} color={Colors.primary} />
+        <Icon name="chatbubbleEllipsesOutline" size={15} color={Pastel.teal.text} />
       </AnimatedPillButton>
     </View>
   );
@@ -136,9 +136,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   primaryBtnOutlined: {
-    backgroundColor: Colors.white,
-    borderWidth: 1.5,
-    borderColor: Colors.primary,
+    backgroundColor: Pastel.teal.tintStrong,
   },
   primaryBtnText: {
     fontSize: 13,
@@ -146,7 +144,7 @@ const styles = StyleSheet.create({
     color: Colors.white,
   },
   primaryBtnTextOutlined: {
-    color: Colors.primary,
+    color: Pastel.teal.text,
   },
   secondaryBtn: {
     width: 36,
@@ -154,8 +152,6 @@ const styles = StyleSheet.create({
     borderRadius: Radius.full,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: Colors.surfaceContainerLowest,
-    borderWidth: 1,
-    borderColor: Colors.outlineVariant,
+    backgroundColor: Pastel.teal.tint,
   },
 });

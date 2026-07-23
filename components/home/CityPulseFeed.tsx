@@ -1,7 +1,7 @@
 import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Icon } from '../ui/Icon';
-import { Colors, Typography, Spacing, Radius, Shadows } from '../../constants/theme';
+import { Colors, Pastel, Typography, Spacing, Radius } from '../../constants/theme';
 import type { PulseItem } from '../../utils/dailyBrief';
 
 interface CityPulseFeedProps {
@@ -9,40 +9,37 @@ interface CityPulseFeedProps {
   onItemPress?: (workshopId: string) => void;
 }
 
-const VARIANT_STYLES: Record<PulseItem['variant'], { bg: string; color: string }> = {
-  urgent: { bg: Colors.errorContainer, color: Colors.onErrorContainer },
-  upcoming: { bg: Colors.primaryContainer, color: Colors.primary },
+const VARIANT_PALETTE: Record<PulseItem['variant'], typeof Pastel.teal> = {
+  urgent: Pastel.coral,
+  upcoming: Pastel.teal,
 };
 
-/**
- * NOT: Bu akış şu an gerçek sosyal olaylar (ör. "Ayşe katıldı") DEĞİL,
- * mevcut atölye verisinden (doluluk, başlangıç zamanı) türetilmiş
- * sinyaller gösteriyor. Gerçek "kim ne yaptı" akışı için Faz 2'de
- * bir feed/notification endpoint'i entegre edilmeli (bkz. README_PATCH.md).
- */
 export function CityPulseFeed({ items, onItemPress }: CityPulseFeedProps) {
   if (items.length === 0) return null;
 
   return (
-    <View style={styles.card}>
+    <View style={styles.wrap}>
       <Text style={styles.heading}>Şehrin Nabzı</Text>
       <View style={styles.list}>
-        {items.map((item) => {
+        {items.map((item, index) => {
           const [before, after] = item.template.split('{{h}}');
-          const variant = VARIANT_STYLES[item.variant];
+          const palette = VARIANT_PALETTE[item.variant];
           const pressable = Boolean(item.workshopId && onItemPress);
+          const isLast = index === items.length - 1;
 
           return (
-            <Pressable
-              key={item.id}
-              style={styles.item}
-              disabled={!pressable}
-              onPress={() => item.workshopId && onItemPress?.(item.workshopId)}
-            >
-              <View style={[styles.iconWrap, { backgroundColor: variant.bg }]}>
-                <Icon name={item.icon as any} size={14} color={variant.color} />
+            <View key={item.id} style={styles.itemRow}>
+              <View style={styles.iconColumn}>
+                <View style={[styles.iconWrap, { backgroundColor: palette.tintStrong }]}>
+                  <Icon name={item.icon as any} size={14} color={palette.text} />
+                </View>
+                {!isLast && <View style={styles.wire} />}
               </View>
-              <View style={styles.itemContent}>
+              <Pressable
+                style={[styles.itemContent, { backgroundColor: palette.tint }]}
+                disabled={!pressable}
+                onPress={() => item.workshopId && onItemPress?.(item.workshopId)}
+              >
                 <Text style={styles.itemText}>
                   {before}
                   <Text style={styles.itemHighlight}>{item.highlight}</Text>
@@ -50,10 +47,10 @@ export function CityPulseFeed({ items, onItemPress }: CityPulseFeedProps) {
                 </Text>
                 <View style={styles.metaRow}>
                   <Text style={styles.timestamp}>{item.timestamp}</Text>
-                  {item.actionLabel && <Text style={styles.actionText}> · {item.actionLabel}</Text>}
+                  {item.actionLabel && <Text style={[styles.actionText, { color: palette.text }]}> · {item.actionLabel}</Text>}
                 </View>
-              </View>
-            </Pressable>
+              </Pressable>
+            </View>
           );
         })}
       </View>
@@ -62,29 +59,23 @@ export function CityPulseFeed({ items, onItemPress }: CityPulseFeedProps) {
 }
 
 const styles = StyleSheet.create({
-  card: {
-    backgroundColor: Colors.surfaceContainerLowest,
-    borderRadius: Radius.lg,
-    borderWidth: 1,
-    borderColor: Colors.surfaceVariant,
-    padding: Spacing.md,
-    ...Shadows.sm,
-  },
-  heading: { ...Typography.h3, color: Colors.onSurface, marginBottom: Spacing.sm },
-  list: { gap: Spacing.sm },
-  item: { flexDirection: 'row', gap: Spacing.sm, alignItems: 'flex-start' },
+  wrap: { gap: Spacing.sm },
+  heading: { ...Typography.serifTitle, color: Colors.onSurface },
+  list: {},
+  itemRow: { flexDirection: 'row', gap: Spacing.sm },
+  iconColumn: { alignItems: 'center', width: 28 },
   iconWrap: {
     width: 28,
     height: 28,
     borderRadius: Radius.full,
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 2,
   },
-  itemContent: { flex: 1 },
+  wire: { width: 2, flex: 1, minHeight: 10, backgroundColor: Colors.surfaceVariant, marginVertical: 2 },
+  itemContent: { flex: 1, borderRadius: Radius.lg, padding: Spacing.sm, marginBottom: Spacing.xs },
   itemText: { ...Typography.bodyMd, fontSize: 13, color: Colors.onSurface, lineHeight: 18 },
   itemHighlight: { fontWeight: '700' },
   metaRow: { flexDirection: 'row', marginTop: 2 },
   timestamp: { ...Typography.labelSm, color: Colors.onSurfaceVariant },
-  actionText: { ...Typography.labelSm, color: Colors.primary, fontWeight: '700' },
+  actionText: { ...Typography.labelSm, fontWeight: '700' },
 });

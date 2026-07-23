@@ -6,12 +6,6 @@ export interface WorkshopGalleryProps {
   imageUrl: string | null;
 }
 
-/**
- * Stitch tasarımı çoklu fotoğraf galerisi öngörüyor; Atolium'da workshop
- * başına tek `coverImageUrl` var (çoklu galeri alanı backend'de yok).
- * Onaylandığı gibi: tek fotoğraf, aynı kart stiliyle gösteriliyor.
- * Çoklu galeri eklenirse yalnızca `images` prop'u array'e döner, kart stili aynı kalır.
- */
 export function WorkshopGallery({ imageUrl }: WorkshopGalleryProps) {
   if (!imageUrl) return null;
 
@@ -30,7 +24,7 @@ const styles = StyleSheet.create({
     gap: Spacing.sm,
   },
   sectionTitle: {
-    ...Typography.titleLg,
+    ...Typography.serifTitle,
     color: Colors.onSurface,
   },
   scrollContent: {
@@ -39,7 +33,7 @@ const styles = StyleSheet.create({
   image: {
     width: 240,
     height: 160,
-    borderRadius: Radius.xl,
+    borderRadius: Radius.xxl,
     backgroundColor: Colors.surfaceContainer,
   },
 });

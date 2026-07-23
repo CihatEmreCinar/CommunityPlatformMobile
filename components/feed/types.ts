@@ -4,6 +4,8 @@ export type AuthorAvatarProps = {
   url: string | null;
   name: string;
   size?: number;
+  // Pastel kategori rengi: kafe paylaşımları coral, eğitmen/atölye paylaşımları teal.
+  variant?: 'teal' | 'coral';
 };
 
 export type MediaStripProps = {

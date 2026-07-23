@@ -1,8 +1,7 @@
-// ─── Feed Configuration ──────────────────────────────────────────────────────
 // Feed'in davranışı role göre değil, config'e göre değişir. Yeni bir rol/actor
-// tipi (Admin, Moderator, Organization, University vb.) eklendiğinde FeedScreen,
-// FeedRouteResolver veya PostCard'a dokunmadan sadece burada yeni bir config
-// tanımlamak yeterli olmalıdır.
+// tipi eklendiğinde FeedScreen, FeedRouteResolver veya PostCard'a dokunmadan
+// sadece burada yeni bir config tanımlamak yeterli olmalıdır.
+import { Colors } from '../../constants/theme';
 
 export type AvailableProfileRoutes = {
   employee: boolean;
@@ -16,9 +15,8 @@ export type FeedConfiguration = {
   availableProfileRoutes: AvailableProfileRoutes;
 };
 
-// Feed genelinde tüm rollerde aynı marka rengi kullanılıyor (notifications'ın
-// aksine burada role göre değişen bir accent yok) — tek yerden export edilir.
-export const FEED_ACCENT_COLOR = '#0F766E';
+// Feed genelinde tüm rollerde aynı marka rengi kullanılır — tema primary'sinden.
+export const FEED_ACCENT_COLOR = Colors.primary;
 
 export const employeeFeedConfig: FeedConfiguration = {
   routePrefix: '(employee)',
@@ -26,7 +24,6 @@ export const employeeFeedConfig: FeedConfiguration = {
   availableProfileRoutes: {
     employee: true,
     employer: true,
-    // (employee) route grubunda bir cafe public profil ekranı henüz yok.
     cafe: false,
   },
 };

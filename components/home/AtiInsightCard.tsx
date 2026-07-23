@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { Animated, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Icon } from '../ui/Icon';
-import { Colors, Typography, Spacing, Radius, Shadows } from '../../constants/theme';
+import { Colors, Pastel, Typography, Spacing, Radius } from '../../constants/theme';
 
 interface AtiInsightCardProps {
   message: string;
@@ -12,13 +12,12 @@ interface AtiInsightCardProps {
 export function AtiInsightCard({ message, onViewRecommendations, onDismiss }: AtiInsightCardProps) {
   return (
     <View style={styles.card}>
-      {/* ATI maskot görseli hazır olunca bu emoji yerine gerçek illüstrasyon konabilir. */}
       <View style={styles.avatarWrap}>
-        <Text style={styles.avatarEmoji}>🦉</Text>
+        <Icon name="aiMatch" size={28} color={Pastel.teal.text} />
       </View>
       <View style={styles.content}>
         <View style={styles.badgeRow}>
-          <Icon name="star" size={12} color={Colors.primary} />
+          <Icon name="star" size={12} color={Pastel.teal.text} />
           <Text style={styles.badgeText}>ATI ÖNERİLERİ</Text>
           <PulseDot />
         </View>
@@ -42,7 +41,6 @@ export function AtiInsightCard({ message, onViewRecommendations, onDismiss }: At
   );
 }
 
-/** CSS `animate-pulse` karşılığı — küçük bir opaklık nabzı. */
 function PulseDot() {
   const opacity = useRef(new Animated.Value(1)).current;
 
@@ -61,32 +59,29 @@ function PulseDot() {
 }
 
 const styles = StyleSheet.create({
+  // Aktivite/öneri katmanı — border'sız, %8 opasiteli pastel.
   card: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.md,
-    backgroundColor: Colors.surfaceContainerLowest,
-    borderRadius: Radius.xl,
-    borderWidth: 1,
-    borderColor: Colors.surfaceVariant,
+    backgroundColor: Pastel.teal.tint,
+    borderRadius: Radius.xxl,
     padding: Spacing.md,
-    ...Shadows.card,
   },
   avatarWrap: {
     width: 64,
     height: 64,
     borderRadius: Radius.full,
-    backgroundColor: Colors.primaryContainer,
+    backgroundColor: Pastel.teal.tintStrong,
     alignItems: 'center',
     justifyContent: 'center',
     flexShrink: 0,
   },
-  avatarEmoji: { fontSize: 30 },
   content: { flex: 1, gap: Spacing.xs },
   badgeRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  badgeText: { ...Typography.labelSm, color: Colors.primary, fontWeight: '700', letterSpacing: 1 },
-  pulseDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: Colors.primary },
-  message: { ...Typography.h3, color: Colors.onSurface },
+  badgeText: { ...Typography.labelSm, color: Pastel.teal.text, fontWeight: '700', letterSpacing: 1 },
+  pulseDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: Pastel.teal.text },
+  message: { ...Typography.serifTitle, fontSize: 17, lineHeight: 22, color: Colors.onSurface },
   actions: { flexDirection: 'row', gap: Spacing.xs, marginTop: Spacing.xs, flexWrap: 'wrap' },
   primaryBtn: {
     backgroundColor: Colors.primary,
@@ -97,8 +92,6 @@ const styles = StyleSheet.create({
   primaryBtnText: { ...Typography.labelSm, color: Colors.onPrimary, fontWeight: '700' },
   secondaryBtn: {
     backgroundColor: Colors.surfaceContainerLowest,
-    borderWidth: 1,
-    borderColor: Colors.outline,
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.sm,
     borderRadius: Radius.full,

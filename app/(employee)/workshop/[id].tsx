@@ -21,8 +21,6 @@ import { WorkshopLocation } from '../../../components/workshop/WorkshopLocation'
 import { WorkshopReviews } from '../../../components/workshop/WorkshopReviews';
 import { WorkshopStickyCTA } from '../../../components/workshop/WorkshopStickyCTA';
 
-/** Atölyenin konum kartında gösterilecek ana metni oluşturur: önce Mekan Adı
- *  + Adres, o da yoksa eski serbest metin `locationDetail` alanına düşer. */
 function getWorkshopLocationLabel(workshop: Workshop): string {
   if (workshop.locationType === 'online') return 'Online';
   const parts = [workshop.venueName, workshop.address].filter((p): p is string => !!p?.trim());
@@ -204,8 +202,6 @@ export default function WorkshopDetailScreen() {
             <WorkshopUrgencyCard capacity={workshop.capacity} enrolledCount={workshop.enrolledCount} />
           </View>
 
-          <View style={styles.divider} />
-
           <View style={styles.section}>
             <WorkshopInfoGrid date={formattedDate} time={formattedTime} price={`${workshop.price} ₺`} />
           </View>
@@ -287,14 +283,9 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 32,
     borderTopRightRadius: 32,
     paddingHorizontal: Spacing.containerMargin,
-    paddingTop: Spacing.sm,
+    paddingTop: Spacing.md,
   },
   section: {
-    marginTop: Spacing.lg,
-  },
-  divider: {
-    height: 1,
-    backgroundColor: Colors.surfaceVariant,
     marginTop: Spacing.lg,
   },
 });

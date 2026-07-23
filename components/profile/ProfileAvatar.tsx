@@ -13,9 +13,7 @@ import { Colors } from '../../constants/theme';
 
 export type ProfileAvatarProps = {
   uri?: string | null;
-  /** İsim baş harfleri (fallback) için. */
   name: string;
-  /** Avatar boyutu (spec: 110-130px). */
   size?: number;
   editable?: boolean;
   uploading?: boolean;
@@ -32,13 +30,6 @@ function getInitials(name: string): string {
     .toUpperCase();
 }
 
-/**
- * Büyük, dairesel, beyaz çerçeveli avatar. Kapak görselinin üzerine
- * ~%40-50 bindirilecek şekilde tasarlanmıştır (konumlandırma ProfileHeader'da
- * negative margin ile yapılır — bu component sadece görsel gösterimden
- * sorumludur). Basılı tutunca hafif küçülme animasyonu (mobilde "hover"
- * karşılığı) ve mount'ta fade-in içerir.
- */
 export function ProfileAvatar({
   uri,
   name,
@@ -67,7 +58,7 @@ export function ProfileAvatar({
   };
 
   const showImage = !!uri && !failed;
-  const ringSize = size + 10; // beyaz çerçeve payı
+  const ringSize = size + 10;
 
   const body = (
     <Animated.View
@@ -131,15 +122,11 @@ export function ProfileAvatar({
 }
 
 const styles = StyleSheet.create({
+  // Lüks/pastel yönde gölge yok — beyaz çerçeve tek başına kapak görselinden ayrıştırıyor.
   ring: {
     backgroundColor: Colors.white,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.12,
-    shadowRadius: 8,
-    elevation: 4,
   },
   fallback: {
     backgroundColor: Colors.primary,

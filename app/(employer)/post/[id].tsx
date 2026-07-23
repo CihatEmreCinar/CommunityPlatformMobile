@@ -16,8 +16,9 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { postService } from '../../../services/postService';
 import type { Post } from '../../../types/post.types';
+import { Colors, Pastel, Typography, Spacing, Radius } from '../../../constants/theme';
 
-const ACCENT = '#0F766E';
+const ACCENT = Colors.primary;
 const MAX_CONTENT = 1000;
 const MAX_TAGS = 5;
 
@@ -33,12 +34,9 @@ export default function PostEditScreen() {
   const [submitting, setSubmitting] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
-  // ─── Post'u yükle ──────────────────────────────────────────────────────────
-  // NOT: backend alanı caption (content değil)
   useEffect(() => {
     if (!id) return;
-    postService
-      .getById(id)
+    postService.getById(id)
       .then((p) => {
         setPost(p);
         setContent(p.caption ?? '');
@@ -48,7 +46,6 @@ export default function PostEditScreen() {
       .finally(() => setLoading(false));
   }, [id]);
 
-  // ─── Tag işlemleri ─────────────────────────────────────────────────────────
   const addTag = useCallback(() => {
     const clean = tagInput.trim().replace(/^#/, '').toLowerCase();
     if (!clean || tags.includes(clean)) { setTagInput(''); return; }
@@ -61,8 +58,6 @@ export default function PostEditScreen() {
     setTags((prev) => prev.filter((t) => t !== tag));
   }, []);
 
-  // ─── Kaydet ────────────────────────────────────────────────────────────────
-  // NOT: UpdatePostRequest → { caption?, tagSlugs? } — content/tags değil
   const handleSave = useCallback(async () => {
     if (!id || !content.trim()) return;
     setSubmitting(true);
@@ -76,31 +71,26 @@ export default function PostEditScreen() {
     }
   }, [id, content, tags, router]);
 
-  // ─── Sil ───────────────────────────────────────────────────────────────────
   const handleDelete = useCallback(() => {
-    Alert.alert(
-      'Gönderiyi sil',
-      'Bu gönderi kalıcı olarak silinecek. Emin misin?',
-      [
-        { text: 'İptal', style: 'cancel' },
-        {
-          text: 'Sil',
-          style: 'destructive',
-          onPress: async () => {
-            if (!id) return;
-            setDeleting(true);
-            try {
-              await postService.delete(id);
-              router.back();
-            } catch {
-              Alert.alert('Hata', 'Gönderi silinemedi.');
-            } finally {
-              setDeleting(false);
-            }
-          },
+    Alert.alert('Gönderiyi sil', 'Bu gönderi kalıcı olarak silinecek. Emin misin?', [
+      { text: 'İptal', style: 'cancel' },
+      {
+        text: 'Sil',
+        style: 'destructive',
+        onPress: async () => {
+          if (!id) return;
+          setDeleting(true);
+          try {
+            await postService.delete(id);
+            router.back();
+          } catch {
+            Alert.alert('Hata', 'Gönderi silinemedi.');
+          } finally {
+            setDeleting(false);
+          }
         },
-      ]
-    );
+      },
+    ]);
   }, [id, router]);
 
   if (loading) {
@@ -119,36 +109,23 @@ export default function PostEditScreen() {
 
   return (
     <SafeAreaView style={styles.root} edges={['top', 'bottom']}>
-    <KeyboardAvoidingView
-      style={styles.root}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-    >
-      {/* Header */}
+    <KeyboardAvoidingView style={styles.root} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-          <Icon name="close" size={24} color="#374151" />
+        <TouchableOpacity onPress={() => router.back()} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} style={styles.closeBtn}>
+          <Icon name="close" size={19} color={Colors.onSurface} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Gönderiyi Düzenle</Text>
-        <TouchableOpacity
-          style={[styles.saveBtn, !canSave && styles.saveBtnDisabled]}
-          onPress={handleSave}
-          disabled={!canSave}
-        >
-          {submitting ? (
-            <ActivityIndicator size="small" color="#FFFFFF" />
-          ) : (
-            <Text style={styles.saveBtnText}>Kaydet</Text>
-          )}
+        <TouchableOpacity style={[styles.saveBtn, !canSave && styles.saveBtnDisabled]} onPress={handleSave} disabled={!canSave}>
+          {submitting ? <ActivityIndicator size="small" color="#FFFFFF" /> : <Text style={styles.saveBtnText}>Kaydet</Text>}
         </TouchableOpacity>
       </View>
 
-      <ScrollView style={styles.body} keyboardShouldPersistTaps="handled">
-        {/* İçerik */}
+      <ScrollView style={styles.body} keyboardShouldPersistTaps="handled" contentContainerStyle={styles.bodyContent}>
         <View style={styles.section}>
           <TextInput
             style={styles.contentInput}
             placeholder="İçerik..."
-            placeholderTextColor="#9CA3AF"
+            placeholderTextColor={Colors.outline}
             value={content}
             onChangeText={setContent}
             multiline
@@ -159,22 +136,14 @@ export default function PostEditScreen() {
           <Text style={styles.charCount}>{content.length}/{MAX_CONTENT}</Text>
         </View>
 
-        <View style={styles.divider} />
-
-        {/* Etiketler */}
         <View style={styles.section}>
           <Text style={styles.sectionLabel}>Etiketler</Text>
           {tags.length > 0 && (
             <View style={styles.tagList}>
               {tags.map((t) => (
-                <TouchableOpacity
-                  key={t}
-                  style={styles.tagChip}
-                  onPress={() => removeTag(t)}
-                  activeOpacity={0.7}
-                >
+                <TouchableOpacity key={t} style={styles.tagChip} onPress={() => removeTag(t)} activeOpacity={0.7}>
                   <Text style={styles.tagText}>#{t}</Text>
-                  <Icon name="closeCircle" size={14} color={ACCENT} />
+                  <Icon name="closeCircle" size={13} color={ACCENT} />
                 </TouchableOpacity>
               ))}
             </View>
@@ -184,7 +153,7 @@ export default function PostEditScreen() {
               <TextInput
                 style={styles.tagInput}
                 placeholder="Etiket ekle..."
-                placeholderTextColor="#9CA3AF"
+                placeholderTextColor={Colors.outline}
                 value={tagInput}
                 onChangeText={setTagInput}
                 onSubmitEditing={addTag}
@@ -192,31 +161,19 @@ export default function PostEditScreen() {
                 autoCapitalize="none"
                 maxLength={30}
               />
-              <TouchableOpacity
-                style={[styles.addTagBtn, !tagInput.trim() && styles.addTagBtnDisabled]}
-                onPress={addTag}
-                disabled={!tagInput.trim()}
-              >
-                <Icon name="add" size={20} color="#FFFFFF" />
+              <TouchableOpacity style={[styles.addTagBtn, !tagInput.trim() && styles.addTagBtnDisabled]} onPress={addTag} disabled={!tagInput.trim()}>
+                <Icon name="add" size={19} color="#FFFFFF" />
               </TouchableOpacity>
             </View>
           )}
         </View>
 
-        <View style={styles.divider} />
-
-        {/* Sil butonu */}
-        <TouchableOpacity
-          style={styles.deleteRow}
-          onPress={handleDelete}
-          disabled={deleting}
-          activeOpacity={0.7}
-        >
+        <TouchableOpacity style={styles.deleteRow} onPress={handleDelete} disabled={deleting} activeOpacity={0.7}>
           {deleting ? (
-            <ActivityIndicator size="small" color="#EF4444" />
+            <ActivityIndicator size="small" color={Pastel.coral.text} />
           ) : (
             <>
-              <Icon name="trashOutline" size={18} color="#EF4444" />
+              <Icon name="trashOutline" size={17} color={Pastel.coral.text} />
               <Text style={styles.deleteText}>Gönderiyi Sil</Text>
             </>
           )}
@@ -228,26 +185,27 @@ export default function PostEditScreen() {
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: '#FFFFFF' },
-  centered: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: '#FFFFFF' },
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 14, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: '#E5E7EB' },
-  headerTitle: { fontSize: 16, fontWeight: '700', color: '#111827' },
-  saveBtn: { backgroundColor: ACCENT, borderRadius: 20, paddingHorizontal: 18, paddingVertical: 8, minWidth: 72, alignItems: 'center' },
-  saveBtnDisabled: { backgroundColor: '#99D6D0' },
-  saveBtnText: { fontSize: 14, fontWeight: '700', color: '#FFFFFF' },
+  root: { flex: 1, backgroundColor: Colors.background },
+  centered: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: Colors.background },
+  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: Spacing.md, paddingVertical: Spacing.sm + 2 },
+  closeBtn: { width: 34, height: 34, borderRadius: 17, backgroundColor: Colors.surfaceContainer, alignItems: 'center', justifyContent: 'center' },
+  headerTitle: { ...Typography.serifTitle, color: Colors.onSurface },
+  saveBtn: { backgroundColor: ACCENT, borderRadius: Radius.full, paddingHorizontal: 18, paddingVertical: 8, minWidth: 72, alignItems: 'center' },
+  saveBtnDisabled: { backgroundColor: Colors.outlineVariant },
+  saveBtnText: { ...Typography.labelMd, color: '#FFFFFF' },
   body: { flex: 1 },
-  section: { padding: 16 },
-  sectionLabel: { fontSize: 13, fontWeight: '600', color: '#374151', marginBottom: 10 },
-  divider: { height: 8, backgroundColor: '#F3F4F6' },
-  contentInput: { fontSize: 16, color: '#111827', lineHeight: 24, minHeight: 160, textAlignVertical: 'top' },
-  charCount: { fontSize: 12, color: '#9CA3AF', textAlign: 'right', marginTop: 8 },
+  bodyContent: { paddingBottom: Spacing.xl, gap: Spacing.sm },
+  section: { padding: Spacing.md, backgroundColor: Pastel.teal.tint, borderRadius: Radius.xxl, marginHorizontal: Spacing.md, marginTop: Spacing.sm },
+  sectionLabel: { ...Typography.labelMd, color: Colors.onSurface, marginBottom: 10 },
+  contentInput: { ...Typography.bodyLg, color: Colors.onSurface, lineHeight: 24, minHeight: 140, textAlignVertical: 'top' },
+  charCount: { ...Typography.labelSm, color: Colors.outline, textAlign: 'right', marginTop: 8 },
   tagList: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 12 },
-  tagChip: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: '#F0FDFA', borderWidth: 1, borderColor: '#99D6D0', borderRadius: 16, paddingHorizontal: 10, paddingVertical: 5 },
-  tagText: { fontSize: 13, color: ACCENT, fontWeight: '500' },
+  tagChip: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: Pastel.teal.tintStrong, borderRadius: Radius.full, paddingHorizontal: 10, paddingVertical: 5 },
+  tagText: { ...Typography.labelSm, color: ACCENT, fontWeight: '600' },
   tagInputRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  tagInput: { flex: 1, backgroundColor: '#F9FAFB', borderWidth: 1, borderColor: '#E5E7EB', borderRadius: 10, paddingHorizontal: 14, paddingVertical: 10, fontSize: 14, color: '#111827' },
-  addTagBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: ACCENT, alignItems: 'center', justifyContent: 'center' },
-  addTagBtnDisabled: { backgroundColor: '#99D6D0' },
-  deleteRow: { flexDirection: 'row', alignItems: 'center', gap: 10, padding: 20, marginTop: 8 },
-  deleteText: { fontSize: 15, fontWeight: '600', color: '#EF4444' },
+  tagInput: { flex: 1, backgroundColor: Colors.surfaceContainerLowest, borderRadius: Radius.lg, paddingHorizontal: Spacing.md, paddingVertical: Spacing.sm, ...Typography.bodyMd, color: Colors.onSurface },
+  addTagBtn: { width: 40, height: 40, borderRadius: Radius.full, backgroundColor: ACCENT, alignItems: 'center', justifyContent: 'center' },
+  addTagBtnDisabled: { backgroundColor: Colors.outlineVariant },
+  deleteRow: { flexDirection: 'row', alignItems: 'center', gap: 10, padding: Spacing.md, marginTop: Spacing.sm, justifyContent: 'center' },
+  deleteText: { ...Typography.labelMd, color: Pastel.coral.text },
 });

@@ -13,22 +13,23 @@ import { Icon } from '../../../components/ui/Icon';
 import { enrollmentService } from '../../../services/enrollmentService';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Enrollment } from '../../../types/enrollment';
-import { Colors, Typography, Spacing, Radius, Shadows } from '../../../constants/theme';
+import { Colors, Pastel, Typography, Spacing, Radius } from '../../../constants/theme';
+import { FLOATING_TAB_BAR_CLEARANCE } from '../../../components/layout/FloatingTabBar';
 
-const STATUS_LABELS: Record<string, { label: string; color: string; bg: string }> = {
-  confirmed: { label: 'Onaylandı', color: Colors.primary, bg: Colors.primaryContainer },
-  pending: { label: 'Bekliyor', color: Colors.secondary, bg: Colors.secondaryContainer },
-  cancelled: { label: 'İptal', color: Colors.error, bg: Colors.errorContainer },
+const STATUS_PASTEL: Record<string, { label: string; palette: typeof Pastel.teal }> = {
+  confirmed: { label: 'Onaylandı', palette: Pastel.teal },
+  pending: { label: 'Bekliyor', palette: Pastel.amber },
+  cancelled: { label: 'İptal', palette: Pastel.coral },
 };
 
 function resolveBadge(e: Enrollment) {
   if (e.attendanceStatus === 'Attended') {
-    return { label: 'Katıldım', color: '#0F766E', bg: '#CCFBF1' };
+    return { label: 'Katıldım', palette: Pastel.teal };
   }
   if (e.attendanceStatus === 'NoShow') {
-    return { label: 'Katılmadım', color: Colors.error, bg: Colors.errorContainer };
+    return { label: 'Katılmadım', palette: Pastel.coral };
   }
-  return STATUS_LABELS[e.status] ?? STATUS_LABELS.pending;
+  return STATUS_PASTEL[e.status] ?? STATUS_PASTEL.pending;
 }
 
 export default function EnrollmentsScreen() {
@@ -131,7 +132,7 @@ function EnrollmentCard({
 
   return (
     <TouchableOpacity
-      style={styles.card}
+      style={[styles.card, { backgroundColor: s.palette.tint }]}
       activeOpacity={canOpenTicket ? 0.8 : 1}
       onPress={canOpenTicket ? onOpenTicket : undefined}
     >
@@ -139,8 +140,8 @@ function EnrollmentCard({
         <Text style={styles.workshopTitle} numberOfLines={2}>
           {e.workshopTitle}
         </Text>
-        <View style={[styles.badge, { backgroundColor: s.bg }]}>
-          <Text style={[styles.badgeText, { color: s.color }]}>{s.label}</Text>
+        <View style={[styles.badge, { backgroundColor: s.palette.tintStrong }]}>
+          <Text style={[styles.badgeText, { color: s.palette.text }]}>{s.label}</Text>
         </View>
       </View>
 
@@ -150,16 +151,16 @@ function EnrollmentCard({
       </View>
 
       {e.status === 'pending' && (
-        <View style={styles.pendingInfo}>
-          <Icon name="hourglassTop" size={14} color={Colors.secondary} />
-          <Text style={styles.pendingText}>Onay bekleniyor</Text>
+        <View style={[styles.pendingInfo, { backgroundColor: Pastel.amber.tintStrong }]}>
+          <Icon name="hourglassTop" size={14} color={Pastel.amber.text} />
+          <Text style={[styles.pendingText, { color: Pastel.amber.text }]}>Onay bekleniyor</Text>
         </View>
       )}
 
       {canOpenTicket && (
-        <View style={styles.ticketRow}>
-          <Icon name="qrCode2" size={16} color={Colors.primary} />
-          <Text style={styles.ticketRowText}>Bileti görüntülemek için dokun</Text>
+        <View style={[styles.ticketRow, { backgroundColor: Pastel.teal.tintStrong }]}>
+          <Icon name="qrCode2" size={16} color={Pastel.teal.text} />
+          <Text style={[styles.ticketRowText, { color: Pastel.teal.text }]}>Bileti görüntülemek için dokun</Text>
         </View>
       )}
 
@@ -175,25 +176,21 @@ function EnrollmentCard({
 const styles = StyleSheet.create({
   flex: { flex: 1, backgroundColor: Colors.background },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: Colors.background },
-  container: { padding: Spacing.containerMargin, paddingBottom: Spacing.xl },
-  pageTitle: { ...Typography.h1Mobile, color: Colors.onSurface, marginBottom: Spacing.sm },
+  container: { padding: Spacing.containerMargin, paddingBottom: Spacing.xl + FLOATING_TAB_BAR_CLEARANCE },
+  pageTitle: { ...Typography.serifHeading, color: Colors.onSurface, marginBottom: Spacing.sm },
   totalCount: { ...Typography.bodyMd, color: Colors.onSurfaceVariant, marginBottom: Spacing.lg },
   empty: { alignItems: 'center', paddingVertical: Spacing.xl, gap: Spacing.sm },
   emptyText: { ...Typography.bodyMd, color: Colors.onSurfaceVariant },
   card: {
-    backgroundColor: Colors.surfaceContainerLowest,
-    borderRadius: Radius.xl,
+    borderRadius: Radius.xxl,
     padding: Spacing.md,
     marginBottom: Spacing.sm,
-    borderWidth: 1,
-    borderColor: Colors.outlineVariant,
     gap: Spacing.sm,
-    ...Shadows.sm,
   },
   cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', gap: Spacing.sm },
   workshopTitle: { ...Typography.h3, color: Colors.onSurface, flex: 1, fontSize: 15 },
   badge: { paddingHorizontal: Spacing.sm, paddingVertical: 3, borderRadius: Radius.full },
-  badgeText: { ...Typography.labelSm, fontWeight: '600' },
+  badgeText: { ...Typography.labelSm, fontWeight: '700' },
   infoRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.xs },
   infoText: { ...Typography.bodyMd, color: Colors.onSurfaceVariant, fontSize: 13 },
   ticketRow: {
@@ -202,27 +199,24 @@ const styles = StyleSheet.create({
     gap: Spacing.xs,
     marginTop: Spacing.xs,
     padding: Spacing.sm,
-    borderRadius: Radius.md,
-    backgroundColor: Colors.primaryContainer,
+    borderRadius: Radius.lg,
   },
-  ticketRowText: { ...Typography.bodyMd, color: Colors.onPrimaryContainer, fontSize: 13 },
+  ticketRowText: { ...Typography.bodyMd, fontSize: 13 },
   cancelBtn: {
     marginTop: Spacing.xs,
     paddingVertical: Spacing.sm,
-    borderRadius: Radius.md,
-    borderWidth: 1,
-    borderColor: Colors.error,
+    borderRadius: Radius.lg,
+    backgroundColor: Pastel.coral.tintStrong,
     alignItems: 'center',
   },
-  cancelText: { ...Typography.labelMd, color: Colors.error },
+  cancelText: { ...Typography.labelMd, color: Pastel.coral.text, fontWeight: '700' },
   pendingInfo: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.xs,
     marginTop: Spacing.sm,
     padding: Spacing.sm,
-    borderRadius: Radius.md,
-    backgroundColor: Colors.secondaryContainer,
+    borderRadius: Radius.lg,
   },
-  pendingText: { ...Typography.bodyMd, color: Colors.secondary },
+  pendingText: { ...Typography.bodyMd },
 });

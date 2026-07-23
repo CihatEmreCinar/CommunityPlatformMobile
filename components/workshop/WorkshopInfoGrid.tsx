@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Icon, IconName } from '../ui/Icon';
-import { Colors, Typography, Spacing, Radius, Shadows } from '../../constants/theme';
+import { Colors, Pastel, Typography, Spacing, Radius } from '../../constants/theme';
 
 export interface WorkshopInfoGridProps {
   date: string;
@@ -13,7 +13,7 @@ function InfoCell({ icon, label, value }: { icon: IconName; label: string; value
   return (
     <View style={styles.cell}>
       <View style={styles.iconWrap}>
-        <Icon name={icon} size={18} color={Colors.primary} />
+        <Icon name={icon} size={18} color={Pastel.teal.text} />
       </View>
       <Text style={styles.label}>{label}</Text>
       <Text style={styles.value} numberOfLines={1}>
@@ -40,19 +40,16 @@ const styles = StyleSheet.create({
   },
   cell: {
     flex: 1,
-    backgroundColor: Colors.surfaceContainerLowest,
-    borderRadius: Radius.lg,
-    borderWidth: 1,
-    borderColor: Colors.surfaceVariant,
+    backgroundColor: Pastel.teal.tint,
+    borderRadius: Radius.xl,
     padding: Spacing.sm,
     gap: 2,
-    ...Shadows.sm,
   },
   iconWrap: {
     width: 32,
     height: 32,
     borderRadius: Radius.md,
-    backgroundColor: Colors.primaryContainer,
+    backgroundColor: Pastel.teal.tintStrong,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: Spacing.xs,

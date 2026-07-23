@@ -12,25 +12,23 @@ import { formatNotificationTime } from '../../../utils/notificationUtils';
 import type { Post, UserSocialStats } from '../../../types/post.types';
 import { ProfileHeader } from '../../../components/profile/ProfileHeader';
 import { formatCityDistrict } from '../../../utils/locationFormat';
+import { Colors, Pastel, Typography, Spacing, Radius } from '../../../constants/theme';
+import { FLOATING_TAB_BAR_CLEARANCE } from '../../../components/layout/FloatingTabBar';
 
-const ACCENT = '#0F766E';
+const ACCENT = Colors.primary;
 
 type Tab = 'posts' | 'info';
 
 function dedupePostsById(items: Post[]): Post[] {
   const seen = new Set<string>();
   const unique: Post[] = [];
-
   for (const item of items) {
     if (seen.has(item.id)) continue;
     seen.add(item.id);
     unique.push(item);
   }
-
   return unique;
 }
-
-// ─── Post kartı (mini) ───────────────────────────────────────────────────────
 
 function MyPostCard({ post, onEdit, onDelete }: {
   post: Post;
@@ -43,7 +41,7 @@ function MyPostCard({ post, onEdit, onDelete }: {
         <Text style={styles.postContent} numberOfLines={3}>{post.caption}</Text>
         {post.workshopTitle ? (
           <View style={styles.workshopTag}>
-            <Icon name="briefcaseOutline" size={11} color="#6B7280" />
+            <Icon name="briefcaseOutline" size={11} color={Pastel.teal.text} />
             <Text style={styles.workshopTagText} numberOfLines={1}>{post.workshopTitle}</Text>
           </View>
         ) : null}
@@ -63,9 +61,9 @@ function MyPostCard({ post, onEdit, onDelete }: {
         )}
         <View style={styles.postMeta}>
           <View style={styles.postStats}>
-            <Icon name="heartOutline" size={13} color="#9CA3AF" />
+            <Icon name="heartOutline" size={13} color={Colors.outline} />
             <Text style={styles.postStatText}>{post.likeCount}</Text>
-            <Icon name="chatbubbleOutline" size={13} color="#9CA3AF" />
+            <Icon name="chatbubbleOutline" size={13} color={Colors.outline} />
             <Text style={styles.postStatText}>{post.commentCount}</Text>
           </View>
           <Text style={styles.postTime}>{formatNotificationTime(post.publishedAt ?? '')}</Text>
@@ -73,17 +71,15 @@ function MyPostCard({ post, onEdit, onDelete }: {
       </View>
       <View style={styles.postCardActions}>
         <TouchableOpacity onPress={() => onEdit(post.id)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} style={styles.postActionBtn}>
-          <Icon name="pencilOutline" size={18} color={ACCENT} />
+          <Icon name="pencilOutline" size={17} color={ACCENT} />
         </TouchableOpacity>
         <TouchableOpacity onPress={() => onDelete(post.id)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} style={styles.postActionBtn}>
-          <Icon name="trashOutline" size={18} color="#EF4444" />
+          <Icon name="trashOutline" size={17} color={Pastel.coral.text} />
         </TouchableOpacity>
       </View>
     </View>
   );
 }
-
-// ─── Ana ekran ───────────────────────────────────────────────────────────────
 
 export default function EmployerProfileScreen() {
   const router = useRouter();
@@ -100,12 +96,10 @@ export default function EmployerProfileScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const cursorRef = React.useRef<string | null>(null);
 
-  // ─── Stats ─────────────────────────────────────────────────────────────────
   const fetchStats = useCallback(async () => {
     if (!user?.id) return;
     try {
-      const s = await postService.getSocialStats(user.id);
-      setStats(s);
+      setStats(await postService.getSocialStats(user.id));
     } catch {
       // sessiz hata
     } finally {
@@ -123,7 +117,6 @@ export default function EmployerProfileScreen() {
     Share.share({ message: `${name || 'Bu eğitmeni'} Atolium'da keşfet!` });
   }, [user?.firstName, user?.lastName]);
 
-  // ─── Postlar ───────────────────────────────────────────────────────────────
   const fetchPosts = useCallback(async (reset = false) => {
     if (!user?.id) return;
     if (!reset && (loadingPosts || loadingMore || !hasMore)) return;
@@ -136,13 +129,8 @@ export default function EmployerProfileScreen() {
       const result = await postService.getUserPosts(user.id, { cursor, limit: 15 });
       cursorRef.current = result.nextCursor;
       setHasMore(result.hasNextPage);
-
       const incoming = dedupePostsById(result.posts);
-      if (reset) {
-        setPosts(incoming);
-      } else {
-        setPosts((prev) => dedupePostsById([...prev, ...incoming]));
-      }
+      setPosts((prev) => (reset ? incoming : dedupePostsById([...prev, ...incoming])));
     } catch {
       // sessiz hata
     } finally {
@@ -164,7 +152,6 @@ export default function EmployerProfileScreen() {
   }, [fetchStats, fetchPosts]);
 
   const handleEdit = useCallback((id: string) => {
-    // DÜZELTİLDİ: /(employer)/post/${id} — route group parantezi eklendi
     router.push(`/(employer)/post/${id}` as any);
   }, [router]);
 
@@ -178,7 +165,7 @@ export default function EmployerProfileScreen() {
           try {
             await postService.delete(id);
             setPosts((prev) => prev.filter((p) => p.id !== id));
-            setStats((prev) => prev ? { ...prev, postCount: Math.max(0, prev.postCount - 1) } : prev);
+            setStats((prev) => (prev ? { ...prev, postCount: Math.max(0, prev.postCount - 1) } : prev));
           } catch {
             Alert.alert('Hata', 'Gönderi silinemedi.');
           }
@@ -187,7 +174,6 @@ export default function EmployerProfileScreen() {
     ]);
   }, []);
 
-  // ─── Header ────────────────────────────────────────────────────────────────
   const renderHeader = () => (
     <View>
       <ProfileHeader
@@ -212,7 +198,7 @@ export default function EmployerProfileScreen() {
           <>
             {profile?.workshopTitle ? (
               <View style={styles.workshopTitleRow}>
-                <Icon name="briefcaseOutline" size={13} color="#6B7280" />
+                <Icon name="briefcaseOutline" size={13} color={Colors.onSurfaceVariant} />
                 <Text style={styles.workshopTitleText}>{profile.workshopTitle}</Text>
               </View>
             ) : null}
@@ -229,7 +215,7 @@ export default function EmployerProfileScreen() {
 
       <View style={styles.quickActionsRow}>
         <TouchableOpacity style={styles.newPostBtn} onPress={() => router.push('/(employer)/post/create' as any)}>
-          <Icon name="add" size={16} color="#FFFFFF" />
+          <Icon name="add" size={16} color={Colors.onPrimary} />
           <Text style={styles.newPostBtnText}>Yeni Gönderi</Text>
         </TouchableOpacity>
         <TouchableOpacity
@@ -239,17 +225,17 @@ export default function EmployerProfileScreen() {
             { text: 'Çıkış', style: 'destructive', onPress: handleLogout },
           ])}
         >
-          <Icon name="logOutOutline" size={18} color="#6B7280" />
+          <Icon name="logOutOutline" size={17} color={Pastel.coral.text} />
         </TouchableOpacity>
       </View>
 
       <View style={styles.tabBar}>
         <TouchableOpacity style={[styles.tab, activeTab === 'posts' && styles.tabActive]} onPress={() => setActiveTab('posts')}>
-          <Icon name="gridOn" size={18} color={activeTab === 'posts' ? ACCENT : '#9CA3AF'} />
+          <Icon name="gridOn" size={17} color={activeTab === 'posts' ? ACCENT : Colors.outline} />
           <Text style={[styles.tabText, activeTab === 'posts' && styles.tabTextActive]}>Gönderilerim</Text>
         </TouchableOpacity>
         <TouchableOpacity style={[styles.tab, activeTab === 'info' && styles.tabActive]} onPress={() => setActiveTab('info')}>
-          <Icon name="informationCircleOutline" size={18} color={activeTab === 'info' ? ACCENT : '#9CA3AF'} />
+          <Icon name="informationCircleOutline" size={17} color={activeTab === 'info' ? ACCENT : Colors.outline} />
           <Text style={[styles.tabText, activeTab === 'info' && styles.tabTextActive]}>Bilgiler</Text>
         </TouchableOpacity>
       </View>
@@ -259,34 +245,31 @@ export default function EmployerProfileScreen() {
   const renderInfo = () => (
     <View style={styles.infoSection}>
       <View style={styles.infoRow}>
-        <Icon name="mailOutline" size={18} color="#6B7280" />
+        <Icon name="mailOutline" size={17} color={Colors.onSurfaceVariant} />
         <Text style={styles.infoText}>{user?.email}</Text>
       </View>
       <View style={styles.infoRow}>
-        <Icon name="starOutline" size={18} color="#6B7280" />
+        <Icon name="starOutline" size={17} color={Pastel.amber.text} />
         <Text style={styles.infoText}>{user?.xpPoints ?? 0} XP — Seviye {user?.rankLevel ?? 1}</Text>
       </View>
-      {/* YENİ: deneyim yılı */}
       {profile?.yearsExperience != null && (
         <View style={styles.infoRow}>
-          <Icon name="timeOutline" size={18} color="#6B7280" />
+          <Icon name="timeOutline" size={17} color={Colors.onSurfaceVariant} />
           <Text style={styles.infoText}>{profile.yearsExperience} yıl deneyim</Text>
         </View>
       )}
       {formatCityDistrict(user?.city, user?.district) ? (
         <View style={styles.infoRow}>
-          <Icon name="locationOutline" size={18} color="#6B7280" />
+          <Icon name="locationOutline" size={17} color={Colors.onSurfaceVariant} />
           <Text style={styles.infoText}>{formatCityDistrict(user?.city, user?.district)}</Text>
         </View>
       ) : null}
-      {/* YENİ: kategoriler */}
       {profile?.categoryNames && profile.categoryNames.length > 0 && (
         <View style={styles.infoRow}>
-          <Icon name="pricetagsOutline" size={18} color="#6B7280" />
+          <Icon name="pricetagsOutline" size={17} color={Colors.onSurfaceVariant} />
           <Text style={styles.infoText}>{profile.categoryNames.join(', ')}</Text>
         </View>
       )}
-      {/* DÜZELTİLDİ: banner kaldırıldı — buton artık header'da + ikonu */}
     </View>
   );
 
@@ -301,7 +284,7 @@ export default function EmployerProfileScreen() {
           ListEmptyComponent={
             !loadingPosts ? (
               <View style={styles.empty}>
-                <Icon name="newspaperOutline" size={44} color="#D1D5DB" />
+                <Icon name="newspaperOutline" size={42} color={Colors.outline} />
                 <Text style={styles.emptyTitle}>Henüz gönderi yok</Text>
                 <TouchableOpacity style={styles.createPostBtn} onPress={() => router.push('/(employer)/post/create' as any)}>
                   <Text style={styles.createPostBtnText}>İlk gönderini paylaş</Text>
@@ -322,6 +305,7 @@ export default function EmployerProfileScreen() {
         />
       ) : (
         <ScrollView
+          contentContainerStyle={styles.infoScrollContent}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refresh} tintColor={ACCENT} />}
           showsVerticalScrollIndicator={false}
         >
@@ -334,43 +318,44 @@ export default function EmployerProfileScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F9FAFB' },
-  listContent: { paddingBottom: 32 },
-  quickActionsRow: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 16, paddingBottom: 12, backgroundColor: '#FFFFFF' },
-  newPostBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: ACCENT, borderRadius: 20, paddingHorizontal: 14, paddingVertical: 9 },
-  newPostBtnText: { fontSize: 13, fontWeight: '600', color: '#FFFFFF' },
-  logoutBtn: { padding: 8, borderWidth: 1, borderColor: '#E5E7EB', borderRadius: 8 },
+  container: { flex: 1, backgroundColor: Colors.background },
+  listContent: { paddingBottom: 32 + FLOATING_TAB_BAR_CLEARANCE },
+  infoScrollContent: { paddingBottom: FLOATING_TAB_BAR_CLEARANCE },
+  quickActionsRow: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: Spacing.containerMargin, paddingBottom: Spacing.sm, backgroundColor: Colors.background },
+  newPostBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: Colors.primary, borderRadius: Radius.full, paddingHorizontal: 14, paddingVertical: 9 },
+  newPostBtnText: { ...Typography.labelMd, color: Colors.onPrimary },
+  logoutBtn: { padding: 9, backgroundColor: Pastel.coral.tint, borderRadius: Radius.full },
   workshopTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 4 },
-  workshopTitleText: { fontSize: 13, color: '#6B7280' },
+  workshopTitleText: { ...Typography.bodyMd, fontSize: 13, color: Colors.onSurfaceVariant },
   specializationRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 8 },
-  specChip: { backgroundColor: '#F0FDFA', borderRadius: 12, paddingHorizontal: 10, paddingVertical: 4 },
-  specChipText: { fontSize: 12, color: ACCENT, fontWeight: '500' },
-  tabBar: { flexDirection: 'row', backgroundColor: '#FFFFFF', borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: '#E5E7EB' },
-  tab: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 12 },
+  specChip: { backgroundColor: Pastel.teal.tintStrong, borderRadius: Radius.full, paddingHorizontal: 10, paddingVertical: 4 },
+  specChipText: { ...Typography.labelSm, color: Pastel.teal.text, fontWeight: '600' },
+  tabBar: { flexDirection: 'row', backgroundColor: Colors.background },
+  tab: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: Spacing.sm + 2 },
   tabActive: { borderBottomWidth: 2, borderBottomColor: ACCENT },
-  tabText: { fontSize: 13, fontWeight: '500', color: '#9CA3AF' },
-  tabTextActive: { color: ACCENT, fontWeight: '600' },
-  postCard: { flexDirection: 'row', backgroundColor: '#FFFFFF', marginHorizontal: 8, marginTop: 8, borderRadius: 10, padding: 14, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 3, elevation: 1 },
+  tabText: { ...Typography.labelSm, fontSize: 13, color: Colors.outline },
+  tabTextActive: { color: ACCENT, fontWeight: '700' },
+  postCard: { flexDirection: 'row', backgroundColor: Pastel.teal.tint, marginHorizontal: Spacing.sm, marginTop: Spacing.sm, borderRadius: Radius.xl, padding: Spacing.md },
   postCardBody: { flex: 1, gap: 6 },
-  postCardActions: { gap: 10, marginLeft: 8, paddingTop: 2 },
+  postCardActions: { gap: 10, marginLeft: Spacing.sm, paddingTop: 2 },
   postActionBtn: { padding: 4 },
-  postContent: { fontSize: 14, color: '#374151', lineHeight: 20 },
+  postContent: { ...Typography.bodyMd, color: Colors.onSurface, lineHeight: 20 },
   workshopTag: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  workshopTagText: { fontSize: 11, color: '#6B7280', flexShrink: 1 },
+  workshopTagText: { ...Typography.labelSm, color: Colors.onSurfaceVariant, flexShrink: 1 },
   tagRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   postMediaRow: { flexDirection: 'row', gap: 6 },
-  postMediaThumb: { width: 82, height: 82, borderRadius: 10, backgroundColor: '#E5E7EB' },
-  tagChip: { backgroundColor: '#F0FDFA', borderRadius: 10, paddingHorizontal: 8, paddingVertical: 2 },
-  tagText: { fontSize: 11, color: ACCENT, fontWeight: '500' },
+  postMediaThumb: { width: 82, height: 82, borderRadius: Radius.lg, backgroundColor: Colors.surfaceContainer },
+  tagChip: { backgroundColor: Pastel.teal.tintStrong, borderRadius: Radius.md, paddingHorizontal: 8, paddingVertical: 2 },
+  tagText: { ...Typography.labelSm, color: Pastel.teal.text, fontWeight: '600' },
   postMeta: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 2 },
   postStats: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  postStatText: { fontSize: 12, color: '#9CA3AF', marginRight: 6 },
-  postTime: { fontSize: 11, color: '#9CA3AF' },
-  infoSection: { padding: 16, gap: 12 },
-  infoRow: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: '#FFFFFF', padding: 14, borderRadius: 10 },
-  infoText: { fontSize: 14, color: '#374151' },
-  empty: { alignItems: 'center', justifyContent: 'center', gap: 10, paddingTop: 48 },
-  emptyTitle: { fontSize: 15, color: '#6B7280' },
-  createPostBtn: { backgroundColor: ACCENT, borderRadius: 20, paddingHorizontal: 20, paddingVertical: 10, marginTop: 4 },
-  createPostBtnText: { fontSize: 14, fontWeight: '600', color: '#FFFFFF' },
+  postStatText: { ...Typography.labelSm, color: Colors.outline, marginRight: 6 },
+  postTime: { ...Typography.labelSm, color: Colors.outline },
+  infoSection: { padding: Spacing.md, gap: Spacing.sm },
+  infoRow: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: Pastel.teal.tint, padding: Spacing.md, borderRadius: Radius.xl },
+  infoText: { ...Typography.bodyMd, color: Colors.onSurface },
+  empty: { alignItems: 'center', justifyContent: 'center', gap: Spacing.sm, paddingTop: 48 },
+  emptyTitle: { ...Typography.serifTitle, color: Colors.onSurface },
+  createPostBtn: { backgroundColor: Colors.primary, borderRadius: Radius.full, paddingHorizontal: 20, paddingVertical: 10, marginTop: 4 },
+  createPostBtnText: { ...Typography.labelMd, color: Colors.onPrimary },
 });

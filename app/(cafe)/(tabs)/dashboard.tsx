@@ -9,6 +9,7 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Icon } from '../../../components/ui/Icon';
 import { StatCard } from '../../../components/ui/StatCard';
 import { Button } from '../../../components/ui/Button';
@@ -18,11 +19,14 @@ import { spaceBookingService } from '../../../services/spaceBookingService';
 import { calendarService } from '../../../services/calendarService';
 import type { CalendarEvent } from '../../../services/calendarService';
 import { CalendarWidget } from '../../../components/CalendarWidget';
-import { Colors, Typography, Spacing, Radius, Shadows } from '../../../constants/theme';
+import { Colors, Pastel, Typography, Spacing, Radius } from '../../../constants/theme';
+import { useUnreadCount } from '../../../hooks/useUnreadCount';
+import { FLOATING_TAB_BAR_CLEARANCE } from '../../../components/layout/FloatingTabBar';
 
 export default function CafeDashboardScreen() {
   const { user, logout } = useAuth();
   const router = useRouter();
+  const { unreadCount } = useUnreadCount(30000);
   const [dashboard, setDashboard] = useState<CafeDashboardStats | null>(null);
   const [profile, setProfile] = useState<CafeProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -38,15 +42,8 @@ export default function CafeDashboardScreen() {
         cafeProfileService.getMe(),
         spaceBookingService.getIncoming(),
       ]);
-
-      if (dashboardResult.status === 'fulfilled') {
-        setDashboard(dashboardResult.value);
-      }
-
-      if (profileResult.status === 'fulfilled') {
-        setProfile(profileResult.value);
-      }
-
+      if (dashboardResult.status === 'fulfilled') setDashboard(dashboardResult.value);
+      if (profileResult.status === 'fulfilled') setProfile(profileResult.value);
       if (bookingsResult.status === 'fulfilled') {
         const bookings = bookingsResult.value;
         setBookingCounts({
@@ -62,15 +59,11 @@ export default function CafeDashboardScreen() {
     }
   }, []);
 
-  useEffect(() => {
-    loadData();
-    loadCalendarEvents();
-  }, [loadData]);
+  useEffect(() => { loadData(); loadCalendarEvents(); }, [loadData]);
 
   async function loadCalendarEvents() {
     try {
-      const events = await calendarService.getCafeCalendarEvents();
-      setCalendarEvents(events);
+      setCalendarEvents(await calendarService.getCafeCalendarEvents());
     } catch (error) {
       console.log('Takvim etkinlikleri yüklenemedi', error);
     } finally {
@@ -97,142 +90,88 @@ export default function CafeDashboardScreen() {
   }
 
   return (
+    <SafeAreaView style={styles.safeArea} edges={['top']}>
     <ScrollView
       style={styles.flex}
       contentContainerStyle={styles.container}
-      refreshControl={
-        <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} colors={[Colors.primary]} />
-      }
+      refreshControl={<RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} colors={[Colors.primary]} />}
     >
-      {/* Header */}
       <View style={styles.header}>
         <View>
           <Text style={styles.greeting}>Merhaba, {user?.firstName}</Text>
-          <Text style={styles.subGreeting}>
-            {profile?.name || 'Profilini tamamla'}
-          </Text>
+          <Text style={styles.subGreeting}>{profile?.name || 'Profilini tamamla'}</Text>
         </View>
-        <TouchableOpacity onPress={handleLogout} style={styles.logoutButton}>
-          <Icon name="logout" size={20} color={Colors.onSurfaceVariant} />
-        </TouchableOpacity>
+        <View style={styles.headerActions}>
+          <TouchableOpacity style={styles.headerActionBtn} onPress={() => router.push('/(cafe)/(tabs)/notifications')}>
+            <Icon name="notifications" size={18} color={Colors.onSurfaceVariant} />
+            {unreadCount > 0 && <View style={styles.headerActionBadge} />}
+          </TouchableOpacity>
+          <TouchableOpacity onPress={handleLogout} style={styles.logoutButton}>
+            <Icon name="logout" size={19} color={Pastel.coral.text} />
+          </TouchableOpacity>
+        </View>
       </View>
 
-      {/* Stats Grid */}
+      {/* Tier 1 — hero: kafe kimliği, cafe kategori rengi (coral) doygun */}
+      <View style={styles.heroCard}>
+        <View style={styles.heroBadge}>
+          <Icon name="localCafe" size={26} color={Pastel.coral.heroText} />
+        </View>
+        <View style={styles.heroInfo}>
+          <Text style={styles.heroLabel}>Kafe</Text>
+          <Text style={styles.heroValue}>{profile?.name || 'Profilini tamamla'}</Text>
+        </View>
+        {profile?.avgRating != null && profile.avgRating > 0 && (
+          <View style={styles.heroRating}>
+            <Icon name="star" size={16} color={Pastel.coral.heroText} />
+            <Text style={styles.heroRatingText}>{profile.avgRating.toFixed(1)}</Text>
+          </View>
+        )}
+      </View>
+
       <View style={styles.statsGrid}>
-        <StatCard
-          icon="eventAvailable"
-          label="Aktif İlan"
-          value={dashboard?.activeListings ?? 0}
-          color={Colors.primary}
-          onPress={() => router.push('/(cafe)/(tabs)/listings' as any)}
-        />
-        <StatCard
-          icon="libraryBooks"
-          label="Toplam İlan"
-          value={dashboard?.totalListings ?? 0}
-          color={Colors.secondary}
-          onPress={() => router.push('/(cafe)/(tabs)/listings' as any)}
-        />
-        <StatCard
-          icon="howToReg"
-          label="Bekleyen Rezervasyon"
-          value={bookingCounts.pendingBookings}
-          color={Colors.amber}
-          onPress={() => router.push('/(cafe)/(tabs)/bookings' as any)}
-        />
-        <StatCard
-          icon="groups"
-          label="Toplam Rezervasyon"
-          value={bookingCounts.totalBookings}
-          color={Colors.primaryMid}
-          onPress={() => router.push('/(cafe)/(tabs)/bookings' as any)}
-        />
+        <StatCard icon="eventAvailable" label="Aktif İlan" value={dashboard?.activeListings ?? 0} color={Pastel.coral.text} onPress={() => router.push('/(cafe)/(tabs)/listings' as any)} />
+        <StatCard icon="libraryBooks" label="Toplam İlan" value={dashboard?.totalListings ?? 0} color={Pastel.coral.text} onPress={() => router.push('/(cafe)/(tabs)/listings' as any)} />
+        <StatCard icon="howToReg" label="Bekleyen Rezervasyon" value={bookingCounts.pendingBookings} color={Pastel.amber.text} onPress={() => router.push('/(cafe)/(tabs)/bookings' as any)} />
+        <StatCard icon="groups" label="Toplam Rezervasyon" value={bookingCounts.totalBookings} color={Pastel.purple.text} onPress={() => router.push('/(cafe)/(tabs)/bookings' as any)} />
       </View>
 
-      {/* Takvim */}
       <CalendarWidget events={calendarEvents} loading={calendarLoading} />
 
-      {/* Quick Actions */}
       <Text style={styles.sectionTitle}>Hızlı İşlemler</Text>
       <View style={styles.actionsRow}>
-        <Button
-          variant="tile"
-          icon="addCircleOutline"
-          label="İlan Oluştur"
-          onPress={() => router.push('/(cafe)/listing/create' as any)}
-        />
-        <Button
-          variant="tile"
-          icon="edit"
-          label="Profili Düzenle"
-          onPress={() => router.push('/(cafe)/(tabs)/profile' as any)}
-        />
+        <Button variant="tile" icon="addCircleOutline" label="İlan Oluştur" onPress={() => router.push('/(cafe)/listing/create' as any)} />
+        <Button variant="tile" icon="edit" label="Profili Düzenle" onPress={() => router.push('/(cafe)/(tabs)/profile' as any)} />
       </View>
       <View style={styles.actionsRow}>
-        <Button
-          variant="tile"
-          icon="listAlt"
-          label="İlanlarım"
-          onPress={() => router.push('/(cafe)/(tabs)/listings' as any)}
-        />
-        <Button
-          variant="tile"
-          icon="eventAvailable"
-          label="Rezervasyonlar"
-          onPress={() => router.push('/(cafe)/(tabs)/bookings' as any)}
-        />
+        <Button variant="tile" icon="listAlt" label="İlanlarım" onPress={() => router.push('/(cafe)/(tabs)/listings' as any)} />
+        <Button variant="tile" icon="eventAvailable" label="Rezervasyonlar" onPress={() => router.push('/(cafe)/(tabs)/bookings' as any)} />
       </View>
     </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   flex: { flex: 1, backgroundColor: Colors.background },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: Colors.background,
-  },
-  container: {
-    paddingHorizontal: Spacing.containerMargin,
-    paddingTop: Spacing.xl,
-    paddingBottom: Spacing.xl,
-    gap: Spacing.md,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: Spacing.sm,
-  },
-  greeting: {
-    ...Typography.h1Mobile,
-    color: Colors.onSurface,
-  },
-  subGreeting: {
-    ...Typography.bodyMd,
-    color: Colors.onSurfaceVariant,
-    marginTop: 2,
-  },
-  logoutButton: {
-    padding: Spacing.sm,
-    borderRadius: Radius.full,
-    backgroundColor: Colors.surfaceContainerLowest,
-    ...Shadows.sm,
-  },
-  statsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: Spacing.sm,
-  },
-  sectionTitle: {
-    ...Typography.h3,
-    color: Colors.onSurface,
-    marginTop: Spacing.sm,
-  },
-  actionsRow: {
-    flexDirection: 'row',
-    gap: Spacing.sm,
-  },
+  safeArea: { flex: 1, backgroundColor: Colors.background },
+  loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: Colors.background },
+  container: { paddingHorizontal: Spacing.containerMargin, paddingTop: Spacing.xl, paddingBottom: Spacing.xl + FLOATING_TAB_BAR_CLEARANCE, gap: Spacing.md },
+  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: Spacing.sm },
+  greeting: { ...Typography.serifHeading, fontSize: 22, lineHeight: 28, color: Colors.onSurface },
+  subGreeting: { ...Typography.bodyMd, color: Colors.onSurfaceVariant, marginTop: 2 },
+  headerActions: { flexDirection: 'row', gap: Spacing.sm },
+  headerActionBtn: { width: 34, height: 34, borderRadius: Radius.full, backgroundColor: Colors.surfaceContainer, alignItems: 'center', justifyContent: 'center' },
+  headerActionBadge: { position: 'absolute', top: 6, right: 6, width: 7, height: 7, borderRadius: 4, backgroundColor: '#EF4444' },
+  logoutButton: { padding: Spacing.sm, borderRadius: Radius.full, backgroundColor: Pastel.coral.tint },
+  heroCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: Pastel.coral.hero, borderRadius: Radius.xxxl, padding: Spacing.md, gap: Spacing.sm },
+  heroBadge: { width: 48, height: 48, borderRadius: Radius.full, backgroundColor: 'rgba(255,255,255,0.5)', justifyContent: 'center', alignItems: 'center' },
+  heroInfo: { flex: 1 },
+  heroLabel: { ...Typography.labelSm, color: Pastel.coral.heroText, opacity: 0.85 },
+  heroValue: { ...Typography.serifTitleLg, color: Pastel.coral.heroText, marginTop: 2 },
+  heroRating: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  heroRatingText: { ...Typography.h2, color: Pastel.coral.heroText },
+  statsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.sm },
+  sectionTitle: { ...Typography.serifTitle, color: Colors.onSurface, marginTop: Spacing.sm },
+  actionsRow: { flexDirection: 'row', gap: Spacing.sm },
 });

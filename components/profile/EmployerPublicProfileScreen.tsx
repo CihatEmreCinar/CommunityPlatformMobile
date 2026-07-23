@@ -20,9 +20,10 @@ import { employerService, type EmployerPublicProfile } from '../../services/empl
 import { formatNotificationTime } from '../../utils/notificationUtils';
 import type { Post, UserSocialStats } from '../../types/post.types';
 import { ProfileHeader } from './ProfileHeader';
+import { Colors, Pastel, Typography, Spacing, Radius } from '../../constants/theme';
 import { formatCityDistrict } from '../../utils/locationFormat';
 
-const ACCENT = '#0F766E';
+const ACCENT = Colors.primary;
 
 function dedupePostsById(items: Post[]): Post[] {
   const seen = new Set<string>();
@@ -34,8 +35,6 @@ function dedupePostsById(items: Post[]): Post[] {
   }
   return unique;
 }
-
-// ─── Mini post kartı ──────────────────────────────────────────────────────────
 
 function PostCard({ post, onLike }: { post: Post; onLike: (id: string) => void }) {
   return (
@@ -51,23 +50,17 @@ function PostCard({ post, onLike }: { post: Post; onLike: (id: string) => void }
       {post.tags && post.tags.length > 0 && (
         <View style={styles.tagRow}>
           {post.tags.map((t) => (
-            <View key={t} style={styles.tagChip}>
-              <Text style={styles.tagText}>#{t}</Text>
-            </View>
+            <View key={t} style={styles.tagChip}><Text style={styles.tagText}>#{t}</Text></View>
           ))}
         </View>
       )}
       <View style={styles.postMeta}>
         <TouchableOpacity style={styles.postAction} onPress={() => onLike(post.id)}>
-          <Icon
-            name={post.isLikedByMe ? 'heartFilled' : 'heartOutline'}
-            size={16}
-            color={post.isLikedByMe ? '#EF4444' : '#9CA3AF'}
-          />
+          <Icon name={post.isLikedByMe ? 'heartFilled' : 'heartOutline'} size={15} color={post.isLikedByMe ? '#EF4444' : Colors.outline} />
           <Text style={styles.postActionText}>{post.likeCount}</Text>
         </TouchableOpacity>
         <View style={styles.postAction}>
-          <Icon name="chatbubbleOutline" size={16} color="#9CA3AF" />
+          <Icon name="chatbubbleOutline" size={15} color={Colors.outline} />
           <Text style={styles.postActionText}>{post.commentCount}</Text>
         </View>
         <Text style={styles.postTime}>{formatNotificationTime(post.publishedAt ?? '')}</Text>
@@ -75,8 +68,6 @@ function PostCard({ post, onLike }: { post: Post; onLike: (id: string) => void }
     </View>
   );
 }
-
-// ─── Ana içerik (route-bağımsız — employer/employee/cafe grupları bunu sarar) ─
 
 export function EmployerPublicProfileScreen({ employerId }: { employerId: string }) {
   const router = useRouter();
@@ -96,12 +87,8 @@ export function EmployerPublicProfileScreen({ employerId }: { employerId: string
   const fetchProfile = useCallback(async () => {
     if (!employerId) return;
     try {
-      const result = await employerService.getPublicProfile(employerId);
-      setProfile(result);
+      setProfile(await employerService.getPublicProfile(employerId));
     } catch (error) {
-      // NOT: Önceden tamamen sessizdi — 404 gibi durumlarda kullanıcı hiçbir
-      // hata görmeden jenerik "Eğitmen Profili" fallback'ine düşüyordu ve bu
-      // durum bir routing bug'ı gibi görünüyordu. En azından logla.
       console.log('EmployerPublicProfileScreen: profil alınamadı', employerId, error);
     } finally {
       setLoadingProfile(false);
@@ -111,8 +98,7 @@ export function EmployerPublicProfileScreen({ employerId }: { employerId: string
   const fetchStats = useCallback(async () => {
     if (!employerId) return;
     try {
-      const s = await postService.getSocialStats(employerId);
-      setStats(s);
+      setStats(await postService.getSocialStats(employerId));
     } catch {
       // sessiz hata
     } finally {
@@ -146,85 +132,44 @@ export function EmployerPublicProfileScreen({ employerId }: { employerId: string
     setRefreshing(false);
   }, [fetchProfile, fetchStats, fetchPosts]);
 
-  useEffect(() => {
-    fetchProfile();
-    fetchStats();
-    fetchPosts(true);
-  }, [employerId]);
+  useEffect(() => { fetchProfile(); fetchStats(); fetchPosts(true); }, [employerId]);
 
   const handleFollow = useCallback(async () => {
     if (!employerId || !stats) return;
     const wasFollowing = stats.isFollowedByMe;
-
-    setStats((prev) =>
-      prev
-        ? {
-            ...prev,
-            isFollowedByMe: !prev.isFollowedByMe,
-            followerCount: wasFollowing ? prev.followerCount - 1 : prev.followerCount + 1,
-          }
-        : prev
-    );
-
+    setStats((prev) => (prev ? { ...prev, isFollowedByMe: !prev.isFollowedByMe, followerCount: wasFollowing ? prev.followerCount - 1 : prev.followerCount + 1 } : prev));
     setFollowLoading(true);
     try {
       await socialService.toggleFollow(employerId);
     } catch {
-      setStats((prev) =>
-        prev
-          ? {
-              ...prev,
-              isFollowedByMe: wasFollowing,
-              followerCount: wasFollowing ? prev.followerCount + 1 : prev.followerCount - 1,
-            }
-          : prev
-      );
+      setStats((prev) => (prev ? { ...prev, isFollowedByMe: wasFollowing, followerCount: wasFollowing ? prev.followerCount + 1 : prev.followerCount - 1 } : prev));
     } finally {
       setFollowLoading(false);
     }
   }, [employerId, stats]);
 
   const handleMessage = useCallback(() => {
-    // NOT: Uygulamada henüz bir mesajlaşma/DM sistemi yok — bu buton spec'te
-    // istendiği için eklendi, backend hazır olunca burası wire edilebilir.
     Alert.alert('Yakında', 'Mesajlaşma özelliği yakında eklenecek.');
   }, []);
 
   const handleLike = useCallback(async (postId: string) => {
-    setPosts((prev) =>
-      prev.map((p) =>
-        p.id === postId
-          ? { ...p, isLikedByMe: !p.isLikedByMe, likeCount: p.isLikedByMe ? p.likeCount - 1 : p.likeCount + 1 }
-          : p
-      )
-    );
+    setPosts((prev) => prev.map((p) => (p.id === postId ? { ...p, isLikedByMe: !p.isLikedByMe, likeCount: p.isLikedByMe ? p.likeCount - 1 : p.likeCount + 1 } : p)));
     try {
       const result = await socialService.toggleLike(postId);
-      setPosts((prev) =>
-        prev.map((p) => (p.id === postId ? { ...p, isLikedByMe: result.liked, likeCount: result.likeCount } : p))
-      );
+      setPosts((prev) => prev.map((p) => (p.id === postId ? { ...p, isLikedByMe: result.liked, likeCount: result.likeCount } : p)));
     } catch {
-      setPosts((prev) =>
-        prev.map((p) =>
-          p.id === postId
-            ? { ...p, isLikedByMe: !p.isLikedByMe, likeCount: p.isLikedByMe ? p.likeCount - 1 : p.likeCount + 1 }
-            : p
-        )
-      );
+      setPosts((prev) => prev.map((p) => (p.id === postId ? { ...p, isLikedByMe: !p.isLikedByMe, likeCount: p.isLikedByMe ? p.likeCount - 1 : p.likeCount + 1 } : p)));
     }
   }, []);
 
   const renderHeader = () => (
     <View>
       <View style={styles.topBar}>
-        <TouchableOpacity onPress={() => router.back()} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-          <Icon name="arrowBackAlt" size={24} color="#111827" />
+        <TouchableOpacity onPress={() => router.back()} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} style={styles.topBarBtn}>
+          <Icon name="arrowBackAlt" size={20} color={Colors.onSurface} />
         </TouchableOpacity>
-        <TouchableOpacity
-          onPress={() => Share.share({ message: `Atolium'da bu eğitmeni keşfet!` })}
-          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-        >
-          <Icon name="shareSocialOutline" size={22} color="#374151" />
+        <TouchableOpacity onPress={() => Share.share({ message: `Atolium'da bu eğitmeni keşfet!` })} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} style={styles.topBarBtn}>
+          <Icon name="shareSocialOutline" size={19} color={Colors.onSurface} />
         </TouchableOpacity>
       </View>
 
@@ -241,30 +186,20 @@ export function EmployerPublicProfileScreen({ employerId }: { employerId: string
           { label: 'Takipçi', value: stats?.followerCount ?? 0 },
           { label: 'Takip', value: stats?.followingCount ?? 0 },
         ]}
-        actions={{
-          variant: 'other',
-          isFollowing: stats?.isFollowedByMe ?? false,
-          followLoading: followLoading || loadingStats,
-          onFollow: handleFollow,
-          onMessage: handleMessage,
-        }}
+        actions={{ variant: 'other', isFollowing: stats?.isFollowedByMe ?? false, followLoading: followLoading || loadingStats, onFollow: handleFollow, onMessage: handleMessage }}
         extra={
           <>
             {profile?.specialization?.length ? (
               <View style={styles.tagRowWrap}>
                 {profile.specialization.map((item, index) => (
-                  <View key={`${item}-${index}`} style={styles.profileChip}>
-                    <Text style={styles.profileChipText}>{item}</Text>
-                  </View>
+                  <View key={`${item}-${index}`} style={styles.profileChip}><Text style={styles.profileChipText}>{item}</Text></View>
                 ))}
               </View>
             ) : null}
             {profile?.categoryNames?.length ? (
               <View style={styles.tagRowWrap}>
                 {profile.categoryNames.map((item, index) => (
-                  <View key={`${item}-${index}`} style={styles.categoryChip}>
-                    <Text style={styles.categoryChipText}>{item}</Text>
-                  </View>
+                  <View key={`${item}-${index}`} style={styles.categoryChip}><Text style={styles.categoryChipText}>{item}</Text></View>
                 ))}
               </View>
             ) : null}
@@ -273,7 +208,7 @@ export function EmployerPublicProfileScreen({ employerId }: { employerId: string
       />
 
       <View style={styles.postsSectionHeader}>
-        <Icon name="gridOutline" size={16} color="#6B7280" />
+        <Icon name="gridOutline" size={15} color={Colors.onSurfaceVariant} />
         <Text style={styles.postsSectionTitle}>Gönderiler</Text>
       </View>
     </View>
@@ -289,18 +224,12 @@ export function EmployerPublicProfileScreen({ employerId }: { employerId: string
         ListEmptyComponent={
           !loadingPosts ? (
             <View style={styles.empty}>
-              <Icon name="newspaperOutline" size={44} color="#D1D5DB" />
+              <Icon name="newspaperOutline" size={40} color={Colors.outline} />
               <Text style={styles.emptyText}>Henüz gönderi paylaşılmamış</Text>
             </View>
           ) : null
         }
-        ListFooterComponent={
-          loadingPosts ? (
-            <ActivityIndicator color={ACCENT} style={{ marginVertical: 24 }} />
-          ) : loadingMore ? (
-            <ActivityIndicator color={ACCENT} style={{ marginVertical: 16 }} />
-          ) : null
-        }
+        ListFooterComponent={loadingPosts ? <ActivityIndicator color={ACCENT} style={{ marginVertical: 24 }} /> : loadingMore ? <ActivityIndicator color={ACCENT} style={{ marginVertical: 16 }} /> : null}
         onEndReached={() => { if (hasMore && !loadingMore) fetchPosts(); }}
         onEndReachedThreshold={0.3}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refresh} tintColor={ACCENT} />}
@@ -308,37 +237,36 @@ export function EmployerPublicProfileScreen({ employerId }: { employerId: string
         contentContainerStyle={styles.listContent}
       />
       {loadingProfile ? (
-        <View style={styles.loadingOverlay} pointerEvents="none">
-          <ActivityIndicator color={ACCENT} />
-        </View>
+        <View style={styles.loadingOverlay} pointerEvents="none"><ActivityIndicator color={ACCENT} /></View>
       ) : null}
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F9FAFB' },
+  container: { flex: 1, backgroundColor: Colors.background },
   listContent: { paddingBottom: 32 },
   loadingOverlay: { position: 'absolute', top: 60, left: 0, right: 0, alignItems: 'center' },
-  topBar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingTop: 12, paddingBottom: 8, backgroundColor: '#FFFFFF' },
+  topBar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: Spacing.md, paddingTop: Spacing.sm, paddingBottom: Spacing.xs, backgroundColor: Colors.background },
+  topBarBtn: { width: 34, height: 34, borderRadius: 17, backgroundColor: Colors.surfaceContainer, alignItems: 'center', justifyContent: 'center' },
   tagRowWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 8 },
-  profileChip: { backgroundColor: '#F0FDFA', borderRadius: 12, paddingHorizontal: 10, paddingVertical: 4 },
-  profileChipText: { fontSize: 12, color: ACCENT, fontWeight: '500' },
-  categoryChip: { backgroundColor: '#F3F4F6', borderRadius: 12, paddingHorizontal: 10, paddingVertical: 4 },
-  categoryChipText: { fontSize: 12, color: '#4B5563', fontWeight: '500' },
-  postsSectionHeader: { flexDirection: 'row', alignItems: 'center', gap: 6, padding: 14, backgroundColor: '#FFFFFF', borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: '#E5E7EB', marginTop: 8 },
-  postsSectionTitle: { fontSize: 13, fontWeight: '600', color: '#374151' },
-  postCard: { backgroundColor: '#FFFFFF', marginHorizontal: 8, marginTop: 8, borderRadius: 10, padding: 14, gap: 8, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 3, elevation: 1 },
-  postContent: { fontSize: 14, color: '#374151', lineHeight: 20 },
+  profileChip: { backgroundColor: Pastel.teal.tintStrong, borderRadius: Radius.full, paddingHorizontal: 10, paddingVertical: 4 },
+  profileChipText: { ...Typography.labelSm, color: Pastel.teal.text, fontWeight: '600' },
+  categoryChip: { backgroundColor: Colors.surfaceContainer, borderRadius: Radius.full, paddingHorizontal: 10, paddingVertical: 4 },
+  categoryChipText: { ...Typography.labelSm, color: Colors.onSurfaceVariant, fontWeight: '600' },
+  postsSectionHeader: { flexDirection: 'row', alignItems: 'center', gap: 6, padding: Spacing.md, marginTop: Spacing.sm },
+  postsSectionTitle: { ...Typography.labelMd, color: Colors.onSurfaceVariant },
+  postCard: { backgroundColor: Pastel.teal.tint, marginHorizontal: Spacing.sm, marginTop: Spacing.sm, borderRadius: Radius.xl, padding: Spacing.md, gap: Spacing.sm },
+  postContent: { ...Typography.bodyMd, color: Colors.onSurface, lineHeight: 20 },
   postMediaRow: { flexDirection: 'row', gap: 6 },
-  postMediaThumb: { width: 92, height: 92, borderRadius: 10, backgroundColor: '#E5E7EB' },
+  postMediaThumb: { width: 88, height: 88, borderRadius: Radius.lg, backgroundColor: Colors.surfaceContainer },
   tagRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
-  tagChip: { backgroundColor: '#F0FDFA', borderRadius: 10, paddingHorizontal: 8, paddingVertical: 2 },
-  tagText: { fontSize: 11, color: ACCENT, fontWeight: '500' },
+  tagChip: { backgroundColor: Pastel.teal.tintStrong, borderRadius: Radius.md, paddingHorizontal: 8, paddingVertical: 2 },
+  tagText: { ...Typography.labelSm, color: Pastel.teal.text, fontWeight: '600' },
   postMeta: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   postAction: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  postActionText: { fontSize: 12, color: '#9CA3AF' },
-  postTime: { marginLeft: 'auto', fontSize: 11, color: '#9CA3AF' },
-  empty: { alignItems: 'center', justifyContent: 'center', gap: 10, paddingTop: 48 },
-  emptyText: { fontSize: 14, color: '#9CA3AF' },
+  postActionText: { ...Typography.labelSm, color: Colors.onSurfaceVariant },
+  postTime: { marginLeft: 'auto', ...Typography.labelSm, color: Colors.outline },
+  empty: { alignItems: 'center', justifyContent: 'center', gap: Spacing.sm, paddingTop: 48 },
+  emptyText: { ...Typography.bodyMd, color: Colors.onSurfaceVariant },
 });

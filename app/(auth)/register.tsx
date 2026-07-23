@@ -2,10 +2,8 @@ import { useState } from 'react';
 import {
   View,
   Text,
-  TextInput,
   TouchableOpacity,
   StyleSheet,
-  ActivityIndicator,
   Alert,
   ScrollView,
   KeyboardAvoidingView,
@@ -15,10 +13,27 @@ import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Icon } from '../../components/ui/Icon';
 import { useAuth } from '../../contexts/AuthContext';
-import { Colors, Typography, Spacing, Radius, Shadows } from '../../constants/theme';
+import { Colors, Pastel, Typography, Spacing, Radius } from '../../constants/theme';
 import { ROLES, type RoleValue } from '../../constants/roles';
 import { CityDistrictPicker } from '../../components/location/CityDistrictPicker';
 import { EMPTY_LOCATION_SELECTION, type LocationSelection } from '../../types/location';
+import { AuthHeader } from '../../components/auth/AuthHeader';
+import { AuthInput } from '../../components/auth/AuthInput';
+import { AuthButton } from '../../components/auth/AuthButton';
+
+const ROLE_OPTIONS: {
+  value: RoleValue;
+  label: string;
+  description: string;
+  icon: 'person' | 'business' | 'localCafe';
+  palette: keyof typeof Pastel;
+  /** seçiliyken ikon dairesinin dolgu rengi — kategori rengi yerine tek, tutarlı "seçili" vurgusu. */
+  activeFill: string;
+}[] = [
+  { value: ROLES.EMPLOYEE, label: 'Katılımcı', description: 'Etkinliklere katıl', icon: 'person', palette: 'teal', activeFill: Colors.primary },
+  { value: ROLES.EMPLOYER, label: 'Atölyeci', description: 'Atölye düzenle', icon: 'business', palette: 'purple', activeFill: Pastel.purple.hero },
+  { value: ROLES.CAFE, label: 'Kafeci', description: 'Mekan paylaş', icon: 'localCafe', palette: 'coral', activeFill: Pastel.coral.hero },
+];
 
 export default function RegisterScreen() {
   const [firstName, setFirstName] = useState('');
@@ -67,111 +82,60 @@ export default function RegisterScreen() {
 
   return (
     <SafeAreaView style={styles.flex} edges={['top', 'bottom']}>
-    <KeyboardAvoidingView
-      style={styles.flex}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-    >
-      <ScrollView
-        contentContainerStyle={styles.container}
-        keyboardShouldPersistTaps="handled"
-      >
-        {/* Logo Header */}
-        <View style={styles.logoSection}>
-          <Text style={styles.logoTitle}>Community</Text>
-          <Text style={styles.logoSubtitle}>Topluluğa katılmak için bilgilerini gir</Text>
-        </View>
+      <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+        <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
+          <AuthHeader title="Hesap Oluştur" subtitle="Topluluğa katılmak için bilgilerini gir" logoSize={56} />
 
-        {/* Register Card */}
-        <View style={styles.card}>
-          {/* Role Selector */}
-          <View style={styles.fieldGroup}>
-            <Text style={styles.label}>Hesap Türü</Text>
-            <View style={styles.roleContainer}>
-              <TouchableOpacity
-                style={[styles.roleButton, role === ROLES.EMPLOYEE && styles.roleButtonActive]}
-                onPress={() => setRole(ROLES.EMPLOYEE)}
-                activeOpacity={0.85}
-              >
-                <Icon
-                  name="badge"
-                  size={18}
-                  color={role === ROLES.EMPLOYEE ? Colors.onAccent : Colors.onSurfaceVariant}
-                />
-                <Text style={[styles.roleButtonText, role === ROLES.EMPLOYEE && styles.roleButtonTextActive]}>
-                  Katılımcı
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.roleButton, role === ROLES.EMPLOYER && styles.roleButtonActive]}
-                onPress={() => setRole(ROLES.EMPLOYER)}
-                activeOpacity={0.85}
-              >
-                <Icon
-                  name="business"
-                  size={18}
-                  color={role === ROLES.EMPLOYER ? Colors.onAccent : Colors.onSurfaceVariant}
-                />
-                <Text style={[styles.roleButtonText, role === ROLES.EMPLOYER && styles.roleButtonTextActive]}>
-                  Atölyeci
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.roleButton, role === ROLES.CAFE && styles.roleButtonActive]}
-                onPress={() => setRole(ROLES.CAFE)}
-                activeOpacity={0.85}
-              >
-                <Icon
-                  name="localCafe"
-                  size={18}
-                  color={role === ROLES.CAFE ? Colors.onAccent : Colors.onSurfaceVariant}
-                />
-                <Text style={[styles.roleButtonText, role === ROLES.CAFE && styles.roleButtonTextActive]}>
-                  Kafeci
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-
-          {/* First / Last Name */}
-          <View style={styles.row}>
-            <View style={[styles.fieldGroup, styles.rowItem]}>
-              <Text style={styles.label}>Ad</Text>
-              <View style={styles.inputWrapper}>
-                <Icon name="person" size={18} color={Colors.outline} style={styles.inputIcon} />
-                <TextInput
-                  style={styles.input}
-                  placeholder="Ad"
-                  placeholderTextColor={Colors.outlineVariant}
-                  value={firstName}
-                  onChangeText={setFirstName}
-                  autoCapitalize="words"
-                />
+          <View style={styles.body}>
+            <View style={styles.fieldGroup}>
+              <Text style={styles.label}>Hesap Türü</Text>
+              <View style={styles.roleRow}>
+                {ROLE_OPTIONS.map((opt) => {
+                  const active = role === opt.value;
+                  const palette = Pastel[opt.palette];
+                  return (
+                    <TouchableOpacity
+                      key={opt.value}
+                      style={[styles.roleCard, { backgroundColor: active ? palette.tint : Colors.surfaceContainerLow }]}
+                      onPress={() => setRole(opt.value)}
+                      activeOpacity={0.85}
+                    >
+                      <View
+                        style={[
+                          styles.roleIconCircle,
+                          { backgroundColor: active ? opt.activeFill : palette.tintStrong },
+                        ]}
+                      >
+                        <Icon name={opt.icon} size={17} color={active ? Colors.white : palette.text} />
+                      </View>
+                      <Text style={[styles.roleLabel, { color: active ? palette.text : Colors.onSurface }]}>
+                        {opt.label}
+                      </Text>
+                      <Text style={[styles.roleDescription, { color: active ? palette.textSub : Colors.onSurfaceVariant }]}>
+                        {opt.description}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
               </View>
             </View>
-            <View style={[styles.fieldGroup, styles.rowItem]}>
-              <Text style={styles.label}>Soyad</Text>
-              <View style={styles.inputWrapper}>
-                <TextInput
-                  style={[styles.input, styles.inputNoIcon]}
-                  placeholder="Soyad"
-                  placeholderTextColor={Colors.outlineVariant}
-                  value={lastName}
-                  onChangeText={setLastName}
-                  autoCapitalize="words"
-                />
+
+            <View style={styles.row}>
+              <View style={[styles.fieldGroup, styles.rowItem]}>
+                <Text style={styles.label}>Ad</Text>
+                <AuthInput placeholder="Ad" value={firstName} onChangeText={setFirstName} autoCapitalize="words" />
+              </View>
+              <View style={[styles.fieldGroup, styles.rowItem]}>
+                <Text style={styles.label}>Soyad</Text>
+                <AuthInput placeholder="Soyad" value={lastName} onChangeText={setLastName} autoCapitalize="words" />
               </View>
             </View>
-          </View>
 
-          {/* Email */}
-          <View style={styles.fieldGroup}>
-            <Text style={styles.label}>E-posta Adresi</Text>
-            <View style={styles.inputWrapper}>
-              <Icon name="mailInput" size={18} color={Colors.outline} style={styles.inputIcon} />
-              <TextInput
-                style={styles.input}
+            <View style={styles.fieldGroup}>
+              <Text style={styles.label}>E-posta Adresi</Text>
+              <AuthInput
+                icon="mailInput"
                 placeholder="ad@sirket.com"
-                placeholderTextColor={Colors.outlineVariant}
                 value={email}
                 onChangeText={setEmail}
                 keyboardType="email-address"
@@ -179,202 +143,69 @@ export default function RegisterScreen() {
                 autoCorrect={false}
               />
             </View>
-          </View>
 
-          {/* Password */}
-          <View style={styles.fieldGroup}>
-            <Text style={styles.label}>Şifre</Text>
-            <View style={styles.inputWrapper}>
-              <Icon name="lockOutline" size={18} color={Colors.outline} style={styles.inputIcon} />
-              <TextInput
-                style={[styles.input, styles.inputWithAction]}
+            <View style={styles.fieldGroup}>
+              <Text style={styles.label}>Şifre</Text>
+              <AuthInput
+                icon="lockOutline"
+                rightIcon={showPassword ? 'passwordHidden' : 'passwordVisible'}
+                onRightIconPress={() => setShowPassword(!showPassword)}
                 placeholder="En az 8 karakter"
-                placeholderTextColor={Colors.outlineVariant}
                 value={password}
                 onChangeText={setPassword}
                 secureTextEntry={!showPassword}
               />
-              <TouchableOpacity
-                style={styles.eyeButton}
-                onPress={() => setShowPassword(!showPassword)}
-              >
-                <Icon
-                  name={showPassword ? 'passwordHidden' : 'passwordVisible'}
-                  size={18}
-                  color={Colors.outline}
-                />
-              </TouchableOpacity>
             </View>
+
+            <View style={styles.fieldGroup}>
+              <Text style={styles.label}>Konum (opsiyonel)</Text>
+              <CityDistrictPicker value={location} onChange={setLocation} />
+            </View>
+
+            <AuthButton label="Kayıt Ol" onPress={handleRegister} loading={isLoading} style={styles.submit} />
           </View>
 
-          {/* Şehir / İlçe */}
-          <View style={styles.fieldGroup}>
-            <Text style={styles.label}>Konum (opsiyonel)</Text>
-            <CityDistrictPicker value={location} onChange={setLocation} />
+          <View style={styles.footer}>
+            <Text style={styles.footerText}>Zaten hesabın var mı? </Text>
+            <TouchableOpacity onPress={() => router.push('/(auth)/login')}>
+              <Text style={styles.footerLink}>Giriş yap</Text>
+            </TouchableOpacity>
           </View>
-
-          {/* Submit */}
-          <TouchableOpacity
-            style={[styles.button, isLoading && styles.buttonDisabled]}
-            onPress={handleRegister}
-            disabled={isLoading}
-            activeOpacity={0.85}
-          >
-            {isLoading ? (
-              <ActivityIndicator color={Colors.onAccent} />
-            ) : (
-              <Text style={styles.buttonText}>Kayıt Ol</Text>
-            )}
-          </TouchableOpacity>
-        </View>
-
-        {/* Footer */}
-        <View style={styles.footer}>
-          <Text style={styles.footerText}>Zaten hesabın var mı? </Text>
-          <TouchableOpacity onPress={() => router.push('/(auth)/login')}>
-            <Text style={styles.footerLink}>Giriş yap</Text>
-          </TouchableOpacity>
-        </View>
-      </ScrollView>
-    </KeyboardAvoidingView>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  flex: {
+  flex: { flex: 1, backgroundColor: Colors.background },
+  container: { flexGrow: 1, paddingBottom: Spacing.xl },
+  body: { paddingHorizontal: Spacing.containerMargin, gap: Spacing.md },
+  fieldGroup: { gap: Spacing.sm },
+  row: { flexDirection: 'row', gap: Spacing.sm },
+  rowItem: { flex: 1 },
+  label: { ...Typography.labelMd, color: Colors.onSurface },
+  roleRow: { flexDirection: 'row', gap: Spacing.sm },
+  roleCard: {
     flex: 1,
-    backgroundColor: Colors.background,
-  },
-  container: {
-    flexGrow: 1,
-    justifyContent: 'center',
-    paddingHorizontal: Spacing.containerMargin,
-    paddingVertical: Spacing.xl,
-    backgroundColor: Colors.background,
-  },
-  logoSection: {
     alignItems: 'center',
-    marginBottom: Spacing.xl,
-  },
-  logoTitle: {
-    ...Typography.display,
-    color: Colors.accent,
-    marginBottom: Spacing.sm,
-  },
-  logoSubtitle: {
-    ...Typography.bodyLg,
-    color: Colors.onSurfaceVariant,
-    textAlign: 'center',
-  },
-  card: {
-    backgroundColor: Colors.surfaceContainerLowest,
+    gap: 4,
+    paddingVertical: Spacing.sm + 2,
+    paddingHorizontal: Spacing.xs,
     borderRadius: Radius.xl,
-    padding: Spacing.lg,
-    borderWidth: 1,
-    borderColor: Colors.surfaceVariant,
-    ...Shadows.card,
-    gap: Spacing.md,
   },
-  fieldGroup: {
-    gap: Spacing.xs,
-  },
-  row: {
-    flexDirection: 'row',
-    gap: Spacing.sm,
-  },
-  rowItem: {
-    flex: 1,
-  },
-  label: {
-    ...Typography.labelMd,
-    color: Colors.onSurface,
-  },
-  roleContainer: {
-    flexDirection: 'row',
-    gap: Spacing.sm,
-  },
-  roleButton: {
-    flex: 1,
-    flexDirection: 'row',
+  roleIconCircle: {
+    width: 36,
+    height: 36,
+    borderRadius: Radius.full,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: Spacing.xs,
-    paddingVertical: Spacing.sm,
-    borderRadius: Radius.md,
-    borderWidth: 1,
-    borderColor: Colors.surfaceVariant,
-    backgroundColor: Colors.surfaceBright,
+    marginBottom: 2,
   },
-  roleButtonActive: {
-    backgroundColor: Colors.accent,
-    borderColor: Colors.accent,
-  },
-  roleButtonText: {
-    ...Typography.labelMd,
-    color: Colors.onSurfaceVariant,
-  },
-  roleButtonTextActive: {
-    color: Colors.onAccent,
-  },
-  inputWrapper: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Colors.surfaceBright,
-    borderWidth: 1,
-    borderColor: Colors.surfaceVariant,
-    borderRadius: Radius.md,
-    paddingHorizontal: Spacing.sm,
-  },
-  inputIcon: {
-    marginRight: Spacing.sm,
-  },
-  input: {
-    flex: 1,
-    ...Typography.bodyMd,
-    color: Colors.onSurface,
-    paddingVertical: Spacing.sm,
-  },
-  inputNoIcon: {
-    paddingLeft: Spacing.xs,
-  },
-  inputWithAction: {
-    paddingRight: Spacing.xl,
-  },
-  eyeButton: {
-    position: 'absolute',
-    right: Spacing.sm,
-    padding: Spacing.xs,
-  },
-  button: {
-    backgroundColor: Colors.accent,
-    borderRadius: Radius.md,
-    paddingVertical: Spacing.sm,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: Spacing.sm,
-    ...Shadows.sm,
-  },
-  buttonDisabled: {
-    opacity: 0.7,
-  },
-  buttonText: {
-    ...Typography.labelMd,
-    color: Colors.onAccent,
-    fontSize: 14,
-  },
-  footer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: Spacing.lg,
-  },
-  footerText: {
-    ...Typography.bodyMd,
-    color: Colors.onSurfaceVariant,
-  },
-  footerLink: {
-    ...Typography.labelMd,
-    color: Colors.accent,
-  },
+  roleLabel: { ...Typography.labelMd, fontSize: 12 },
+  roleDescription: { ...Typography.labelSm, fontSize: 10.5, textAlign: 'center', lineHeight: 13 },
+  submit: { marginTop: Spacing.sm },
+  footer: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginTop: Spacing.lg },
+  footerText: { ...Typography.bodyMd, color: Colors.onSurfaceVariant },
+  footerLink: { ...Typography.labelMd, color: Colors.primary },
 });

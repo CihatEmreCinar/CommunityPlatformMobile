@@ -1,10 +1,12 @@
 import { useState } from 'react';
-import { ActivityIndicator, Alert, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Alert, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Icon } from '../../components/ui/Icon';
-import { Colors, Radius, Shadows, Spacing, Typography } from '../../constants/theme';
+import { Colors, Pastel, Radius, Spacing, Typography } from '../../constants/theme';
 import { authService } from '../../services/authService';
+import { AuthHeader } from '../../components/auth/AuthHeader';
+import { AuthInput } from '../../components/auth/AuthInput';
+import { AuthButton } from '../../components/auth/AuthButton';
 
 export default function ResetPasswordScreen() {
   const { token: tokenParam } = useLocalSearchParams<{ token?: string | string[] }>();
@@ -46,23 +48,37 @@ export default function ResetPasswordScreen() {
     <SafeAreaView style={styles.flex} edges={['top', 'bottom']}>
       <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
         <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
-          <View style={styles.header}>
-            <View style={styles.iconCircle}><Icon name="lockOutline" size={32} color={Colors.accent} /></View>
-            <Text style={styles.title}>Yeni parola oluştur</Text>
-            <Text style={styles.subtitle}>E-postadaki tokenı ve yeni parolanı gir.</Text>
-          </View>
+          <AuthHeader
+            variant="icon"
+            icon="lockOutline"
+            title="Yeni parola oluştur"
+            subtitle="E-postadaki tokenı ve yeni parolanı gir."
+          />
+
           <View style={styles.card}>
             <Text style={styles.label}>Sıfırlama tokenı</Text>
-            <TextInput style={styles.input} value={token} onChangeText={setToken} placeholder="E-postadaki token" placeholderTextColor={Colors.outlineVariant} autoCapitalize="none" autoCorrect={false} editable={!isSubmitting} />
+            <AuthInput value={token} onChangeText={setToken} placeholder="E-postadaki token" autoCapitalize="none" autoCorrect={false} editable={!isSubmitting} />
             <Text style={styles.label}>Yeni parola</Text>
-            <TextInput style={styles.input} value={newPassword} onChangeText={setNewPassword} placeholder="En az 12 karakter" placeholderTextColor={Colors.outlineVariant} secureTextEntry editable={!isSubmitting} />
+            <AuthInput value={newPassword} onChangeText={setNewPassword} placeholder="En az 12 karakter" secureTextEntry editable={!isSubmitting} />
             <Text style={styles.label}>Yeni parola (tekrar)</Text>
-            <TextInput style={styles.input} value={confirmPassword} onChangeText={setConfirmPassword} placeholder="Parolanı tekrar gir" placeholderTextColor={Colors.outlineVariant} secureTextEntry editable={!isSubmitting} onSubmitEditing={handleSubmit} />
-            <TouchableOpacity style={[styles.primaryButton, isSubmitting && styles.disabled]} onPress={handleSubmit} disabled={isSubmitting} activeOpacity={0.85}>
-              {isSubmitting ? <ActivityIndicator color={Colors.onAccent} /> : <Text style={styles.primaryButtonText}>Parolayı Güncelle</Text>}
-            </TouchableOpacity>
+            <AuthInput
+              value={confirmPassword}
+              onChangeText={setConfirmPassword}
+              placeholder="Parolanı tekrar gir"
+              secureTextEntry
+              editable={!isSubmitting}
+              onSubmitEditing={handleSubmit}
+            />
+            <AuthButton label="Parolayı Güncelle" onPress={handleSubmit} loading={isSubmitting} style={styles.submit} />
           </View>
-          <TouchableOpacity style={styles.backButton} onPress={() => router.replace('/(auth)/login')} disabled={isSubmitting}><Text style={styles.backButtonText}>Giriş ekranına dön</Text></TouchableOpacity>
+
+          <AuthButton
+            variant="ghost"
+            label="Giriş ekranına dön"
+            onPress={() => router.replace('/(auth)/login')}
+            disabled={isSubmitting}
+            style={styles.backButton}
+          />
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -72,16 +88,8 @@ export default function ResetPasswordScreen() {
 const styles = StyleSheet.create({
   flex: { flex: 1, backgroundColor: Colors.background },
   container: { flexGrow: 1, justifyContent: 'center', paddingHorizontal: Spacing.containerMargin, paddingVertical: Spacing.xl },
-  header: { alignItems: 'center', marginBottom: Spacing.xl },
-  iconCircle: { width: 72, height: 72, borderRadius: Radius.full, alignItems: 'center', justifyContent: 'center', backgroundColor: Colors.primaryContainer, marginBottom: Spacing.md },
-  title: { ...Typography.h1, color: Colors.onSurface, marginBottom: Spacing.sm },
-  subtitle: { ...Typography.bodyLg, color: Colors.onSurfaceVariant, textAlign: 'center' },
-  card: { backgroundColor: Colors.surfaceContainerLowest, borderRadius: Radius.xl, padding: Spacing.lg, borderWidth: 1, borderColor: Colors.surfaceVariant, ...Shadows.card, gap: Spacing.sm },
+  card: { backgroundColor: Pastel.teal.tint, borderRadius: Radius.xxl, padding: Spacing.lg, gap: Spacing.sm },
   label: { ...Typography.labelMd, color: Colors.onSurface, marginTop: Spacing.xs },
-  input: { ...Typography.bodyMd, color: Colors.onSurface, backgroundColor: Colors.surfaceBright, borderWidth: 1, borderColor: Colors.surfaceVariant, borderRadius: Radius.md, paddingHorizontal: Spacing.md, paddingVertical: Spacing.md },
-  primaryButton: { backgroundColor: Colors.accent, borderRadius: Radius.md, paddingVertical: Spacing.md, alignItems: 'center', marginTop: Spacing.sm, ...Shadows.sm },
-  disabled: { opacity: 0.7 },
-  primaryButtonText: { ...Typography.labelMd, color: Colors.onAccent, fontSize: 14 },
-  backButton: { alignSelf: 'center', marginTop: Spacing.lg, padding: Spacing.sm },
-  backButtonText: { ...Typography.labelMd, color: Colors.accent },
+  submit: { marginTop: Spacing.sm },
+  backButton: { marginTop: Spacing.lg },
 });

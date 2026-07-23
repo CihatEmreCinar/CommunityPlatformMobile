@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Icon, IconName } from './Icon';
-import { Colors, Typography, Spacing, Radius, Shadows } from '../../constants/theme';
+import { Typography, Spacing, Radius } from '../../constants/theme';
 
 export interface StatCardProps {
   icon: IconName;
@@ -11,14 +11,14 @@ export interface StatCardProps {
   onPress?: () => void;
 }
 
-/**
- * employer/cafe dashboard.tsx'te birebir aynı (byte-identical) tanımlıydı —
- * buraya değişiklik yapılmadan taşındı.
- */
+function withAlpha(hex: string, alpha: string) {
+  return hex.startsWith('#') ? hex + alpha : hex;
+}
+
 export function StatCard({ icon, label, value, color, onPress }: StatCardProps) {
   const content = (
-    <View style={styles.statCard}>
-      <View style={[styles.statIconWrap, { backgroundColor: color + '1A' }]}>
+    <View style={[styles.statCard, { backgroundColor: withAlpha(color, '14') }]}>
+      <View style={[styles.statIconWrap, { backgroundColor: withAlpha(color, '24') }]}>
         <Icon name={icon} size={20} color={color} />
       </View>
       <Text style={styles.statValue}>{value}</Text>
@@ -38,20 +38,14 @@ export function StatCard({ icon, label, value, color, onPress }: StatCardProps) 
 }
 
 const styles = StyleSheet.create({
+  // Tier 2 — istatistik kartı: renk-koduna göre %8 opasiteli pastel, border yok.
   statCard: {
     flexBasis: '47%',
     flexGrow: 1,
-    backgroundColor: Colors.surfaceContainerLowest,
-    borderRadius: Radius.lg,
-    borderWidth: 1,
-    borderColor: Colors.surfaceVariant,
+    borderRadius: Radius.xl,
     padding: Spacing.md,
-    ...Shadows.sm,
   },
-  statCardTouchable: {
-    flexBasis: '47%',
-    flexGrow: 1,
-  },
+  statCardTouchable: { flexBasis: '47%', flexGrow: 1 },
   statIconWrap: {
     width: 36,
     height: 36,
@@ -60,13 +54,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: Spacing.sm,
   },
-  statValue: {
-    ...Typography.h1Mobile,
-    color: Colors.onSurface,
-  },
-  statLabel: {
-    ...Typography.bodyMd,
-    color: Colors.onSurfaceVariant,
-    marginTop: 2,
-  },
+  statValue: { ...Typography.h1Mobile, color: '#00201D' },
+  statLabel: { ...Typography.bodyMd, color: '#5B6A67', marginTop: 2 },
 });

@@ -1,4 +1,4 @@
-import React, { useEffect, useCallback } from 'react';
+import React, { useCallback } from 'react';
 import {
   View,
   Text,
@@ -17,21 +17,22 @@ import {
   formatNotificationTime,
   getNotificationRoute,
 } from '../../utils/notificationUtils';
+import { Colors, Typography, Spacing, Radius } from '../../constants/theme';
+import { FLOATING_TAB_BAR_CLEARANCE } from '../layout/FloatingTabBar';
 import type { Notification } from '../../types/notification.types';
 import { useRouter } from 'expo-router';
 
 export interface NotificationsScreenTheme {
-  /** Rol vurgu rengi — ActivityIndicator, unread dot/border, "tümünü okundu" linki,
-   *  retry butonu ve "ellipse" ikonunda kullanılır. */
+  /** Rol vurgu rengi — "tümünü okundu" linki ve okunmamış banner noktasında
+   *  kullanılır (rol markası, satır arka planları bildirim tipine göre boyanır). */
   accentColor: string;
-  /** Okunmamış bildirim banner'ının arka plan rengi (accentColor'ın açık tonu). */
   unreadBannerBg: string;
-  /** Boş liste durumunda gösterilen açıklama metni (role göre değişir). */
   emptyDescription: string;
-  /** emptyDesc metninin yatay padding'i — employer/cafe'de var, employee'de yok
-   *  (orijinal davranış korunuyor, bkz. MANIFEST notu). */
   emptyDescPaddingHorizontal?: number;
 }
+
+const ICON_COLUMN_WIDTH = 40;
+const ROW_PADDING_H = Spacing.containerMargin;
 
 export function NotificationsScreen({
   accentColor,
@@ -54,7 +55,7 @@ export function NotificationsScreen({
     refresh,
   } = useNotifications({ limit: 20, pollIntervalMs: 30000 });
 
-  useEffect(() => {
+  React.useEffect(() => {
     refresh();
   }, []);
 
@@ -93,17 +94,15 @@ export function NotificationsScreen({
         <TouchableOpacity
           style={[
             styles.item,
-            !item.isRead && [styles.itemUnread, { borderLeftColor: accentColor }],
+            { backgroundColor: item.isRead ? config.color + '0F' : config.color + '1F' },
           ]}
           onPress={() => handlePress(item)}
           activeOpacity={0.7}
         >
-          {/* Sol — ikon */}
-          <View style={[styles.iconWrap, { backgroundColor: config.color + '18' }]}>
-            <Icon name={config.icon} size={20} color={config.color} />
+          <View style={[styles.iconWrap, { backgroundColor: config.color + '24' }]}>
+            <Icon name={config.icon} size={19} color={config.color} />
           </View>
 
-          {/* Orta — içerik */}
           <View style={styles.body}>
             <View style={styles.bodyTop}>
               <Text style={styles.title} numberOfLines={1}>
@@ -117,18 +116,26 @@ export function NotificationsScreen({
             <Text style={styles.time}>{formatNotificationTime(item.createdAt)}</Text>
           </View>
 
-          {/* Sağ — sil */}
           <TouchableOpacity
             style={styles.deleteBtn}
             onPress={() => handleDelete(item.id)}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >
-            <Icon name="trashOutline" size={16} color="#9CA3AF" />
+            <Icon name="trashOutline" size={15} color={Colors.outline} />
           </TouchableOpacity>
         </TouchableOpacity>
       );
     },
     [handlePress, handleDelete, accentColor]
+  );
+
+  // Ardışık bildirimler arasında ince bir "wire" — ikon sütununun ortasından geçer.
+  const renderSeparator = () => (
+    <View style={styles.separatorRow}>
+      <View style={styles.separatorIconColumn}>
+        <View style={styles.wire} />
+      </View>
+    </View>
   );
 
   const renderFooter = () => {
@@ -144,7 +151,7 @@ export function NotificationsScreen({
     if (loading) return null;
     return (
       <View style={styles.empty}>
-        <Icon name="notificationsOffOutline" size={48} color="#D1D5DB" />
+        <Icon name="notificationsOffOutline" size={44} color={Colors.outline} />
         <Text style={styles.emptyTitle}>Bildirim yok</Text>
         <Text
           style={[
@@ -171,7 +178,7 @@ export function NotificationsScreen({
   if (error && notifications.length === 0) {
     return (
       <View style={styles.centered}>
-        <Icon name="cloudOfflineOutline" size={48} color="#D1D5DB" />
+        <Icon name="cloudOfflineOutline" size={44} color={Colors.outline} />
         <Text style={styles.errorText}>{error}</Text>
         <TouchableOpacity
           style={[styles.retryBtn, { backgroundColor: accentColor }]}
@@ -185,7 +192,6 @@ export function NotificationsScreen({
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
-      {/* Header */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Bildirimler</Text>
         {unreadCount > 0 && (
@@ -197,10 +203,9 @@ export function NotificationsScreen({
         )}
       </View>
 
-      {/* Okunmamış banner */}
       {unreadCount > 0 && (
         <View style={[styles.unreadBanner, { backgroundColor: unreadBannerBg }]}>
-          <Icon name="ellipse" size={8} color={accentColor} />
+          <Icon name="ellipse" size={7} color={accentColor} />
           <Text style={[styles.unreadBannerText, { color: accentColor }]}>
             {unreadCount} okunmamış bildirim
           </Text>
@@ -211,6 +216,7 @@ export function NotificationsScreen({
         data={notifications}
         keyExtractor={(item) => item.id}
         renderItem={renderItem}
+        ItemSeparatorComponent={renderSeparator}
         ListEmptyComponent={renderEmpty}
         ListFooterComponent={renderFooter}
         onEndReached={loadMore}
@@ -228,155 +234,63 @@ export function NotificationsScreen({
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#F9FAFB',
-  },
-  centered: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 12,
-    backgroundColor: '#F9FAFB',
-  },
-  // ─── Header ────────────────────────────────────────────────────────────────
+  container: { flex: 1, backgroundColor: Colors.background },
+  centered: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: Spacing.md, backgroundColor: Colors.background },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingTop: 16,
-    paddingBottom: 12,
-    backgroundColor: '#FFFFFF',
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: '#E5E7EB',
+    paddingHorizontal: ROW_PADDING_H,
+    paddingTop: Spacing.md,
+    paddingBottom: Spacing.md,
+    backgroundColor: Colors.background,
   },
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#111827',
-  },
-  markAllText: {
-    fontSize: 13,
-    fontWeight: '500',
-  },
-  // ─── Unread banner ─────────────────────────────────────────────────────────
+  headerTitle: { ...Typography.serifHeading, color: Colors.onSurface },
+  markAllText: { ...Typography.labelSm, fontWeight: '600' },
   unreadBanner: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
+    marginHorizontal: ROW_PADDING_H,
+    marginBottom: Spacing.sm,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
+    borderRadius: Radius.full,
   },
-  unreadBannerText: {
-    fontSize: 12,
-    fontWeight: '500',
-  },
-  // ─── List ──────────────────────────────────────────────────────────────────
-  flatListContent: {
-    paddingVertical: 8,
-  },
-  flatListEmpty: {
-    flexGrow: 1,
-  },
-  // ─── Item ──────────────────────────────────────────────────────────────────
+  unreadBannerText: { ...Typography.labelSm, fontWeight: '600' },
+  flatListContent: { paddingHorizontal: Spacing.sm, paddingBottom: Spacing.xl + FLOATING_TAB_BAR_CLEARANCE },
+  flatListEmpty: { flexGrow: 1 },
   item: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    backgroundColor: '#FFFFFF',
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: '#F3F4F6',
-    gap: 12,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.md,
+    borderRadius: Radius.xxl,
+    gap: Spacing.sm,
   },
-  itemUnread: {
-    backgroundColor: '#FAFAFA',
-    borderLeftWidth: 3,
-  },
+  separatorRow: { flexDirection: 'row' },
+  separatorIconColumn: { width: ICON_COLUMN_WIDTH + Spacing.md, alignItems: 'center', paddingLeft: Spacing.md },
+  wire: { width: 2, height: 10, borderRadius: 1, backgroundColor: Colors.surfaceVariant },
   iconWrap: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: ICON_COLUMN_WIDTH,
+    height: ICON_COLUMN_WIDTH,
+    borderRadius: ICON_COLUMN_WIDTH / 2,
     alignItems: 'center',
     justifyContent: 'center',
     flexShrink: 0,
-    marginTop: 2,
   },
-  body: {
-    flex: 1,
-    gap: 3,
-  },
-  bodyTop: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  title: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#111827',
-    flex: 1,
-  },
-  dot: {
-    width: 7,
-    height: 7,
-    borderRadius: 4,
-    flexShrink: 0,
-  },
-  bodyText: {
-    fontSize: 13,
-    color: '#6B7280',
-    lineHeight: 18,
-  },
-  time: {
-    fontSize: 11,
-    color: '#9CA3AF',
-    marginTop: 2,
-  },
-  deleteBtn: {
-    paddingTop: 2,
-    flexShrink: 0,
-  },
-  // ─── Footer ────────────────────────────────────────────────────────────────
-  footer: {
-    paddingVertical: 16,
-    alignItems: 'center',
-  },
-  // ─── Empty ─────────────────────────────────────────────────────────────────
-  empty: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    paddingTop: 80,
-  },
-  emptyTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#374151',
-    marginTop: 4,
-  },
-  emptyDesc: {
-    fontSize: 13,
-    color: '#9CA3AF',
-    textAlign: 'center',
-  },
-  // ─── Error ─────────────────────────────────────────────────────────────────
-  errorText: {
-    fontSize: 14,
-    color: '#6B7280',
-    textAlign: 'center',
-  },
-  retryBtn: {
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 8,
-    marginTop: 4,
-  },
-  retryText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#FFFFFF',
-  },
+  body: { flex: 1, gap: 3 },
+  bodyTop: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  title: { ...Typography.labelMd, fontSize: 14, color: Colors.onSurface, flex: 1 },
+  dot: { width: 7, height: 7, borderRadius: 4, flexShrink: 0 },
+  bodyText: { ...Typography.bodyMd, fontSize: 13, color: Colors.onSurfaceVariant, lineHeight: 18 },
+  time: { ...Typography.labelSm, color: Colors.outline, marginTop: 2 },
+  deleteBtn: { paddingTop: 2, flexShrink: 0 },
+  footer: { paddingVertical: Spacing.md, alignItems: 'center' },
+  empty: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: Spacing.sm, paddingTop: 80 },
+  emptyTitle: { ...Typography.serifTitle, color: Colors.onSurface, marginTop: 4 },
+  emptyDesc: { ...Typography.bodyMd, fontSize: 13, color: Colors.onSurfaceVariant, textAlign: 'center' },
+  errorText: { ...Typography.bodyMd, color: Colors.onSurfaceVariant, textAlign: 'center' },
+  retryBtn: { paddingHorizontal: 20, paddingVertical: 10, borderRadius: Radius.full, marginTop: 4 },
+  retryText: { ...Typography.labelMd, color: Colors.onPrimary },
 });

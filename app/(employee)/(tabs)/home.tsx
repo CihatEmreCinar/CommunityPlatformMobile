@@ -10,8 +10,11 @@ import {
   Alert,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Location from 'expo-location';
 import { Icon } from '../../../components/ui/Icon';
+import { useUnreadCount } from '../../../hooks/useUnreadCount';
+import { FLOATING_TAB_BAR_CLEARANCE } from '../../../components/layout/FloatingTabBar';
 import { AtiInsightCard } from '../../../components/home/AtiInsightCard';
 import { BentoCard } from '../../../components/home/BentoCard';
 import { CityPulseFeed } from '../../../components/home/CityPulseFeed';
@@ -22,7 +25,7 @@ import { DashboardHero } from '../../../components/dashboard/DashboardHero';
 import { useAuth } from '../../../contexts/AuthContext';
 import { workshopService } from '../../../services/workshopService';
 import { Workshop } from '../../../types/workshop';
-import { Colors, Typography, Spacing, Radius, Shadows } from '../../../constants/theme';
+import { Colors, Pastel, Typography, Spacing, Radius } from '../../../constants/theme';
 import { useCurrentLocation } from '../../../hooks/useCurrentLocation';
 import { formatCityDistrict } from '../../../utils/locationFormat';
 import {
@@ -36,6 +39,8 @@ import {
 export default function EmployeeHomeScreen() {
   const { user } = useAuth();
   const router = useRouter();
+  const insets = useSafeAreaInsets();
+  const { unreadCount } = useUnreadCount(30000);
   const [recommended, setRecommended] = useState<Workshop[]>([]);
   const [allWorkshops, setAllWorkshops] = useState<Workshop[]>([]);
   const [nearby, setNearby] = useState<Workshop[]>([]);
@@ -44,8 +49,6 @@ export default function EmployeeHomeScreen() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const { getCurrentLocation, loading: locatingForNearby } = useCurrentLocation();
 
-  // Daily Brief bölümlerinde "Önerileri Gör" butonu ile Recommended
-  // bölümüne kaydırmak için kullanılıyor.
   const scrollRef = useRef<ScrollView>(null);
   const recommendedOffsetY = useRef(0);
 
@@ -69,10 +72,6 @@ export default function EmployeeHomeScreen() {
       setRecommended(recommendedData.slice(0, 5));
       setAllWorkshops(allData);
 
-      // Konum izni daha önce verilmişse sessizce GPS koordinatını kullan;
-      // verilmemişse burada izin İSTENMEZ — backend'in tercih edilen bölge →
-      // aynı şehir → popüler → son eklenenler fallback zinciri devreye girer.
-      // İzin isteme, "Konumuma Göre Sırala" butonuna basılınca tetiklenir.
       const { status } = await Location.getForegroundPermissionsAsync();
       if (status === 'granted') {
         const position = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
@@ -112,10 +111,6 @@ export default function EmployeeHomeScreen() {
     scrollRef.current?.scrollTo({ y: recommendedOffsetY.current, animated: true });
   }
 
-  // --- Daily Brief türetilmiş veriler ---
-  // Not: Hepsi zaten yüklenmiş olan recommended/allWorkshops/nearby'den
-  // hesaplanıyor, yeni bir servis çağrısı gerekmiyor. Ayrıntılar için
-  // utils/dailyBrief.ts ve README_PATCH.md.
   const tickerItems = useMemo(
     () =>
       buildTickerItems({
@@ -150,8 +145,22 @@ export default function EmployeeHomeScreen() {
 
   return (
     <View style={styles.flex}>
-      {/* Status bar/kamera çentiği altında kalan marka başlığı, ticker'ın üzerinde */}
       <BrandHeader />
+      <View style={[styles.headerActions, { top: insets.top + Spacing.xs }]}>
+        <TouchableOpacity
+          style={styles.headerActionBtn}
+          onPress={() => router.push('/(employee)/(tabs)/search')}
+        >
+          <Icon name="search" size={18} color={Colors.onSurfaceVariant} />
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.headerActionBtn}
+          onPress={() => router.push('/(employee)/(tabs)/notifications')}
+        >
+          <Icon name="notifications" size={18} color={Colors.onSurfaceVariant} />
+          {unreadCount > 0 && <View style={styles.headerActionBadge} />}
+        </TouchableOpacity>
+      </View>
       <DashboardTicker messages={tickerItems} />
 
       <ScrollView
@@ -162,7 +171,6 @@ export default function EmployeeHomeScreen() {
           <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} colors={[Colors.primary]} />
         }
       >
-        {/* Hero: ATI maskotu + kişiselleştirilmiş karşılama + keşif çipleri */}
         <DashboardHero
           firstName={user?.firstName}
           chips={[
@@ -171,16 +179,12 @@ export default function EmployeeHomeScreen() {
           ]}
         />
 
-        {/* Oyunlaştırma — mevcut XP kartının ilerleme çubuklu hali */}
         <GamificationCard
           levelLabel={levelInfo.levelLabel}
           xp={user?.xpPoints ?? 0}
           progressPercent={levelInfo.progressPercent}
-          // streakDays / nextBadgeGoal: backend'de henüz karşılığı yok.
-          // Eklendiğinde buraya bağlanacak (README_PATCH.md, Faz 4).
         />
 
-        {/* ATI Öneri Kartı */}
         {recommended.length > 0 && (
           <AtiInsightCard
             message={`Bu hafta senin için ${recommended.length} atölye önerisi buldum.`}
@@ -191,13 +195,13 @@ export default function EmployeeHomeScreen() {
           />
         )}
 
-        {/* Bento Grid: Yakınımdakiler + Trend */}
         {(nearestWorkshop || trendingWorkshop) && (
           <View style={styles.bentoGrid}>
             {nearestWorkshop && (
               <BentoCard
                 icon="place"
                 tagLabel="Yakında"
+                variant="teal"
                 title={nearestWorkshop.title}
                 description={
                   nearestWorkshop.distanceKm != null
@@ -213,6 +217,7 @@ export default function EmployeeHomeScreen() {
               <BentoCard
                 icon="bolt"
                 tagLabel="Trend"
+                variant="coral"
                 title={trendingWorkshop.title}
                 description={
                   trendingWorkshop.capacity - trendingWorkshop.enrolledCount > 0
@@ -230,7 +235,6 @@ export default function EmployeeHomeScreen() {
           </View>
         )}
 
-        {/* Recommended Section */}
         {recommended.length > 0 && (
           <View onLayout={(e) => (recommendedOffsetY.current = e.nativeEvent.layout.y)}>
             <View style={styles.sectionHeader}>
@@ -252,7 +256,6 @@ export default function EmployeeHomeScreen() {
           </View>
         )}
 
-        {/* Nearby Section */}
         {nearby.length > 0 && (
           <>
             <View style={styles.sectionHeaderRow}>
@@ -289,7 +292,6 @@ export default function EmployeeHomeScreen() {
           </>
         )}
 
-        {/* Şehrin Nabzı */}
         {pulseItems.length > 0 && (
           <CityPulseFeed
             items={pulseItems}
@@ -297,7 +299,6 @@ export default function EmployeeHomeScreen() {
           />
         )}
 
-        {/* All Workshops Section */}
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Tüm Atölyeler</Text>
         </View>
@@ -322,6 +323,7 @@ export default function EmployeeHomeScreen() {
   );
 }
 
+// (emoji tamamen kaldırıldı — tüm görsel işaretler Icon/lucide üzerinden)
 function NearbyCard({ workshop, onPress }: { workshop: Workshop; onPress: () => void }) {
   const locationLabel =
     workshop.locationType === 'online'
@@ -331,7 +333,7 @@ function NearbyCard({ workshop, onPress }: { workshop: Workshop; onPress: () => 
   return (
     <TouchableOpacity style={styles.recCard} onPress={onPress} activeOpacity={0.85}>
       <View style={styles.recImagePlaceholder}>
-        <Icon name={workshop.locationType === 'online' ? 'videocam' : 'place'} size={28} color={Colors.primary} />
+        <Icon name={workshop.locationType === 'online' ? 'videocam' : 'place'} size={28} color={Pastel.teal.text} />
       </View>
       <Text style={styles.recTitle} numberOfLines={2}>
         {workshop.title}
@@ -366,7 +368,7 @@ function RecommendedCard({ workshop, onPress }: { workshop: Workshop; onPress: (
   return (
     <TouchableOpacity style={styles.recCard} onPress={onPress} activeOpacity={0.85}>
       <View style={styles.recImagePlaceholder}>
-        <Icon name="palette" size={28} color={Colors.primary} />
+        <Icon name="palette" size={28} color={Pastel.teal.text} />
       </View>
       <Text style={styles.recTitle} numberOfLines={2}>
         {workshop.title}
@@ -396,7 +398,7 @@ function WorkshopListItem({ workshop, onPress }: { workshop: Workshop; onPress: 
   return (
     <TouchableOpacity style={styles.listItem} onPress={onPress} activeOpacity={0.85}>
       <View style={styles.listImagePlaceholder}>
-        <Icon name="event" size={22} color={Colors.primary} />
+        <Icon name="event" size={22} color={Pastel.teal.text} />
       </View>
       <View style={styles.listInfo}>
         <Text style={styles.listTitle} numberOfLines={1}>
@@ -450,8 +452,32 @@ const styles = StyleSheet.create({
   container: {
     paddingHorizontal: Spacing.containerMargin,
     paddingTop: Spacing.xl,
-    paddingBottom: Spacing.xl,
+    paddingBottom: Spacing.xl + FLOATING_TAB_BAR_CLEARANCE,
     gap: Spacing.lg,
+  },
+  headerActions: {
+    position: 'absolute',
+    right: Spacing.containerMargin,
+    flexDirection: 'row',
+    gap: Spacing.sm,
+    zIndex: 1,
+  },
+  headerActionBtn: {
+    width: 34,
+    height: 34,
+    borderRadius: Radius.full,
+    backgroundColor: Colors.surfaceContainer,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  headerActionBadge: {
+    position: 'absolute',
+    top: 6,
+    right: 6,
+    width: 7,
+    height: 7,
+    borderRadius: 4,
+    backgroundColor: '#EF4444',
   },
   sectionHeader: {
     marginBottom: Spacing.sm,
@@ -486,7 +512,7 @@ const styles = StyleSheet.create({
     flexShrink: 1,
   },
   sectionTitle: {
-    ...Typography.h3,
+    ...Typography.serifTitle,
     color: Colors.onSurface,
   },
   bentoGrid: {
@@ -500,18 +526,15 @@ const styles = StyleSheet.create({
   },
   recCard: {
     width: 160,
-    backgroundColor: Colors.surfaceContainerLowest,
-    borderRadius: Radius.lg,
-    borderWidth: 1,
-    borderColor: Colors.surfaceVariant,
+    backgroundColor: Pastel.teal.tint,
+    borderRadius: Radius.xl,
     padding: Spacing.sm,
-    ...Shadows.sm,
   },
   recImagePlaceholder: {
     width: '100%',
     height: 80,
-    borderRadius: Radius.md,
-    backgroundColor: Colors.primaryContainer,
+    borderRadius: Radius.lg,
+    backgroundColor: Pastel.teal.tintStrong,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: Spacing.sm,
@@ -529,7 +552,7 @@ const styles = StyleSheet.create({
   },
   recPrice: {
     ...Typography.bodyMd,
-    color: Colors.primary,
+    color: Pastel.teal.text,
     fontWeight: '700',
   },
   recRating: {
@@ -555,20 +578,17 @@ const styles = StyleSheet.create({
   },
   listItem: {
     flexDirection: 'row',
-    backgroundColor: Colors.surfaceContainerLowest,
-    borderRadius: Radius.lg,
-    borderWidth: 1,
-    borderColor: Colors.surfaceVariant,
+    backgroundColor: Pastel.teal.tint,
+    borderRadius: Radius.xl,
     padding: Spacing.sm,
     gap: Spacing.sm,
     alignItems: 'center',
-    ...Shadows.sm,
   },
   listImagePlaceholder: {
     width: 52,
     height: 52,
-    borderRadius: Radius.md,
-    backgroundColor: Colors.primaryContainer,
+    borderRadius: Radius.lg,
+    backgroundColor: Pastel.teal.tintStrong,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -604,20 +624,20 @@ const styles = StyleSheet.create({
   listPrice: {
     ...Typography.labelMd,
     fontSize: 14,
-    color: Colors.primary,
+    color: Pastel.teal.text,
   },
   listSpots: {
     ...Typography.labelSm,
     color: Colors.onSurfaceVariant,
   },
   fullBadge: {
-    backgroundColor: Colors.errorContainer,
+    backgroundColor: Pastel.coral.tintStrong,
     paddingHorizontal: Spacing.xs,
     paddingVertical: 2,
     borderRadius: Radius.sm,
   },
   fullBadgeText: {
     ...Typography.labelSm,
-    color: Colors.onErrorContainer,
+    color: Pastel.coral.text,
   },
 });

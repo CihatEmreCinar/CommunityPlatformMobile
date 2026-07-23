@@ -55,7 +55,8 @@
           "locationWhenInUsePermission": "Yakınındaki atölyeleri ve kafeleri gösterebilmek, ayrıca kafe/atölye konumunu haritada işaretleyebilmek için konumuna ihtiyacımız var."
         }
       ],
-      "expo-secure-store"
+      "expo-secure-store",
+      "expo-font"
     ],
     "extra": {
       "router": {},

@@ -1,23 +1,15 @@
 import React, { useEffect, useRef } from 'react';
 import { Animated, Image, ImageSourcePropType, StyleSheet, Text, View } from 'react-native';
+import { Icon } from '../ui/Icon';
 import { Colors, Typography } from '../../constants/theme';
 
 export interface AtiMascotProps {
   size?: number;
   status?: 'live' | 'idle' | 'none';
   statusLabel?: string;
-  /**
-   * İleride Illustrator'da hazırlanan gerçek maskot geldiğinde buraya
-   * verilecek: PNG için require('.../ati.png') veya { uri }, SVG için
-   * react-native-svg tabanlı bir wrapper, Lottie için lottie-react-native
-   * kaynağı bu prop'un üstüne kolayca eklenebilir (dosya sonundaki nota bak).
-   * Verilmezse emoji fallback gösterilir — bu bileşeni kullanan hiçbir yer
-   * (DashboardHero dahil) bundan habersizdir.
-   */
   source?: ImageSourcePropType;
 }
 
-/** <AtiMascot /> — tamamen bağımsız, tek sorumluluğu maskotu göstermek. */
 export function AtiMascot({ size = 88, status = 'live', statusLabel = 'CANLI', source }: AtiMascotProps) {
   return (
     <View style={styles.wrap}>
@@ -25,7 +17,7 @@ export function AtiMascot({ size = 88, status = 'live', statusLabel = 'CANLI', s
         {source ? (
           <Image source={source} style={{ width: size * 0.7, height: size * 0.7 }} resizeMode="contain" />
         ) : (
-          <Text style={{ fontSize: size * 0.42 }}>🦉</Text>
+          <Icon name="aiMatch" size={size * 0.42} color={Colors.primaryDarker} />
         )}
       </View>
       {status !== 'none' && (
@@ -57,7 +49,7 @@ function PulseDot({ active }: { active: boolean }) {
     <Animated.View
       style={[
         styles.dot,
-        { opacity: active ? opacity : 1, backgroundColor: active ? Colors.primary : Colors.outline },
+        { opacity: active ? opacity : 1, backgroundColor: active ? Colors.primaryDarker : Colors.outline },
       ]}
     />
   );
@@ -65,21 +57,15 @@ function PulseDot({ active }: { active: boolean }) {
 
 const styles = StyleSheet.create({
   wrap: { alignItems: 'center' },
+  // Hero kartın (doygun teal) üzerinde oturuyor — yarı saydam beyaz halka.
   circle: {
-    backgroundColor: Colors.primaryContainer,
+    backgroundColor: 'rgba(255,255,255,0.55)',
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 3,
-    borderColor: Colors.surfaceContainerLowest,
+    borderColor: 'rgba(255,255,255,0.7)',
   },
   statusRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 8 },
   dot: { width: 6, height: 6, borderRadius: 3 },
-  statusText: { ...Typography.labelSm, color: Colors.primary, fontWeight: '700', letterSpacing: 1 },
+  statusText: { ...Typography.labelSm, color: Colors.primaryDarker, fontWeight: '700', letterSpacing: 1 },
 });
-
-/**
- * Lottie'ye geçiş notu: `lottie-react-native` kurulduğunda bu dosyada
- * `source` bir Lottie JSON'ı olduğunda `<LottieView source={source} autoPlay loop />`
- * render eden bir dal eklenir; AtiMascot'u kullanan hiçbir yer (DashboardHero
- * dahil) değişmez, çünkü dışa açık API hâlâ `<AtiMascot source={...} />`.
- */

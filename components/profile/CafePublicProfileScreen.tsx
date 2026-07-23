@@ -22,10 +22,10 @@ import type { SpaceBookingReview } from '../../types/spaceBookingReview';
 import { formatNotificationTime } from '../../utils/notificationUtils';
 import type { Post, UserSocialStats } from '../../types/post.types';
 import { ProfileHeader } from './ProfileHeader';
-import { Colors } from '../../constants/theme';
+import { Colors, Pastel, Typography, Spacing, Radius } from '../../constants/theme';
 import { formatCityDistrict, openMapsForCoordinate } from '../../utils/locationFormat';
 
-const ACCENT = '#0F766E';
+const ACCENT = Colors.primary;
 
 function dedupePostsById(items: Post[]): Post[] {
   const seen = new Set<string>();
@@ -52,23 +52,17 @@ function PostCard({ post, onLike }: { post: Post; onLike: (id: string) => void }
       {post.tags && post.tags.length > 0 && (
         <View style={styles.tagRow}>
           {post.tags.map((t) => (
-            <View key={t} style={styles.tagChip}>
-              <Text style={styles.tagText}>#{t}</Text>
-            </View>
+            <View key={t} style={styles.tagChip}><Text style={styles.tagText}>#{t}</Text></View>
           ))}
         </View>
       )}
       <View style={styles.postMeta}>
         <TouchableOpacity style={styles.postAction} onPress={() => onLike(post.id)}>
-          <Icon
-            name={post.isLikedByMe ? 'heartFilled' : 'heartOutline'}
-            size={16}
-            color={post.isLikedByMe ? '#EF4444' : '#9CA3AF'}
-          />
+          <Icon name={post.isLikedByMe ? 'heartFilled' : 'heartOutline'} size={15} color={post.isLikedByMe ? '#EF4444' : Colors.outline} />
           <Text style={styles.postActionText}>{post.likeCount}</Text>
         </TouchableOpacity>
         <View style={styles.postAction}>
-          <Icon name="chatbubbleOutline" size={16} color="#9CA3AF" />
+          <Icon name="chatbubbleOutline" size={15} color={Colors.outline} />
           <Text style={styles.postActionText}>{post.commentCount}</Text>
         </View>
         <Text style={styles.postTime}>{formatNotificationTime(post.publishedAt ?? '')}</Text>
@@ -77,11 +71,6 @@ function PostCard({ post, onLike }: { post: Post; onLike: (id: string) => void }
   );
 }
 
-/**
- * NOT: cafeProfileService.getPublicProfile ve dolayısıyla bu ekran, backend'de
- * henüz var olmayan bir endpoint'e dayanıyor (bkz. cafeProfileService.ts içindeki
- * not). Backend eklenince ekran ekstra değişiklik gerekmeden çalışır.
- */
 export function CafePublicProfileScreen({ cafeId }: { cafeId: string }) {
   const router = useRouter();
 
@@ -101,8 +90,7 @@ export function CafePublicProfileScreen({ cafeId }: { cafeId: string }) {
   const fetchProfile = useCallback(async () => {
     if (!cafeId) return;
     try {
-      const result = await cafeProfileService.getPublicProfile(cafeId);
-      setProfile(result);
+      setProfile(await cafeProfileService.getPublicProfile(cafeId));
     } catch {
       // sessiz hata
     } finally {
@@ -113,8 +101,7 @@ export function CafePublicProfileScreen({ cafeId }: { cafeId: string }) {
   const fetchStats = useCallback(async () => {
     if (!cafeId) return;
     try {
-      const s = await postService.getSocialStats(cafeId);
-      setStats(s);
+      setStats(await postService.getSocialStats(cafeId));
     } catch {
       // sessiz hata
     } finally {
@@ -125,8 +112,7 @@ export function CafePublicProfileScreen({ cafeId }: { cafeId: string }) {
   const fetchReviews = useCallback(async () => {
     if (!cafeId) return;
     try {
-      const data = await spaceBookingReviewService.getByCafeProfile(cafeId);
-      setReviews(data);
+      setReviews(await spaceBookingReviewService.getByCafeProfile(cafeId));
     } catch {
       // sessiz hata
     }
@@ -158,40 +144,17 @@ export function CafePublicProfileScreen({ cafeId }: { cafeId: string }) {
     setRefreshing(false);
   }, [fetchProfile, fetchStats, fetchReviews, fetchPosts]);
 
-  useEffect(() => {
-    fetchProfile();
-    fetchStats();
-    fetchReviews();
-    fetchPosts(true);
-  }, [cafeId]);
+  useEffect(() => { fetchProfile(); fetchStats(); fetchReviews(); fetchPosts(true); }, [cafeId]);
 
   const handleFollow = useCallback(async () => {
     if (!cafeId || !stats) return;
     const wasFollowing = stats.isFollowedByMe;
-
-    setStats((prev) =>
-      prev
-        ? {
-            ...prev,
-            isFollowedByMe: !prev.isFollowedByMe,
-            followerCount: wasFollowing ? prev.followerCount - 1 : prev.followerCount + 1,
-          }
-        : prev
-    );
-
+    setStats((prev) => (prev ? { ...prev, isFollowedByMe: !prev.isFollowedByMe, followerCount: wasFollowing ? prev.followerCount - 1 : prev.followerCount + 1 } : prev));
     setFollowLoading(true);
     try {
       await socialService.toggleFollow(cafeId);
     } catch {
-      setStats((prev) =>
-        prev
-          ? {
-              ...prev,
-              isFollowedByMe: wasFollowing,
-              followerCount: wasFollowing ? prev.followerCount + 1 : prev.followerCount - 1,
-            }
-          : prev
-      );
+      setStats((prev) => (prev ? { ...prev, isFollowedByMe: wasFollowing, followerCount: wasFollowing ? prev.followerCount + 1 : prev.followerCount - 1 } : prev));
     } finally {
       setFollowLoading(false);
     }
@@ -202,40 +165,23 @@ export function CafePublicProfileScreen({ cafeId }: { cafeId: string }) {
   }, []);
 
   const handleLike = useCallback(async (postId: string) => {
-    setPosts((prev) =>
-      prev.map((p) =>
-        p.id === postId
-          ? { ...p, isLikedByMe: !p.isLikedByMe, likeCount: p.isLikedByMe ? p.likeCount - 1 : p.likeCount + 1 }
-          : p
-      )
-    );
+    setPosts((prev) => prev.map((p) => (p.id === postId ? { ...p, isLikedByMe: !p.isLikedByMe, likeCount: p.isLikedByMe ? p.likeCount - 1 : p.likeCount + 1 } : p)));
     try {
       const result = await socialService.toggleLike(postId);
-      setPosts((prev) =>
-        prev.map((p) => (p.id === postId ? { ...p, isLikedByMe: result.liked, likeCount: result.likeCount } : p))
-      );
+      setPosts((prev) => prev.map((p) => (p.id === postId ? { ...p, isLikedByMe: result.liked, likeCount: result.likeCount } : p)));
     } catch {
-      setPosts((prev) =>
-        prev.map((p) =>
-          p.id === postId
-            ? { ...p, isLikedByMe: !p.isLikedByMe, likeCount: p.isLikedByMe ? p.likeCount - 1 : p.likeCount + 1 }
-            : p
-        )
-      );
+      setPosts((prev) => prev.map((p) => (p.id === postId ? { ...p, isLikedByMe: !p.isLikedByMe, likeCount: p.isLikedByMe ? p.likeCount - 1 : p.likeCount + 1 } : p)));
     }
   }, []);
 
   const renderHeader = () => (
     <View>
       <View style={styles.topBar}>
-        <TouchableOpacity onPress={() => router.back()} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-          <Icon name="arrowBackAlt" size={24} color="#111827" />
+        <TouchableOpacity onPress={() => router.back()} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} style={styles.topBarBtn}>
+          <Icon name="arrowBackAlt" size={20} color={Colors.onSurface} />
         </TouchableOpacity>
-        <TouchableOpacity
-          onPress={() => Share.share({ message: `Atolium'da bu kafeyi keşfet!` })}
-          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-        >
-          <Icon name="shareSocialOutline" size={22} color="#374151" />
+        <TouchableOpacity onPress={() => Share.share({ message: `Atolium'da bu kafeyi keşfet!` })} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} style={styles.topBarBtn}>
+          <Icon name="shareSocialOutline" size={19} color={Colors.onSurface} />
         </TouchableOpacity>
       </View>
 
@@ -251,20 +197,12 @@ export function CafePublicProfileScreen({ cafeId }: { cafeId: string }) {
           { label: 'Takipçi', value: stats?.followerCount ?? 0 },
           { label: 'Takip', value: stats?.followingCount ?? 0 },
         ]}
-        actions={{
-          variant: 'other',
-          isFollowing: stats?.isFollowedByMe ?? false,
-          followLoading: followLoading || loadingStats,
-          onFollow: handleFollow,
-          onMessage: handleMessage,
-        }}
+        actions={{ variant: 'other', isFollowing: stats?.isFollowedByMe ?? false, followLoading: followLoading || loadingStats, onFollow: handleFollow, onMessage: handleMessage }}
         extra={
           !!profile?.avgRating && profile.avgRating > 0 ? (
             <View style={styles.ratingRow}>
-              <Icon name="star" size={16} color={Colors.amber} />
-              <Text style={styles.ratingText}>
-                {profile.avgRating.toFixed(1)} ({profile.reviewCount ?? 0} değerlendirme)
-              </Text>
+              <Icon name="star" size={15} color={Colors.amber} />
+              <Text style={styles.ratingText}>{profile.avgRating.toFixed(1)} ({profile.reviewCount ?? 0} değerlendirme)</Text>
             </View>
           ) : null
         }
@@ -272,13 +210,10 @@ export function CafePublicProfileScreen({ cafeId }: { cafeId: string }) {
 
       {profile?.address ? (
         <View style={styles.addressRow}>
-          <Icon name="locationOutline" size={16} color={Colors.onSurfaceVariant} />
+          <Icon name="locationOutline" size={15} color={Pastel.coral.text} />
           <Text style={styles.addressText}>{profile.address}</Text>
           {profile.latitude != null && profile.longitude != null && (
-            <TouchableOpacity
-              onPress={() => openMapsForCoordinate(profile.latitude!, profile.longitude!, profile.name)}
-              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-            >
+            <TouchableOpacity onPress={() => openMapsForCoordinate(profile.latitude!, profile.longitude!, profile.name)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
               <Text style={styles.mapLink}>Haritada Göster</Text>
             </TouchableOpacity>
           )}
@@ -286,9 +221,7 @@ export function CafePublicProfileScreen({ cafeId }: { cafeId: string }) {
       ) : null}
 
       <View style={styles.reviewsSection}>
-        <Text style={styles.sectionTitle}>
-          Değerlendirmeler {reviews.length > 0 ? `(${reviews.length})` : ''}
-        </Text>
+        <Text style={styles.sectionTitle}>Değerlendirmeler {reviews.length > 0 ? `(${reviews.length})` : ''}</Text>
         {reviews.length === 0 ? (
           <Text style={styles.emptyReviewText}>Henüz değerlendirme yok.</Text>
         ) : (
@@ -298,12 +231,7 @@ export function CafePublicProfileScreen({ cafeId }: { cafeId: string }) {
                 <Text style={styles.reviewUserName}>{r.userName}</Text>
                 <View style={{ flexDirection: 'row' }}>
                   {[1, 2, 3, 4, 5].map((star) => (
-                    <Icon
-                      key={star}
-                      name={star <= r.rating ? 'star' : 'starEmpty'}
-                      size={13}
-                      color={Colors.amber}
-                    />
+                    <Icon key={star} name={star <= r.rating ? 'star' : 'starEmpty'} size={12} color={Colors.amber} />
                   ))}
                 </View>
               </View>
@@ -314,7 +242,7 @@ export function CafePublicProfileScreen({ cafeId }: { cafeId: string }) {
       </View>
 
       <View style={styles.postsSectionHeader}>
-        <Icon name="gridOutline" size={16} color="#6B7280" />
+        <Icon name="gridOutline" size={15} color={Colors.onSurfaceVariant} />
         <Text style={styles.postsSectionTitle}>Gönderiler</Text>
       </View>
     </View>
@@ -330,18 +258,12 @@ export function CafePublicProfileScreen({ cafeId }: { cafeId: string }) {
         ListEmptyComponent={
           !loadingPosts ? (
             <View style={styles.empty}>
-              <Icon name="newspaperOutline" size={44} color="#D1D5DB" />
+              <Icon name="newspaperOutline" size={40} color={Colors.outline} />
               <Text style={styles.emptyText}>Henüz gönderi paylaşılmamış</Text>
             </View>
           ) : null
         }
-        ListFooterComponent={
-          loadingPosts ? (
-            <ActivityIndicator color={ACCENT} style={{ marginVertical: 24 }} />
-          ) : loadingMore ? (
-            <ActivityIndicator color={ACCENT} style={{ marginVertical: 16 }} />
-          ) : null
-        }
+        ListFooterComponent={loadingPosts ? <ActivityIndicator color={ACCENT} style={{ marginVertical: 24 }} /> : loadingMore ? <ActivityIndicator color={ACCENT} style={{ marginVertical: 16 }} /> : null}
         onEndReached={() => { if (hasMore && !loadingMore) fetchPosts(); }}
         onEndReachedThreshold={0.3}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refresh} tintColor={ACCENT} />}
@@ -349,44 +271,43 @@ export function CafePublicProfileScreen({ cafeId }: { cafeId: string }) {
         contentContainerStyle={styles.listContent}
       />
       {loadingProfile ? (
-        <View style={styles.loadingOverlay} pointerEvents="none">
-          <ActivityIndicator color={ACCENT} />
-        </View>
+        <View style={styles.loadingOverlay} pointerEvents="none"><ActivityIndicator color={ACCENT} /></View>
       ) : null}
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F9FAFB' },
+  container: { flex: 1, backgroundColor: Colors.background },
   listContent: { paddingBottom: 32 },
   loadingOverlay: { position: 'absolute', top: 60, left: 0, right: 0, alignItems: 'center' },
-  topBar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingTop: 12, paddingBottom: 8, backgroundColor: '#FFFFFF' },
+  topBar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: Spacing.md, paddingTop: Spacing.sm, paddingBottom: Spacing.xs, backgroundColor: Colors.background },
+  topBarBtn: { width: 34, height: 34, borderRadius: 17, backgroundColor: Colors.surfaceContainer, alignItems: 'center', justifyContent: 'center' },
   ratingRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 8 },
-  addressRow: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 16, marginTop: 4, flexWrap: 'wrap' },
-  addressText: { fontSize: 13, color: Colors.onSurfaceVariant, flexShrink: 1 },
-  mapLink: { fontSize: 13, color: Colors.primary, fontWeight: '600' },
-  ratingText: { fontSize: 14, color: '#6B7280' },
-  reviewsSection: { padding: 14, backgroundColor: '#FFFFFF', gap: 8, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: '#E5E7EB' },
-  sectionTitle: { fontSize: 15, fontWeight: '700', color: '#111827' },
-  emptyReviewText: { fontSize: 13, color: '#9CA3AF' },
-  reviewCard: { backgroundColor: '#F9FAFB', borderRadius: 10, borderWidth: 1, borderColor: '#F3F4F6', padding: 10, gap: 4 },
+  addressRow: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: Spacing.md, marginTop: 4, flexWrap: 'wrap' },
+  addressText: { ...Typography.bodyMd, fontSize: 13, color: Colors.onSurfaceVariant, flexShrink: 1 },
+  mapLink: { ...Typography.labelMd, fontSize: 13, color: Pastel.coral.text },
+  ratingText: { ...Typography.bodyMd, color: Colors.onSurfaceVariant },
+  reviewsSection: { padding: Spacing.md, gap: Spacing.sm, marginTop: Spacing.sm },
+  sectionTitle: { ...Typography.serifTitle, color: Colors.onSurface },
+  emptyReviewText: { ...Typography.bodyMd, color: Colors.onSurfaceVariant },
+  reviewCard: { backgroundColor: Pastel.coral.tint, borderRadius: Radius.xl, padding: Spacing.sm, gap: 4 },
   reviewHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  reviewUserName: { fontSize: 13, fontWeight: '600', color: '#111827' },
-  reviewComment: { fontSize: 13, color: '#374151' },
-  postsSectionHeader: { flexDirection: 'row', alignItems: 'center', gap: 6, padding: 14, backgroundColor: '#FFFFFF', borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: '#E5E7EB', marginTop: 8 },
-  postsSectionTitle: { fontSize: 13, fontWeight: '600', color: '#374151' },
-  postCard: { backgroundColor: '#FFFFFF', marginHorizontal: 8, marginTop: 8, borderRadius: 10, padding: 14, gap: 8, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 3, elevation: 1 },
-  postContent: { fontSize: 14, color: '#374151', lineHeight: 20 },
+  reviewUserName: { ...Typography.labelMd, fontSize: 13, color: Colors.onSurface },
+  reviewComment: { ...Typography.bodyMd, color: Colors.onSurfaceVariant },
+  postsSectionHeader: { flexDirection: 'row', alignItems: 'center', gap: 6, padding: Spacing.md, marginTop: Spacing.sm },
+  postsSectionTitle: { ...Typography.labelMd, color: Colors.onSurfaceVariant },
+  postCard: { backgroundColor: Pastel.coral.tint, marginHorizontal: Spacing.sm, marginTop: Spacing.sm, borderRadius: Radius.xl, padding: Spacing.md, gap: Spacing.sm },
+  postContent: { ...Typography.bodyMd, color: Colors.onSurface, lineHeight: 20 },
   postMediaRow: { flexDirection: 'row', gap: 6 },
-  postMediaThumb: { width: 92, height: 92, borderRadius: 10, backgroundColor: '#E5E7EB' },
+  postMediaThumb: { width: 88, height: 88, borderRadius: Radius.lg, backgroundColor: Colors.surfaceContainer },
   tagRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
-  tagChip: { backgroundColor: '#F0FDFA', borderRadius: 10, paddingHorizontal: 8, paddingVertical: 2 },
-  tagText: { fontSize: 11, color: ACCENT, fontWeight: '500' },
+  tagChip: { backgroundColor: Pastel.coral.tintStrong, borderRadius: Radius.md, paddingHorizontal: 8, paddingVertical: 2 },
+  tagText: { ...Typography.labelSm, color: Pastel.coral.text, fontWeight: '600' },
   postMeta: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   postAction: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  postActionText: { fontSize: 12, color: '#9CA3AF' },
-  postTime: { marginLeft: 'auto', fontSize: 11, color: '#9CA3AF' },
-  empty: { alignItems: 'center', justifyContent: 'center', gap: 10, paddingTop: 48 },
-  emptyText: { fontSize: 14, color: '#9CA3AF' },
+  postActionText: { ...Typography.labelSm, color: Colors.onSurfaceVariant },
+  postTime: { marginLeft: 'auto', ...Typography.labelSm, color: Colors.outline },
+  empty: { alignItems: 'center', justifyContent: 'center', gap: Spacing.sm, paddingTop: 48 },
+  emptyText: { ...Typography.bodyMd, color: Colors.onSurfaceVariant },
 });

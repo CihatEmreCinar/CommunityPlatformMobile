@@ -13,14 +13,14 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Icon } from '../../components/ui/Icon';
 import { enrollmentService } from '../../services/enrollmentService';
 import { EmployerEnrollment } from '../../types/enrollment';
-import { Colors, Typography, Spacing, Radius, Shadows } from '../../constants/theme';
+import { Colors, Pastel, Typography, Spacing, Radius } from '../../constants/theme';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-const STATUS_LABELS: Record<string, { label: string; color: string; bg: string }> = {
-  confirmed: { label: 'Onaylandı', color: Colors.primary, bg: Colors.primaryContainer },
-  pending: { label: 'Bekliyor', color: Colors.secondary, bg: Colors.secondaryContainer },
-  attended: { label: 'Katıldı', color: '#0F766E', bg: '#CCFBF1' },
-  cancelled: { label: 'İptal', color: Colors.error, bg: Colors.errorContainer },
+const STATUS_STYLES: Record<string, { label: string; palette: typeof Pastel.teal }> = {
+  confirmed: { label: 'Onaylandı', palette: Pastel.teal },
+  pending: { label: 'Bekliyor', palette: Pastel.amber },
+  attended: { label: 'Katıldı', palette: Pastel.purple },
+  cancelled: { label: 'İptal', palette: Pastel.coral },
 };
 
 export default function EmployerEnrollmentsScreen() {
@@ -33,8 +33,7 @@ export default function EmployerEnrollmentsScreen() {
 
   const loadEnrollments = useCallback(async () => {
     try {
-      const data = await enrollmentService.getEmployerEnrollments(status);
-      setEnrollments(data);
+      setEnrollments(await enrollmentService.getEmployerEnrollments(status));
     } catch (error) {
       console.log('Kayıtlar yüklenemedi', error);
     } finally {
@@ -43,15 +42,13 @@ export default function EmployerEnrollmentsScreen() {
     }
   }, [status]);
 
-  useEffect(() => {
-    loadEnrollments();
-  }, [loadEnrollments]);
+  useEffect(() => { loadEnrollments(); }, [loadEnrollments]);
 
   async function handleApprove(id: string) {
     setActionId(id);
     try {
       await enrollmentService.approve(id);
-      setEnrollments((prev) => prev.map((item) => item.id === id ? { ...item, status: 'confirmed' } : item));
+      setEnrollments((prev) => prev.map((item) => (item.id === id ? { ...item, status: 'confirmed' } : item)));
     } catch (error) {
       console.log('Onaylanamadı', error);
       Alert.alert('Hata', 'Kaydı onaylarken bir sorun oluştu.');
@@ -64,7 +61,7 @@ export default function EmployerEnrollmentsScreen() {
     setActionId(id);
     try {
       await enrollmentService.reject(id);
-      setEnrollments((prev) => prev.map((item) => item.id === id ? { ...item, status: 'cancelled' } : item));
+      setEnrollments((prev) => prev.map((item) => (item.id === id ? { ...item, status: 'cancelled' } : item)));
     } catch (error) {
       console.log('Reddedilemedi', error);
       Alert.alert('Hata', 'Kaydı reddederken bir sorun oluştu.');
@@ -88,77 +85,75 @@ export default function EmployerEnrollmentsScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
-    <ScrollView
-      style={styles.flex}
-      contentContainerStyle={styles.container}
-      refreshControl={
-        <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} colors={[Colors.primary]} />
-      }
-    >
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <Icon name="arrowBack" size={22} color={Colors.onSurface} />
-        </TouchableOpacity>
-        <Text style={styles.title}>Kayıt Talepleri</Text>
-        <View style={{ width: 40 }} />
-      </View>
-
-      {enrollments.length === 0 ? (
-        <View style={styles.emptyState}>
-          <Icon name="peopleOutline" size={40} color={Colors.outline} />
-          <Text style={styles.emptyTitle}>Kayıt bulunamadı</Text>
-          <Text style={styles.emptyText}>Yeni talepler için atölyelerini kontrol et.</Text>
+      <ScrollView
+        style={styles.flex}
+        contentContainerStyle={styles.container}
+        refreshControl={<RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} colors={[Colors.primary]} />}
+      >
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+            <Icon name="arrowBack" size={20} color={Colors.onSurface} />
+          </TouchableOpacity>
+          <Text style={styles.title}>Kayıt Talepleri</Text>
+          <View style={{ width: 38 }} />
         </View>
-      ) : (
-        enrollments.map((item) => {
-          const statusStyle = STATUS_LABELS[item.status] ?? STATUS_LABELS.pending;
-          return (
-            <View key={item.id} style={styles.card}>
-              <View style={styles.cardHeader}>
-                <View style={styles.cardTitleWrap}>
-                  <Text style={styles.cardTitle} numberOfLines={2}>{item.workshopTitle}</Text>
-                  <Text style={styles.cardSubtitle}>{item.employeeName}</Text>
+
+        {enrollments.length === 0 ? (
+          <View style={styles.emptyState}>
+            <Icon name="peopleOutline" size={38} color={Colors.outline} />
+            <Text style={styles.emptyTitle}>Kayıt bulunamadı</Text>
+            <Text style={styles.emptyText}>Yeni talepler için atölyelerini kontrol et.</Text>
+          </View>
+        ) : (
+          enrollments.map((item) => {
+            const s = STATUS_STYLES[item.status] ?? STATUS_STYLES.pending;
+            return (
+              <View key={item.id} style={[styles.card, { backgroundColor: s.palette.tint }]}>
+                <View style={styles.cardHeader}>
+                  <View style={styles.cardTitleWrap}>
+                    <Text style={styles.cardTitle} numberOfLines={2}>{item.workshopTitle}</Text>
+                    <Text style={styles.cardSubtitle}>{item.employeeName}</Text>
+                  </View>
+                  <View style={[styles.badge, { backgroundColor: s.palette.tintStrong }]}>
+                    <Text style={[styles.badgeText, { color: s.palette.text }]}>{s.label}</Text>
+                  </View>
                 </View>
-                <View style={[styles.badge, { backgroundColor: statusStyle.bg }]}> 
-                  <Text style={[styles.badgeText, { color: statusStyle.color }]}>{statusStyle.label}</Text>
+
+                {item.message ? (
+                  <View style={styles.messageRow}>
+                    <Icon name="message" size={15} color={Colors.onSurfaceVariant} />
+                    <Text style={styles.messageText}>{item.message}</Text>
+                  </View>
+                ) : null}
+
+                <View style={styles.metaRow}>
+                  <Icon name="event" size={13} color={Colors.onSurfaceVariant} />
+                  <Text style={styles.metaText}>
+                    {new Date(item.appliedAt).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                  </Text>
+                </View>
+
+                <View style={styles.cardActions}>
+                  <TouchableOpacity
+                    style={[styles.actionButton, styles.approveButton]}
+                    disabled={item.status !== 'pending' || actionId === item.id}
+                    onPress={() => handleApprove(item.id)}
+                  >
+                    <Text style={styles.approveText}>Onayla</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.actionButton, styles.rejectButton]}
+                    disabled={item.status !== 'pending' || actionId === item.id}
+                    onPress={() => handleReject(item.id)}
+                  >
+                    <Text style={styles.rejectText}>Reddet</Text>
+                  </TouchableOpacity>
                 </View>
               </View>
-
-              {item.message ? (
-                <View style={styles.messageRow}>
-                  <Icon name="message" size={16} color={Colors.outline} />
-                  <Text style={styles.messageText}>{item.message}</Text>
-                </View>
-              ) : null}
-
-              <View style={styles.metaRow}>
-                <Icon name="event" size={14} color={Colors.outline} />
-                <Text style={styles.metaText}>{new Date(item.appliedAt).toLocaleDateString('tr-TR', {
-                  day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit',
-                })}</Text>
-              </View>
-
-              <View style={styles.cardActions}>
-                <TouchableOpacity
-                  style={[styles.actionButton, styles.approveButton]}
-                  disabled={item.status !== 'pending' || actionId === item.id}
-                  onPress={() => handleApprove(item.id)}
-                >
-                  <Text style={styles.actionText}>Onayla</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[styles.actionButton, styles.rejectButton]}
-                  disabled={item.status !== 'pending' || actionId === item.id}
-                  onPress={() => handleReject(item.id)}
-                >
-                  <Text style={styles.actionText}>Reddet</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          );
-        })
-      )}
-    </ScrollView>
+            );
+          })
+        )}
+      </ScrollView>
     </SafeAreaView>
   );
 }
@@ -168,38 +163,16 @@ const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: Colors.background },
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: Colors.background },
   container: { padding: Spacing.containerMargin, paddingBottom: Spacing.xl },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: Spacing.lg,
-  },
-  backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: Radius.full,
-    backgroundColor: Colors.surfaceContainerLowest,
-    justifyContent: 'center',
-    alignItems: 'center',
-    ...Shadows.sm,
-  },
-  title: { ...Typography.h3, color: Colors.onSurface },
+  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: Spacing.lg },
+  backButton: { width: 38, height: 38, borderRadius: Radius.full, backgroundColor: Colors.surfaceContainer, justifyContent: 'center', alignItems: 'center' },
+  title: { ...Typography.serifTitleLg, color: Colors.onSurface },
   emptyState: { alignItems: 'center', paddingVertical: Spacing.xl * 1.5, gap: Spacing.sm },
-  emptyTitle: { ...Typography.h3, color: Colors.onSurface, marginTop: Spacing.sm },
+  emptyTitle: { ...Typography.serifTitle, color: Colors.onSurface, marginTop: Spacing.sm },
   emptyText: { ...Typography.bodyMd, color: Colors.onSurfaceVariant, textAlign: 'center' },
-  card: {
-    backgroundColor: Colors.surfaceContainerLowest,
-    borderRadius: Radius.xl,
-    borderWidth: 1,
-    borderColor: Colors.surfaceVariant,
-    padding: Spacing.md,
-    marginBottom: Spacing.sm,
-    gap: Spacing.sm,
-    ...Shadows.sm,
-  },
+  card: { borderRadius: Radius.xxl, padding: Spacing.md, marginBottom: Spacing.sm, gap: Spacing.sm },
   cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', gap: Spacing.sm },
   cardTitleWrap: { flex: 1 },
-  cardTitle: { ...Typography.h3, color: Colors.onSurface, fontSize: 16 },
+  cardTitle: { ...Typography.labelMd, fontSize: 16, color: Colors.onSurface },
   cardSubtitle: { ...Typography.bodyMd, color: Colors.onSurfaceVariant, marginTop: 2 },
   badge: { paddingHorizontal: Spacing.sm, paddingVertical: 3, borderRadius: Radius.full, alignSelf: 'flex-start' },
   badgeText: { ...Typography.labelSm, fontWeight: '700' },
@@ -208,18 +181,9 @@ const styles = StyleSheet.create({
   metaRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.xs },
   metaText: { ...Typography.bodyMd, color: Colors.onSurfaceVariant, fontSize: 13 },
   cardActions: { flexDirection: 'row', gap: Spacing.sm, marginTop: Spacing.sm },
-  actionButton: {
-    flex: 1,
-    paddingVertical: Spacing.sm,
-    borderRadius: Radius.md,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  approveButton: {
-    backgroundColor: Colors.primary,
-  },
-  rejectButton: {
-    backgroundColor: Colors.error,
-  },
-  actionText: { ...Typography.labelMd, color: '#FFFFFF' },
+  actionButton: { flex: 1, paddingVertical: Spacing.sm, borderRadius: Radius.md, justifyContent: 'center', alignItems: 'center' },
+  approveButton: { backgroundColor: Colors.primary },
+  rejectButton: { backgroundColor: Pastel.coral.tintStrong },
+  approveText: { ...Typography.labelMd, color: '#FFFFFF' },
+  rejectText: { ...Typography.labelMd, color: Pastel.coral.text },
 });

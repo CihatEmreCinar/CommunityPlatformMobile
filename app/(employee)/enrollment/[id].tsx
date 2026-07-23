@@ -5,13 +5,13 @@ import { Icon } from '../../../components/ui/Icon';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { enrollmentService } from '../../../services/enrollmentService';
 import { Ticket } from '../../../types/ticket';
-import { Colors, Typography, Spacing, Radius, Shadows } from '../../../constants/theme';
+import { Colors, Pastel, Typography, Spacing, Radius } from '../../../constants/theme';
 import { TicketQR } from '../../../components/tickets/TicketQR';
 
-const ATTENDANCE_LABELS: Record<string, { label: string; color: string; bg: string }> = {
-  Pending: { label: 'Katılım bekleniyor', color: Colors.secondary, bg: Colors.secondaryContainer },
-  Attended: { label: 'Katıldınız', color: '#0F766E', bg: '#CCFBF1' },
-  NoShow: { label: 'Katılmadınız', color: Colors.error, bg: Colors.errorContainer },
+const ATTENDANCE_PASTEL: Record<string, { label: string; palette: typeof Pastel.teal }> = {
+  Pending: { label: 'Katılım bekleniyor', palette: Pastel.amber },
+  Attended: { label: 'Katıldınız', palette: Pastel.teal },
+  NoShow: { label: 'Katılmadınız', palette: Pastel.coral },
 };
 
 export default function TicketScreen() {
@@ -56,14 +56,14 @@ export default function TicketScreen() {
           <View style={{ width: 40 }} />
         </View>
         <View style={styles.center}>
-          <Icon name="errorOutline" size={40} color={Colors.error} />
+          <Icon name="errorOutline" size={40} color={Pastel.coral.text} />
           <Text style={styles.errorText}>{error || 'Bilet bulunamadı.'}</Text>
         </View>
       </SafeAreaView>
     );
   }
 
-  const s = ATTENDANCE_LABELS[ticket.attendanceStatus] ?? ATTENDANCE_LABELS.Pending;
+  const s = ATTENDANCE_PASTEL[ticket.attendanceStatus] ?? ATTENDANCE_PASTEL.Pending;
   const startDate = new Date(ticket.workshopStartAt);
   const dateText = startDate.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' });
   const timeText = startDate.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
@@ -79,48 +79,49 @@ export default function TicketScreen() {
           <View style={{ width: 40 }} />
         </View>
 
-        <View style={styles.ticketCard}>
-          <View style={[styles.statusBadge, { backgroundColor: s.bg }]}>
-            <Text style={[styles.statusText, { color: s.color }]}>{s.label}</Text>
+        {/* Hero kart — bu ekranın tek öncelikli içeriği: solid doygun pastel, koyu ton metin */}
+        <View style={[styles.ticketCard, { backgroundColor: s.palette.hero }]}>
+          <View style={styles.statusBadge}>
+            <Text style={[styles.statusText, { color: s.palette.heroText }]}>{s.label}</Text>
           </View>
 
-          <Text style={styles.workshopTitle}>{ticket.workshopTitle}</Text>
+          <Text style={[styles.workshopTitle, { color: s.palette.heroText }]}>{ticket.workshopTitle}</Text>
 
           <View style={styles.infoRow}>
-            <Icon name="calendarToday" size={16} color={Colors.onSurfaceVariant} />
-            <Text style={styles.infoText}>{dateText}</Text>
+            <Icon name="calendarToday" size={16} color={s.palette.heroText} />
+            <Text style={[styles.infoText, { color: s.palette.heroText }]}>{dateText}</Text>
           </View>
           <View style={styles.infoRow}>
-            <Icon name="schedule" size={16} color={Colors.onSurfaceVariant} />
-            <Text style={styles.infoText}>{timeText}</Text>
+            <Icon name="schedule" size={16} color={s.palette.heroText} />
+            <Text style={[styles.infoText, { color: s.palette.heroText }]}>{timeText}</Text>
           </View>
           <View style={styles.infoRow}>
-            <Icon name="place" size={16} color={Colors.onSurfaceVariant} />
-            <Text style={styles.infoText}>
+            <Icon name="place" size={16} color={s.palette.heroText} />
+            <Text style={[styles.infoText, { color: s.palette.heroText }]}>
               {ticket.workshopLocationType === 'online' ? 'Online' : (ticket.workshopLocationDetail || 'Konum belirtilmedi')}
             </Text>
           </View>
           <View style={styles.infoRow}>
-            <Icon name="badge" size={16} color={Colors.onSurfaceVariant} />
-            <Text style={styles.infoText}>{ticket.employerName}</Text>
+            <Icon name="badge" size={16} color={s.palette.heroText} />
+            <Text style={[styles.infoText, { color: s.palette.heroText }]}>{ticket.employerName}</Text>
           </View>
 
-          <View style={styles.divider} />
-
-          <Text style={styles.participantLabel}>Katılımcı</Text>
-          <Text style={styles.participantName}>{ticket.participantName}</Text>
+          <View style={styles.participantBlock}>
+            <Text style={[styles.participantLabel, { color: s.palette.heroText }]}>Katılımcı</Text>
+            <Text style={[styles.participantName, { color: s.palette.heroText }]}>{ticket.participantName}</Text>
+          </View>
 
           <View style={styles.qrSection}>
             {ticket.attendanceStatus === 'Attended' ? (
               <View style={styles.attendedBox}>
-                <Icon name="checkCircle" size={48} color="#0F766E" />
-                <Text style={styles.attendedText}>Bu atölyeye katıldınız</Text>
+                <Icon name="checkCircle" size={48} color={s.palette.heroText} />
+                <Text style={[styles.attendedText, { color: s.palette.heroText }]}>Bu atölyeye katıldınız</Text>
               </View>
             ) : (
-              <>
+              <View style={styles.qrCard}>
                 <TicketQR value={ticket.qrPayload} />
                 <Text style={styles.qrHint}>Giriş için bu kodu görevliye okutun</Text>
-              </>
+              </View>
             )}
           </View>
         </View>
@@ -145,36 +146,33 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: Radius.full,
-    backgroundColor: Colors.surfaceContainerLowest,
+    backgroundColor: Colors.surfaceContainer,
     justifyContent: 'center',
     alignItems: 'center',
-    ...Shadows.sm,
   },
-  headerTitle: { ...Typography.h3, color: Colors.onSurface, flex: 1, textAlign: 'center' },
+  headerTitle: { ...Typography.serifTitle, color: Colors.onSurface, flex: 1, textAlign: 'center' },
   ticketCard: {
-    backgroundColor: Colors.surfaceContainerLowest,
-    borderRadius: Radius.xl,
-    borderWidth: 1,
-    borderColor: Colors.outlineVariant,
+    borderRadius: Radius.xxxl,
     padding: Spacing.lg,
     gap: Spacing.sm,
-    ...Shadows.card,
   },
   statusBadge: {
     alignSelf: 'flex-start',
+    backgroundColor: 'rgba(255,255,255,0.5)',
     paddingHorizontal: Spacing.sm,
     paddingVertical: 4,
     borderRadius: Radius.full,
   },
-  statusText: { ...Typography.labelSm, fontWeight: '600' },
-  workshopTitle: { ...Typography.h2, color: Colors.onSurface, marginTop: Spacing.xs },
+  statusText: { ...Typography.labelSm, fontWeight: '700' },
+  workshopTitle: { ...Typography.serifHeading, fontSize: 22, lineHeight: 28, marginTop: Spacing.xs },
   infoRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.xs },
-  infoText: { ...Typography.bodyMd, color: Colors.onSurfaceVariant },
-  divider: { height: 1, backgroundColor: Colors.surfaceVariant, marginVertical: Spacing.sm },
-  participantLabel: { ...Typography.labelSm, color: Colors.onSurfaceVariant },
-  participantName: { ...Typography.h3, color: Colors.onSurface },
+  infoText: { ...Typography.bodyMd },
+  participantBlock: { marginTop: Spacing.sm, gap: 2 },
+  participantLabel: { ...Typography.labelSm, opacity: 0.8 },
+  participantName: { ...Typography.h3 },
   qrSection: { alignItems: 'center', marginTop: Spacing.lg, gap: Spacing.sm },
+  qrCard: { backgroundColor: Colors.white, borderRadius: Radius.xl, padding: Spacing.md, alignItems: 'center', gap: Spacing.sm },
   qrHint: { ...Typography.bodyMd, color: Colors.onSurfaceVariant, textAlign: 'center' },
   attendedBox: { alignItems: 'center', gap: Spacing.sm, paddingVertical: Spacing.xl },
-  attendedText: { ...Typography.h3, color: '#0F766E' },
+  attendedText: { ...Typography.h3 },
 });

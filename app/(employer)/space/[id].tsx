@@ -4,7 +4,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Icon } from '../../../components/ui/Icon';
 import DateTimePicker, { type DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { ScreenContainer } from '../../../components/layout/ScreenContainer';
-import { Colors, Typography, Spacing, Radius, Shadows } from '../../../constants/theme';
+import { Colors, Pastel, Typography, Spacing, Radius } from '../../../constants/theme';
 import { spaceListingService, type SpaceListing } from '../../../services/spaceListingService';
 import { spaceBookingService } from '../../../services/spaceBookingService';
 
@@ -12,18 +12,13 @@ type PickerTarget = { field: 'start' | 'end'; mode: 'date' | 'time' } | null;
 
 function combineDateAndTime(base: Date, part: Date, part2: 'date' | 'time'): Date {
   const result = new Date(base);
-  if (part2 === 'date') {
-    result.setFullYear(part.getFullYear(), part.getMonth(), part.getDate());
-  } else {
-    result.setHours(part.getHours(), part.getMinutes(), 0, 0);
-  }
+  if (part2 === 'date') result.setFullYear(part.getFullYear(), part.getMonth(), part.getDate());
+  else result.setHours(part.getHours(), part.getMinutes(), 0, 0);
   return result;
 }
 
 function formatDateTime(date: Date): string {
-  return date.toLocaleString('tr-TR', {
-    day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit',
-  });
+  return date.toLocaleString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' });
 }
 
 function defaultStart(): Date {
@@ -50,22 +45,12 @@ export default function EmployerSpaceDetailScreen() {
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    if (!id) {
-      console.log('employer space detail: missing id', id);
-      setLoading(false);
-      return;
-    }
+    if (!id) { setLoading(false); return; }
     const resolvedId = Array.isArray(id) ? id[0] : String(id);
-    if (!resolvedId || resolvedId === 'undefined') {
-      console.log('employer space detail: invalid id', id);
-      setLoading(false);
-      return;
-    }
+    if (!resolvedId || resolvedId === 'undefined') { setLoading(false); return; }
     (async () => {
       try {
-        console.log('employer fetching listing', resolvedId);
-        const data = await spaceListingService.getById(resolvedId);
-        setListing(data);
+        setListing(await spaceListingService.getById(resolvedId));
       } catch (error) {
         console.log('Mekan detay yüklenemedi', error);
       } finally {
@@ -80,54 +65,32 @@ export default function EmployerSpaceDetailScreen() {
 
   function handlePickerChange(event: DateTimePickerEvent, selected?: Date) {
     if (!pickerTarget) return;
-
-    if (event.type === 'dismissed') {
-      setPickerTarget(null);
-      return;
-    }
-
-    if (!selected) {
-      setPickerTarget(null);
-      return;
-    }
-
+    if (event.type === 'dismissed') { setPickerTarget(null); return; }
+    if (!selected) { setPickerTarget(null); return; }
     const { field, mode } = pickerTarget;
     const current = field === 'start' ? startDateTime : endDateTime;
     const updated = combineDateAndTime(current, selected, mode);
-
     if (field === 'start') setStartDateTime(updated);
     else setEndDateTime(updated);
-
-    if (mode === 'date') {
-      // Tarih seçildi, aynı alan için saat seçimine geç
-      setPickerTarget({ field, mode: 'time' });
-    } else {
-      setPickerTarget(null);
-    }
+    if (mode === 'date') setPickerTarget({ field, mode: 'time' });
+    else setPickerTarget(null);
   }
 
   async function handleCreateBooking() {
     if (!listing) return;
-
     if (endDateTime <= startDateTime) {
       Alert.alert('Geçersiz tarih', 'Bitiş tarihi başlangıç tarihinden sonra olmalı.');
       return;
     }
-
     setSubmitting(true);
     try {
-      await spaceBookingService.create({
-        spaceListingId: listing.id,
-        startDateTime: startDateTime.toISOString(),
-        endDateTime: endDateTime.toISOString(),
-      });
+      await spaceBookingService.create({ spaceListingId: listing.id, startDateTime: startDateTime.toISOString(), endDateTime: endDateTime.toISOString() });
       Alert.alert('Talep gönderildi', 'Rezervasyon talebiniz kafeye iletildi.');
       router.back();
     } catch (error: any) {
       if (error?.response?.status === 409) {
         Alert.alert('Dolu', error.response?.data?.message || 'Bu tarih aralığı dolu.');
       } else {
-        console.log('Rezervasyon talebi oluşturulamadı', error);
         Alert.alert('Hata', error?.response?.data?.message || 'Rezervasyon talebi gönderilemedi.');
       }
     } finally {
@@ -138,9 +101,7 @@ export default function EmployerSpaceDetailScreen() {
   if (loading) {
     return (
       <ScreenContainer edges={['top', 'bottom']}>
-        <View style={styles.centered}>
-          <ActivityIndicator size="large" color={Colors.primary} />
-        </View>
+        <View style={styles.centered}><ActivityIndicator size="large" color={Colors.primary} /></View>
       </ScreenContainer>
     );
   }
@@ -148,9 +109,7 @@ export default function EmployerSpaceDetailScreen() {
   if (!listing) {
     return (
       <ScreenContainer edges={['top', 'bottom']}>
-        <View style={styles.centered}>
-          <Text>İlan bulunamadı.</Text>
-        </View>
+        <View style={styles.centered}><Text style={{ color: Colors.onSurfaceVariant }}>İlan bulunamadı.</Text></View>
       </ScreenContainer>
     );
   }
@@ -167,15 +126,15 @@ export default function EmployerSpaceDetailScreen() {
             </ScrollView>
           ) : (
             <View style={styles.photoPlaceholder}>
-              <Icon name="photoLibrary" size={32} color={Colors.outline} />
+              <Icon name="photoLibrary" size={30} color={Pastel.coral.text} />
               <Text style={styles.photoPlaceholderText}>Fotoğraf yok</Text>
             </View>
           )}
         </View>
 
         <View style={styles.badgeRow}>
-          <View style={[styles.statusBadge, listing.isActive ? styles.statusActive : styles.statusInactive]}>
-            <Text style={styles.statusText}>{listing.isActive ? 'Aktif' : 'Pasif'}</Text>
+          <View style={[styles.statusBadge, { backgroundColor: listing.isActive ? Pastel.teal.tintStrong : Pastel.coral.tintStrong }]}>
+            <Text style={[styles.statusText, { color: listing.isActive ? Pastel.teal.text : Pastel.coral.text }]}>{listing.isActive ? 'Aktif' : 'Pasif'}</Text>
           </View>
           {listing.status ? <Text style={styles.statusSubtext}>{listing.status}</Text> : null}
         </View>
@@ -218,7 +177,7 @@ export default function EmployerSpaceDetailScreen() {
           <Text style={styles.label}>Rezervasyon Talep Et</Text>
 
           <TouchableOpacity style={styles.dateRow} onPress={() => openPicker('start')} activeOpacity={0.7}>
-            <Icon name="event" size={18} color={Colors.onSurfaceVariant} />
+            <Icon name="event" size={17} color={Pastel.coral.text} />
             <View style={styles.dateRowText}>
               <Text style={styles.dateRowLabel}>Başlangıç</Text>
               <Text style={styles.dateRowValue}>{formatDateTime(startDateTime)}</Text>
@@ -226,7 +185,7 @@ export default function EmployerSpaceDetailScreen() {
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.dateRow} onPress={() => openPicker('end')} activeOpacity={0.7}>
-            <Icon name="event" size={18} color={Colors.onSurfaceVariant} />
+            <Icon name="event" size={17} color={Pastel.coral.text} />
             <View style={styles.dateRowText}>
               <Text style={styles.dateRowLabel}>Bitiş</Text>
               <Text style={styles.dateRowValue}>{formatDateTime(endDateTime)}</Text>
@@ -244,17 +203,8 @@ export default function EmployerSpaceDetailScreen() {
           ) : null}
         </View>
 
-        <TouchableOpacity
-          style={[styles.submitButton, submitting && styles.submitButtonDisabled]}
-          activeOpacity={0.85}
-          onPress={handleCreateBooking}
-          disabled={submitting}
-        >
-          {submitting ? (
-            <ActivityIndicator size="small" color={Colors.onPrimary} />
-          ) : (
-            <Text style={styles.submitButtonText}>Rezervasyon Talep Et</Text>
-          )}
+        <TouchableOpacity style={[styles.submitButton, submitting && styles.submitButtonDisabled]} activeOpacity={0.85} onPress={handleCreateBooking} disabled={submitting}>
+          {submitting ? <ActivityIndicator size="small" color={Colors.onPrimary} /> : <Text style={styles.submitButtonText}>Rezervasyon Talep Et</Text>}
         </TouchableOpacity>
       </ScrollView>
     </ScreenContainer>
@@ -263,26 +213,24 @@ export default function EmployerSpaceDetailScreen() {
 
 const styles = StyleSheet.create({
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  title: { ...Typography.h3, color: Colors.onSurface },
-  content: { padding: Spacing.md, gap: Spacing.md },
-  photoGallery: { minHeight: 180, borderRadius: Radius.lg, overflow: 'hidden', backgroundColor: Colors.surfaceContainerLowest },
+  title: { ...Typography.serifTitleLg, color: Colors.onSurface },
+  content: { padding: Spacing.md, gap: Spacing.md, paddingBottom: Spacing.xl },
+  photoGallery: { minHeight: 180, borderRadius: Radius.xxl, overflow: 'hidden', backgroundColor: Pastel.coral.tint },
   photoRow: { gap: Spacing.sm, padding: Spacing.sm },
-  photoItem: { width: 240, height: 160, borderRadius: Radius.lg, backgroundColor: Colors.surfaceContainer },
+  photoItem: { width: 240, height: 160, borderRadius: Radius.xl, backgroundColor: Colors.surfaceContainer },
   photoPlaceholder: { flex: 1, minHeight: 160, alignItems: 'center', justifyContent: 'center', gap: Spacing.xs },
-  photoPlaceholderText: { ...Typography.bodyMd, color: Colors.onSurfaceVariant },
+  photoPlaceholderText: { ...Typography.bodyMd, color: Pastel.coral.text },
   badgeRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm },
   statusBadge: { borderRadius: Radius.full, paddingVertical: Spacing.xs, paddingHorizontal: Spacing.sm },
-  statusActive: { backgroundColor: Colors.primary + '20' },
-  statusInactive: { backgroundColor: Colors.error + '20' },
-  statusText: { ...Typography.labelSm, color: Colors.primary },
+  statusText: { ...Typography.labelSm, fontWeight: '700' },
   statusSubtext: { ...Typography.bodyMd, color: Colors.onSurfaceVariant },
-  card: { backgroundColor: Colors.surfaceContainerLowest, borderRadius: Radius.lg, padding: Spacing.md, gap: Spacing.xs, ...Shadows.sm },
-  rowCard: { backgroundColor: Colors.surfaceContainerLowest, borderRadius: Radius.lg, padding: Spacing.md, flexDirection: 'row', justifyContent: 'space-between', gap: Spacing.sm, ...Shadows.sm },
+  card: { backgroundColor: Pastel.coral.tint, borderRadius: Radius.xxl, padding: Spacing.md, gap: Spacing.xs },
+  rowCard: { backgroundColor: Pastel.coral.tint, borderRadius: Radius.xxl, padding: Spacing.md, flexDirection: 'row', justifyContent: 'space-between', gap: Spacing.sm },
   infoColumn: { flex: 1, gap: Spacing.xs },
   label: { ...Typography.labelMd, color: Colors.onSurfaceVariant },
   value: { ...Typography.bodyMd, color: Colors.onSurface },
   subValue: { ...Typography.bodyMd, color: Colors.onSurfaceVariant },
-  dateRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm, paddingVertical: Spacing.sm, borderTopWidth: 1, borderTopColor: Colors.surfaceVariant },
+  dateRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm, paddingVertical: Spacing.sm },
   dateRowText: { flex: 1 },
   dateRowLabel: { ...Typography.labelSm, color: Colors.onSurfaceVariant },
   dateRowValue: { ...Typography.bodyMd, color: Colors.onSurface, marginTop: 2 },

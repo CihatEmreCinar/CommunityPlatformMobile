@@ -2,16 +2,13 @@ import { useMemo, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Modal, ScrollView, ActivityIndicator } from 'react-native';
 import { Icon } from './ui/Icon';
 import { Calendar, type DateData } from 'react-native-calendars';
-import { Colors, Typography, Spacing, Radius, Shadows } from '../constants/theme';
+import { Colors, Pastel, Fonts, Typography, Spacing, Radius } from '../constants/theme';
 import type { CalendarEvent } from '../services/calendarService';
 import { CALENDAR_EVENT_COLORS } from '../services/calendarService';
 
 function toDateKey(iso: string): string {
   const d = new Date(iso);
-  const year = d.getFullYear();
-  const month = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
 function formatTimeRange(startAt: string, endAt: string): string {
@@ -25,6 +22,33 @@ const TYPE_LABELS: Record<CalendarEvent['type'], string> = {
   booking: 'Rezervasyon',
   'booking-pending': 'Bekleyen Rezervasyon',
 };
+
+// react-native-calendars'ın kendi ızgarasını sistemimize (serif ay başlığı,
+// Plus Jakarta Sans gün etiketleri, flat teal vurgu) uyarlayan tema.
+const CALENDAR_THEME = {
+  backgroundColor: 'transparent',
+  calendarBackground: 'transparent',
+  textSectionTitleColor: Colors.onSurfaceVariant,
+  selectedDayBackgroundColor: Colors.primary,
+  selectedDayTextColor: Colors.onPrimary,
+  todayBackgroundColor: Pastel.teal.tintStrong,
+  todayTextColor: Pastel.teal.text,
+  dayTextColor: Colors.onSurface,
+  textDisabledColor: Colors.outlineVariant,
+  dotColor: Colors.primary,
+  selectedDotColor: Colors.onPrimary,
+  arrowColor: Pastel.teal.text,
+  monthTextColor: Colors.onSurface,
+  textMonthFontFamily: Fonts.serifSemibold,
+  textDayFontFamily: Fonts.sansMedium,
+  textDayHeaderFontFamily: Fonts.sansSemibold,
+  textMonthFontSize: 17,
+  textDayFontSize: 14,
+  textDayHeaderFontSize: 11,
+  'stylesheet.calendar.header': {
+    week: { marginTop: 6, flexDirection: 'row', justifyContent: 'space-between' },
+  },
+} as const;
 
 interface CalendarWidgetProps {
   events: CalendarEvent[];
@@ -59,13 +83,7 @@ export function CalendarWidget({ events, loading }: CalendarWidgetProps) {
         .map((e) => ({ key: e.type, color: e.color }));
       marks[date] = { dots };
     }
-
-    marks[selectedDate] = {
-      ...(marks[selectedDate] ?? { dots: [] }),
-      selected: true,
-      selectedColor: Colors.primary,
-    };
-
+    marks[selectedDate] = { ...(marks[selectedDate] ?? { dots: [] }), selected: true, selectedColor: Colors.primary };
     return marks;
   }, [eventsByDate, selectedDate]);
 
@@ -85,7 +103,7 @@ export function CalendarWidget({ events, loading }: CalendarWidgetProps) {
     <>
       <TouchableOpacity style={styles.card} activeOpacity={0.85} onPress={() => setVisible(true)}>
         <View style={styles.cardIconWrap}>
-          <Icon name="calendarToday" size={22} color={Colors.primary} />
+          <Icon name="calendarToday" size={22} color={Pastel.teal.text} />
         </View>
         <View style={styles.cardTextWrap}>
           <Text style={styles.cardTitle}>{todayLabel}</Text>
@@ -93,15 +111,15 @@ export function CalendarWidget({ events, loading }: CalendarWidgetProps) {
             {loading ? 'Yükleniyor…' : todayEvents.length === 0 ? 'Bugün etkinlik yok' : `Bugün ${todayEvents.length} etkinlik`}
           </Text>
         </View>
-        <Icon name="chevronRight" size={22} color={Colors.outline} />
+        <Icon name="chevronRight" size={20} color={Colors.outline} />
       </TouchableOpacity>
 
       <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setVisible(false)}>
         <View style={styles.modalContainer}>
           <View style={styles.modalHeader}>
             <Text style={styles.modalTitle}>Takvim</Text>
-            <TouchableOpacity onPress={() => setVisible(false)}>
-              <Icon name="closeModal" size={22} color={Colors.onSurface} />
+            <TouchableOpacity onPress={() => setVisible(false)} style={styles.closeBtn}>
+              <Icon name="closeModal" size={18} color={Colors.onSurface} />
             </TouchableOpacity>
           </View>
 
@@ -111,45 +129,45 @@ export function CalendarWidget({ events, loading }: CalendarWidgetProps) {
             </View>
           ) : (
             <ScrollView contentContainerStyle={styles.modalContent}>
-              <Calendar
-                current={selectedDate}
-                markingType="multi-dot"
-                markedDates={markedDates}
-                onDayPress={(day: DateData) => setSelectedDate(day.dateString)}
-                theme={{
-                  todayTextColor: Colors.primary,
-                  arrowColor: Colors.primary,
-                  selectedDayBackgroundColor: Colors.primary,
-                }}
-              />
-
-              <View style={styles.legendRow}>
-                {legendTypes.map((type) => (
-                  <View key={type} style={styles.legendItem}>
-                    <View style={[styles.legendDot, { backgroundColor: CALENDAR_EVENT_COLORS[type] }]} />
-                    <Text style={styles.legendText}>{TYPE_LABELS[type]}</Text>
-                  </View>
-                ))}
+              <View style={styles.calendarCard}>
+                <Calendar
+                  current={selectedDate}
+                  markingType="multi-dot"
+                  markedDates={markedDates}
+                  onDayPress={(day: DateData) => setSelectedDate(day.dateString)}
+                  theme={CALENDAR_THEME as any}
+                />
               </View>
+
+              {legendTypes.length > 0 && (
+                <View style={styles.legendRow}>
+                  {legendTypes.map((type) => (
+                    <View key={type} style={[styles.legendPill, { backgroundColor: CALENDAR_EVENT_COLORS[type] + '1F' }]}>
+                      <View style={[styles.legendDot, { backgroundColor: CALENDAR_EVENT_COLORS[type] }]} />
+                      <Text style={[styles.legendText, { color: CALENDAR_EVENT_COLORS[type] }]}>{TYPE_LABELS[type]}</Text>
+                    </View>
+                  ))}
+                </View>
+              )}
 
               <Text style={styles.selectedDateLabel}>{selectedLabel}</Text>
 
               {selectedEvents.length === 0 ? (
                 <View style={styles.emptyDay}>
-                  <Icon name="eventBusy" size={28} color={Colors.outline} />
+                  <Icon name="eventBusy" size={26} color={Colors.outline} />
                   <Text style={styles.emptyDayText}>Bu gün için etkinlik yok</Text>
                 </View>
               ) : (
                 selectedEvents
                   .sort((a, b) => a.startAt.localeCompare(b.startAt))
                   .map((event) => (
-                    <View key={event.id} style={styles.eventRow}>
+                    <View key={event.id} style={[styles.eventRow, { backgroundColor: event.color + '14' }]}>
                       <View style={[styles.eventDot, { backgroundColor: event.color }]} />
                       <View style={styles.eventTextWrap}>
                         <Text style={styles.eventTitle} numberOfLines={1}>{event.title}</Text>
                         <Text style={styles.eventTime}>{formatTimeRange(event.startAt, event.endAt)}</Text>
                       </View>
-                      <View style={[styles.eventBadge, { backgroundColor: event.color + '1A' }]}>
+                      <View style={[styles.eventBadge, { backgroundColor: event.color + '1F' }]}>
                         <Text style={[styles.eventBadgeText, { color: event.color }]}>{TYPE_LABELS[event.type]}</Text>
                       </View>
                     </View>
@@ -168,18 +186,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.sm,
-    backgroundColor: Colors.surfaceContainerLowest,
-    borderRadius: Radius.lg,
-    borderWidth: 1,
-    borderColor: Colors.surfaceVariant,
+    backgroundColor: Pastel.teal.tint,
+    borderRadius: Radius.xxl,
     padding: Spacing.md,
-    ...Shadows.sm,
   },
   cardIconWrap: {
     width: 40,
     height: 40,
     borderRadius: Radius.md,
-    backgroundColor: Colors.primary + '1A',
+    backgroundColor: Pastel.teal.tintStrong,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -192,28 +207,25 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     padding: Spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.surfaceVariant,
   },
-  modalTitle: { ...Typography.h3, color: Colors.onSurface },
+  modalTitle: { ...Typography.serifTitle, color: Colors.onSurface },
+  closeBtn: { width: 34, height: 34, borderRadius: 17, backgroundColor: Colors.surfaceContainer, alignItems: 'center', justifyContent: 'center' },
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  modalContent: { padding: Spacing.md, paddingBottom: Spacing.xl, gap: Spacing.sm },
-  legendRow: { flexDirection: 'row', gap: Spacing.md, marginTop: Spacing.sm },
-  legendItem: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  legendDot: { width: 8, height: 8, borderRadius: 4 },
-  legendText: { ...Typography.bodyMd, color: Colors.onSurfaceVariant, fontSize: 13 },
-  selectedDateLabel: { ...Typography.labelMd, color: Colors.onSurface, marginTop: Spacing.md, textTransform: 'capitalize' },
+  modalContent: { padding: Spacing.md, paddingBottom: Spacing.xl, gap: Spacing.md },
+  calendarCard: { backgroundColor: Pastel.teal.tint, borderRadius: Radius.xxl, padding: Spacing.sm, paddingBottom: Spacing.md },
+  legendRow: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.sm },
+  legendPill: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: Spacing.sm + 2, paddingVertical: 6, borderRadius: Radius.full },
+  legendDot: { width: 7, height: 7, borderRadius: 4 },
+  legendText: { ...Typography.labelSm, fontWeight: '700' },
+  selectedDateLabel: { ...Typography.serifTitle, fontSize: 16, color: Colors.onSurface, textTransform: 'capitalize' },
   emptyDay: { alignItems: 'center', paddingVertical: Spacing.lg, gap: Spacing.xs },
   emptyDayText: { ...Typography.bodyMd, color: Colors.onSurfaceVariant },
   eventRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.sm,
-    backgroundColor: Colors.surfaceContainerLowest,
-    borderRadius: Radius.md,
-    borderWidth: 1,
-    borderColor: Colors.surfaceVariant,
-    padding: Spacing.sm,
+    borderRadius: Radius.xl,
+    padding: Spacing.sm + 2,
   },
   eventDot: { width: 10, height: 10, borderRadius: 5 },
   eventTextWrap: { flex: 1 },

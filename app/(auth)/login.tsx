@@ -2,10 +2,8 @@ import { useState } from 'react';
 import {
   View,
   Text,
-  TextInput,
   TouchableOpacity,
   StyleSheet,
-  ActivityIndicator,
   Alert,
   ScrollView,
   KeyboardAvoidingView,
@@ -14,8 +12,11 @@ import {
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../../contexts/AuthContext';
-import { Colors, Typography, Spacing, Radius, Shadows } from '../../constants/theme';
+import { Colors, Typography, Spacing, Radius } from '../../constants/theme';
 import { ROLES } from '../../constants/roles';
+import { AuthHeader } from '../../components/auth/AuthHeader';
+import { AuthInput } from '../../components/auth/AuthInput';
+import { AuthButton } from '../../components/auth/AuthButton';
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
@@ -53,31 +54,16 @@ export default function LoginScreen() {
 
   return (
     <SafeAreaView style={styles.flex} edges={['top', 'bottom']}>
-    <KeyboardAvoidingView
-      style={styles.flex}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-    >
-      <ScrollView
-        contentContainerStyle={styles.container}
-        keyboardShouldPersistTaps="handled"
-      >
-        {/* Logo Header */}
-        <View style={styles.logoSection}>
-          <Text style={styles.logoTitle}>Community</Text>
-          <Text style={styles.logoSubtitle}>Yolculuğuna devam etmek için giriş yap</Text>
-        </View>
+      <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+        <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
+          <AuthHeader title="Atolium" subtitle="Yolculuğuna devam etmek için giriş yap" />
 
-        {/* Login Card */}
-        <View style={styles.card}>
-          {/* Email */}
-          <View style={styles.fieldGroup}>
-            <Text style={styles.label}>E-posta Adresi</Text>
-            <View style={styles.inputWrapper}>
-              <Text style={styles.inputIcon}>✉</Text>
-              <TextInput
-                style={styles.input}
+          <View style={styles.body}>
+            <View style={styles.fieldGroup}>
+              <Text style={styles.label}>E-posta Adresi</Text>
+              <AuthInput
+                icon="mailOutline"
                 placeholder="ad@sirket.com"
-                placeholderTextColor={Colors.outlineVariant}
                 value={email}
                 onChangeText={setEmail}
                 keyboardType="email-address"
@@ -85,174 +71,50 @@ export default function LoginScreen() {
                 autoCorrect={false}
               />
             </View>
-          </View>
 
-          {/* Password */}
-          <View style={styles.fieldGroup}>
-            <View style={styles.labelRow}>
-              <Text style={styles.label}>Şifre</Text>
-              <TouchableOpacity onPress={() => router.push('/(auth)/forgot-password')}>
-                <Text style={styles.forgotText}>Şifremi Unuttum?</Text>
-              </TouchableOpacity>
-            </View>
-            <View style={styles.inputWrapper}>
-              <Text style={styles.inputIcon}>🔒</Text>
-              <TextInput
-                style={[styles.input, styles.inputWithAction]}
+            <View style={styles.fieldGroup}>
+              <View style={styles.labelRow}>
+                <Text style={styles.label}>Şifre</Text>
+                <TouchableOpacity onPress={() => router.push('/(auth)/forgot-password')}>
+                  <Text style={styles.forgotText}>Şifremi Unuttum?</Text>
+                </TouchableOpacity>
+              </View>
+              <AuthInput
+                icon="lockOutline"
+                rightIcon={showPassword ? 'passwordHidden' : 'passwordVisible'}
+                onRightIconPress={() => setShowPassword(!showPassword)}
                 placeholder="••••••••"
-                placeholderTextColor={Colors.outlineVariant}
                 value={password}
                 onChangeText={setPassword}
                 secureTextEntry={!showPassword}
               />
-              <TouchableOpacity
-                style={styles.eyeButton}
-                onPress={() => setShowPassword(!showPassword)}
-              >
-                <Text style={styles.eyeIcon}>{showPassword ? '🙈' : '👁'}</Text>
-              </TouchableOpacity>
             </View>
+
+            <AuthButton label="Giriş Yap" onPress={handleLogin} loading={isLoading} style={styles.submit} />
           </View>
 
-          {/* Submit */}
-          <TouchableOpacity
-            style={[styles.button, isLoading && styles.buttonDisabled]}
-            onPress={handleLogin}
-            disabled={isLoading}
-            activeOpacity={0.85}
-          >
-            {isLoading ? (
-              <ActivityIndicator color={Colors.onPrimary} />
-            ) : (
-              <Text style={styles.buttonText}>Giriş Yap</Text>
-            )}
-          </TouchableOpacity>
-        </View>
-
-        {/* Footer */}
-        <View style={styles.footer}>
-          <Text style={styles.footerText}>Hesabın yok mu? </Text>
-          <TouchableOpacity onPress={() => router.push('/(auth)/register')}>
-            <Text style={styles.footerLink}>Kayıt ol</Text>
-          </TouchableOpacity>
-        </View>
-      </ScrollView>
-    </KeyboardAvoidingView>
+          <View style={styles.footer}>
+            <Text style={styles.footerText}>Hesabın yok mu? </Text>
+            <TouchableOpacity onPress={() => router.push('/(auth)/register')}>
+              <Text style={styles.footerLink}>Kayıt ol</Text>
+            </TouchableOpacity>
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  flex: {
-    flex: 1,
-    backgroundColor: Colors.background,
-  },
-  container: {
-    flexGrow: 1,
-    justifyContent: 'center',
-    paddingHorizontal: Spacing.containerMargin,
-    paddingVertical: Spacing.xl,
-    backgroundColor: Colors.background,
-  },
-  logoSection: {
-    alignItems: 'center',
-    marginBottom: Spacing.xl,
-  },
-  logoTitle: {
-    ...Typography.display,
-    color: Colors.primary,
-    marginBottom: Spacing.sm,
-  },
-  logoSubtitle: {
-    ...Typography.bodyLg,
-    color: Colors.onSurfaceVariant,
-    textAlign: 'center',
-  },
-  card: {
-    backgroundColor: Colors.surfaceContainerLowest,
-    borderRadius: Radius.xl,
-    padding: Spacing.lg,
-    borderWidth: 1,
-    borderColor: Colors.surfaceVariant,
-    ...Shadows.card,
-    gap: Spacing.md,
-  },
-  fieldGroup: {
-    gap: Spacing.xs,
-  },
-  label: {
-    ...Typography.labelMd,
-    color: Colors.onSurface,
-  },
-  labelRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  forgotText: {
-    ...Typography.labelMd,
-    color: Colors.primary,
-  },
-  inputWrapper: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Colors.surfaceBright,
-    borderWidth: 1,
-    borderColor: Colors.surfaceVariant,
-    borderRadius: Radius.md,
-    paddingHorizontal: Spacing.sm,
-  },
-  inputIcon: {
-    fontSize: 16,
-    marginRight: Spacing.sm,
-    color: Colors.outline,
-  },
-  input: {
-    flex: 1,
-    ...Typography.bodyMd,
-    color: Colors.onSurface,
-    paddingVertical: Spacing.sm,
-  },
-  inputWithAction: {
-    paddingRight: Spacing.xl,
-  },
-  eyeButton: {
-    position: 'absolute',
-    right: Spacing.sm,
-    padding: Spacing.xs,
-  },
-  eyeIcon: {
-    fontSize: 16,
-  },
-  button: {
-    backgroundColor: Colors.primary,
-    borderRadius: Radius.md,
-    paddingVertical: Spacing.sm,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: Spacing.sm,
-    ...Shadows.sm,
-  },
-  buttonDisabled: {
-    opacity: 0.7,
-  },
-  buttonText: {
-    ...Typography.labelMd,
-    color: Colors.onPrimary,
-    fontSize: 14,
-  },
-  footer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: Spacing.lg,
-  },
-  footerText: {
-    ...Typography.bodyMd,
-    color: Colors.onSurfaceVariant,
-  },
-  footerLink: {
-    ...Typography.labelMd,
-    color: Colors.primary,
-  },
+  flex: { flex: 1, backgroundColor: Colors.background },
+  container: { flexGrow: 1, paddingBottom: Spacing.xl },
+  body: { paddingHorizontal: Spacing.containerMargin, gap: Spacing.md },
+  fieldGroup: { gap: Spacing.sm },
+  label: { ...Typography.labelMd, color: Colors.onSurface },
+  labelRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  forgotText: { ...Typography.labelMd, color: Colors.primary },
+  submit: { marginTop: Spacing.sm },
+  footer: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginTop: Spacing.lg },
+  footerText: { ...Typography.bodyMd, color: Colors.onSurfaceVariant },
+  footerLink: { ...Typography.labelMd, color: Colors.primary },
 });

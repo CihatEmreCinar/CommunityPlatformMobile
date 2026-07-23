@@ -1,14 +1,15 @@
 import { useCallback, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, RefreshControl, ActivityIndicator, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, RefreshControl, ActivityIndicator, Alert } from 'react-native';
 import { useFocusEffect } from 'expo-router';
 import { Icon } from '../../../components/ui/Icon';
 import { Badge } from '../../../components/ui/Badge';
 import { EmptyState } from '../../../components/ui/EmptyState';
 import { Button } from '../../../components/ui/Button';
 import { ScreenContainer } from '../../../components/layout/ScreenContainer';
-import { Colors, Typography, Spacing, Radius, Shadows } from '../../../constants/theme';
+import { Colors, Pastel, Typography, Spacing, Radius } from '../../../constants/theme';
 import { spaceBookingService, type SpaceBooking } from '../../../services/spaceBookingService';
 import { getSpaceBookingStatusStyle } from '../../../utils/spaceBookingStatus';
+import { FLOATING_TAB_BAR_CLEARANCE } from '../../../components/layout/FloatingTabBar';
 
 export default function CafeBookingsScreen() {
   const [bookings, setBookings] = useState<SpaceBooking[]>([]);
@@ -18,8 +19,7 @@ export default function CafeBookingsScreen() {
 
   const loadBookings = useCallback(async () => {
     try {
-      const data = await spaceBookingService.getIncoming();
-      setBookings(data);
+      setBookings(await spaceBookingService.getIncoming());
     } catch (error) {
       console.log('Rezervasyon talepleri yüklenemedi', error);
     } finally {
@@ -39,10 +39,9 @@ export default function CafeBookingsScreen() {
           setActionId(item.id);
           try {
             await spaceBookingService.approve(item.id);
-            setBookings((prev) => prev.map((b) => b.id === item.id ? { ...b, status: 'Approved' } : b));
+            setBookings((prev) => prev.map((b) => (b.id === item.id ? { ...b, status: 'Approved' } : b)));
           } catch (error: any) {
-            const message = error?.response?.data?.message || 'Onaylama işlemi başarısız.';
-            Alert.alert('Hata', message);
+            Alert.alert('Hata', error?.response?.data?.message || 'Onaylama işlemi başarısız.');
           } finally {
             setActionId(null);
           }
@@ -61,10 +60,9 @@ export default function CafeBookingsScreen() {
           setActionId(item.id);
           try {
             await spaceBookingService.reject(item.id);
-            setBookings((prev) => prev.map((b) => b.id === item.id ? { ...b, status: 'Rejected' } : b));
+            setBookings((prev) => prev.map((b) => (b.id === item.id ? { ...b, status: 'Rejected' } : b)));
           } catch (error: any) {
-            const message = error?.response?.data?.message || 'Reddetme işlemi başarısız.';
-            Alert.alert('Hata', message);
+            Alert.alert('Hata', error?.response?.data?.message || 'Reddetme işlemi başarısız.');
           } finally {
             setActionId(null);
           }
@@ -76,9 +74,7 @@ export default function CafeBookingsScreen() {
   if (loading) {
     return (
       <ScreenContainer edges={['top', 'bottom']}>
-        <View style={styles.centered}>
-          <ActivityIndicator size="large" color={Colors.primary} />
-        </View>
+        <View style={styles.centered}><ActivityIndicator size="large" color={Colors.primary} /></View>
       </ScreenContainer>
     );
   }
@@ -90,16 +86,11 @@ export default function CafeBookingsScreen() {
         contentContainerStyle={styles.content}
       >
         {bookings.length === 0 ? (
-          <EmptyState
-            icon="eventBusy"
-            title="Henüz talep yok"
-            description="İlanlarına gelen rezervasyon talepleri burada görünecek."
-            style={styles.emptyState}
-          />
+          <EmptyState icon="eventBusy" title="Henüz talep yok" description="İlanlarına gelen rezervasyon talepleri burada görünecek." style={styles.emptyState} />
         ) : bookings.map((item) => {
           const statusStyle = getSpaceBookingStatusStyle(item.status);
           return (
-            <View key={item.id} style={styles.card}>
+            <View key={item.id} style={[styles.card, { backgroundColor: statusStyle.bg.replace('1A', '14') }]}>
               <View style={styles.cardHeader}>
                 <View style={styles.cardTitleWrap}>
                   <Text style={styles.cardTitle} numberOfLines={2}>{item.spaceListingTitle ?? 'Alan'}</Text>
@@ -109,37 +100,23 @@ export default function CafeBookingsScreen() {
               </View>
 
               <View style={styles.metaRow}>
-                <Icon name="event" size={14} color={Colors.outline} />
+                <Icon name="event" size={13} color={Colors.onSurfaceVariant} />
                 <Text style={styles.metaText}>
-                  {new Date(item.startDateTime).toLocaleDateString('tr-TR', {
-                    day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit',
-                  })}
+                  {new Date(item.startDateTime).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
                   {' – '}
                   {new Date(item.endDateTime).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}
                 </Text>
               </View>
 
               <View style={styles.metaRow}>
-                <Icon name="payments" size={14} color={Colors.outline} />
+                <Icon name="payments" size={13} color={Colors.onSurfaceVariant} />
                 <Text style={styles.metaText}>{item.totalPrice} ₺</Text>
               </View>
 
               {item.status === 'Pending' ? (
                 <View style={styles.cardActions}>
-                  <Button
-                    style={styles.flexOne}
-                    color="primary"
-                    label="Onayla"
-                    disabled={actionId === item.id}
-                    onPress={() => confirmApprove(item)}
-                  />
-                  <Button
-                    style={styles.flexOne}
-                    color="danger"
-                    label="Reddet"
-                    disabled={actionId === item.id}
-                    onPress={() => confirmReject(item)}
-                  />
+                  <Button style={styles.flexOne} color="primary" label="Onayla" disabled={actionId === item.id} onPress={() => confirmApprove(item)} />
+                  <Button style={styles.flexOne} color="danger" label="Reddet" disabled={actionId === item.id} onPress={() => confirmReject(item)} />
                 </View>
               ) : null}
             </View>
@@ -152,21 +129,13 @@ export default function CafeBookingsScreen() {
 
 const styles = StyleSheet.create({
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  title: { ...Typography.h3, color: Colors.onSurface },
-  content: { padding: Spacing.md, gap: Spacing.md },
+  title: { ...Typography.serifTitleLg, color: Colors.onSurface },
+  content: { padding: Spacing.md, paddingBottom: Spacing.md + FLOATING_TAB_BAR_CLEARANCE, gap: Spacing.md },
   emptyState: { paddingVertical: Spacing.xl * 2, gap: Spacing.xs },
-  card: {
-    backgroundColor: Colors.surfaceContainerLowest,
-    borderRadius: Radius.xl,
-    borderWidth: 1,
-    borderColor: Colors.surfaceVariant,
-    padding: Spacing.md,
-    gap: Spacing.sm,
-    ...Shadows.sm,
-  },
+  card: { borderRadius: Radius.xxl, padding: Spacing.md, gap: Spacing.sm },
   cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', gap: Spacing.sm },
   cardTitleWrap: { flex: 1 },
-  cardTitle: { ...Typography.h3, color: Colors.onSurface, fontSize: 16 },
+  cardTitle: { ...Typography.labelMd, fontSize: 16, color: Colors.onSurface },
   cardSubtitle: { ...Typography.bodyMd, color: Colors.onSurfaceVariant, marginTop: 2 },
   metaRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.xs },
   metaText: { ...Typography.bodyMd, color: Colors.onSurfaceVariant, fontSize: 13 },

@@ -15,11 +15,7 @@ export default function EditWorkshopScreen() {
 
   useEffect(() => {
     if (!id) return;
-    workshopService
-      .getById(id)
-      .then(setWorkshop)
-      .catch(() => setError(true))
-      .finally(() => setIsLoading(false));
+    workshopService.getById(id).then(setWorkshop).catch(() => setError(true)).finally(() => setIsLoading(false));
   }, [id]);
 
   if (isLoading) {
@@ -39,23 +35,11 @@ export default function EditWorkshopScreen() {
   }
 
   return (
-    <WorkshopForm
-      mode="edit"
-      initialWorkshop={workshop}
-      onSubmit={(payload: WorkshopRequest) => workshopService.update(workshop.id, payload).then(() => {})}
-    />
+    <WorkshopForm mode="edit" initialWorkshop={workshop} onSubmit={(payload: WorkshopRequest) => workshopService.update(workshop.id, payload).then(() => {})} />
   );
 }
 
 const styles = StyleSheet.create({
-  center: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: Colors.background,
-  },
-  errorText: {
-    ...Typography.bodyLg,
-    color: Colors.onSurfaceVariant,
-  },
+  center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: Colors.background },
+  errorText: { ...Typography.bodyLg, color: Colors.onSurfaceVariant },
 });

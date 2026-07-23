@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
 import { Icon } from '../ui/Icon';
+import { Colors, Typography, Spacing, Radius } from '../../constants/theme';
 
 type FormHeaderProps = {
   title: string;
@@ -11,19 +12,18 @@ type FormHeaderProps = {
   accentColor?: string;
 };
 
-/** Kapat (X) / başlık / Kaydet düzenindeki ortak form header'ı. */
 export function FormHeader({
   title,
   onClose,
   onSave,
   saving = false,
   saveLabel = 'Kaydet',
-  accentColor = '#0F766E',
+  accentColor = Colors.primary,
 }: FormHeaderProps) {
   return (
     <View style={styles.header}>
-      <TouchableOpacity onPress={onClose} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-        <Icon name="close" size={24} color="#374151" />
+      <TouchableOpacity onPress={onClose} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} style={styles.closeBtn}>
+        <Icon name="close" size={19} color={Colors.onSurface} />
       </TouchableOpacity>
       <Text style={styles.headerTitle}>{title}</Text>
       <TouchableOpacity
@@ -38,9 +38,10 @@ export function FormHeader({
 }
 
 const styles = StyleSheet.create({
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 14, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: '#E5E7EB' },
-  headerTitle: { fontSize: 16, fontWeight: '700', color: '#111827' },
-  saveBtn: { borderRadius: 20, paddingHorizontal: 18, paddingVertical: 8, minWidth: 72, alignItems: 'center' },
+  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: Spacing.md, paddingVertical: Spacing.sm + 2 },
+  closeBtn: { width: 34, height: 34, borderRadius: 17, backgroundColor: Colors.surfaceContainer, alignItems: 'center', justifyContent: 'center' },
+  headerTitle: { ...Typography.serifTitle, color: Colors.onSurface },
+  saveBtn: { borderRadius: Radius.full, paddingHorizontal: 18, paddingVertical: 8, minWidth: 72, alignItems: 'center' },
   saveBtnDisabled: { opacity: 0.6 },
-  saveBtnText: { fontSize: 14, fontWeight: '700', color: '#FFFFFF' },
+  saveBtnText: { ...Typography.labelMd, color: '#FFFFFF' },
 });

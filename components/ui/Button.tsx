@@ -8,7 +8,7 @@ import {
   ViewStyle,
 } from 'react-native';
 import { Icon, IconName } from './Icon';
-import { Colors, Typography, Spacing, Radius, Shadows } from '../../constants/theme';
+import { Colors, Pastel, Typography, Spacing, Radius } from '../../constants/theme';
 
 export type ButtonVariant = 'solid' | 'tile';
 export type ButtonColor = 'primary' | 'danger';
@@ -16,18 +16,11 @@ export type ButtonColor = 'primary' | 'danger';
 export interface ButtonProps {
   label: string;
   onPress: () => void;
-  /** 'tile': dashboard hızlı işlem kutucuğu (ikon solda, bordered).
-   *  'solid': dolu arkaplanlı aksiyon butonu (varsayılan). */
   variant?: ButtonVariant;
-  /** yalnızca variant='solid' için: arkaplan rengini belirler. */
   color?: ButtonColor;
   icon?: IconName;
   iconSize?: number;
-  /** true olduğunda: buton metni yerine spinner gösterilir, arkaplan
-   *  Colors.outline'a döner (orijinaldeki "submitting" davranışı). */
   loading?: boolean;
-  /** yalnızca etkileşimi kapatır, loading'in aksine görünümü DEĞİŞTİRMEZ —
-   *  orijinal cancel/approve/reject butonlarının davranışıyla birebir aynı. */
   disabled?: boolean;
   style?: StyleProp<ViewStyle>;
 }
@@ -46,26 +39,22 @@ export function Button({
   if (variant === 'tile') {
     return (
       <TouchableOpacity style={[styles.tile, style]} activeOpacity={0.85} onPress={onPress} disabled={disabled}>
-        {icon && <Icon name={icon} size={20} color={Colors.primary} />}
+        {icon && <Icon name={icon} size={20} color={Pastel.teal.text} />}
         <Text style={styles.tileLabel}>{label}</Text>
       </TouchableOpacity>
     );
   }
 
+  // 'solid' = tek gerçek CTA — primary teal doygun kalır (vurgu noktası kuralı).
   const backgroundColor = loading
     ? Colors.outline
     : color === 'danger'
-    ? Colors.error
+    ? Pastel.coral.text
     : Colors.primary;
 
   return (
     <TouchableOpacity
-      style={[
-        styles.solid,
-        { backgroundColor },
-        icon ? styles.solidWithIcon : null,
-        style,
-      ]}
+      style={[styles.solid, { backgroundColor }, icon ? styles.solidWithIcon : null, style]}
       activeOpacity={0.85}
       onPress={onPress}
       disabled={disabled || loading}
@@ -83,37 +72,24 @@ export function Button({
 }
 
 const styles = StyleSheet.create({
-  // ─── variant="tile" (dashboard hızlı işlemler) ────────────────────────────
+  // Flat pastel tile — dashboard hızlı işlemler.
   tile: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: Spacing.xs,
-    backgroundColor: Colors.surfaceContainerLowest,
-    borderRadius: Radius.md,
-    borderWidth: 1,
-    borderColor: Colors.surfaceVariant,
-    paddingVertical: Spacing.sm,
-    ...Shadows.sm,
+    backgroundColor: Pastel.teal.tint,
+    borderRadius: Radius.xl,
+    paddingVertical: Spacing.sm + 2,
   },
-  tileLabel: {
-    ...Typography.labelMd,
-    color: Colors.primary,
-  },
-  // ─── variant="solid" (rezervasyon kart aksiyonları) ───────────────────────
+  tileLabel: { ...Typography.labelMd, color: Pastel.teal.text },
   solid: {
     paddingVertical: Spacing.sm,
-    borderRadius: Radius.md,
+    borderRadius: Radius.full,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  solidWithIcon: {
-    flexDirection: 'row',
-    gap: 6,
-  },
-  solidLabel: {
-    ...Typography.labelMd,
-    color: Colors.onPrimary,
-  },
+  solidWithIcon: { flexDirection: 'row', gap: 6 },
+  solidLabel: { ...Typography.labelMd, color: Colors.onPrimary },
 });

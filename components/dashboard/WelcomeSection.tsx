@@ -20,10 +20,11 @@ export function WelcomeSection({ firstName, subtitle = DEFAULT_SUBTITLE }: Welco
 
 const styles = StyleSheet.create({
   wrap: { alignItems: 'center', gap: 4, paddingHorizontal: Spacing.md },
-  greeting: { ...Typography.h2, color: Colors.primary, textAlign: 'center' },
+  // Hero (doygun pastel teal) üzerinde okunabilirlik için koyu ton metin.
+  greeting: { ...Typography.serifTitleLg, color: Colors.primaryDarker, textAlign: 'center' },
   subtitle: {
     ...Typography.bodyMd,
-    color: Colors.onSurfaceVariant,
+    color: Colors.primaryDark,
     textAlign: 'center',
     lineHeight: 20,
   },

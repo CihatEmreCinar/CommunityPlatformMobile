@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Colors, Typography, Spacing } from '../../constants/theme';
 
@@ -9,7 +9,7 @@ export interface WorkshopDescriptionProps {
 const COLLAPSED_LINES = 4;
 
 export function WorkshopDescription({ description }: WorkshopDescriptionProps) {
-  const [expanded, setExpanded] = useState(false);
+  const [expanded, setExpanded] = React.useState(false);
 
   if (!description) return null;
 
@@ -31,7 +31,7 @@ const styles = StyleSheet.create({
     gap: Spacing.sm,
   },
   sectionTitle: {
-    ...Typography.titleLg,
+    ...Typography.serifTitle,
     color: Colors.onSurface,
   },
   body: {

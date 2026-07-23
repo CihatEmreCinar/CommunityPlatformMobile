@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Icon } from '../ui/Icon';
-import { Colors, Typography, Spacing, Radius } from '../../constants/theme';
+import { Colors, Pastel, Typography, Spacing, Radius } from '../../constants/theme';
 import { CoverImage } from './CoverImage';
 import { ProfileAvatar } from './ProfileAvatar';
 import { ProfileStats, type ProfileStatItem } from './ProfileStats';
@@ -146,14 +146,14 @@ const styles = StyleSheet.create({
   },
   roleChip: {
     alignSelf: 'flex-start',
-    backgroundColor: Colors.primaryContainer,
-    borderRadius: Radius.sm,
-    paddingHorizontal: 8,
-    paddingVertical: 2,
+    backgroundColor: Pastel.teal.tintStrong,
+    borderRadius: Radius.full,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
   },
   roleChipText: {
     ...Typography.labelSm,
-    color: Colors.primaryDarker,
+    color: Pastel.teal.text,
     fontWeight: '700',
   },
   bio: {

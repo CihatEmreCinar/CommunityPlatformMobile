@@ -1,10 +1,11 @@
 import { useCallback, useState } from 'react';
-import { Image, View, Text, StyleSheet, ScrollView, RefreshControl, ActivityIndicator, TouchableOpacity, Alert } from 'react-native';
+import { Image, View, Text, StyleSheet, ScrollView, RefreshControl, ActivityIndicator, TouchableOpacity } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { Icon } from '../../../components/ui/Icon';
 import { ScreenContainer } from '../../../components/layout/ScreenContainer';
-import { Colors, Typography, Spacing, Radius, Shadows } from '../../../constants/theme';
+import { Colors, Pastel, Typography, Spacing, Radius } from '../../../constants/theme';
 import { spaceListingService, type SpaceListing } from '../../../services/spaceListingService';
+import { FLOATING_TAB_BAR_CLEARANCE } from '../../../components/layout/FloatingTabBar';
 
 export default function CafeListingsScreen() {
   const router = useRouter();
@@ -14,8 +15,7 @@ export default function CafeListingsScreen() {
 
   const loadListings = useCallback(async () => {
     try {
-      const data = await spaceListingService.getMine();
-      setListings(data);
+      setListings(await spaceListingService.getMine());
     } catch (error) {
       console.log('İlanlar yüklenemedi', error);
     } finally {
@@ -29,19 +29,17 @@ export default function CafeListingsScreen() {
   if (loading) {
     return (
       <ScreenContainer edges={['top', 'bottom']}>
-        <View style={styles.centered}>
-          <ActivityIndicator size="large" color={Colors.primary} />
-        </View>
+        <View style={styles.centered}><ActivityIndicator size="large" color={Colors.primary} /></View>
       </ScreenContainer>
     );
   }
 
   return (
-    <ScreenContainer edges={['top', 'bottom']} header={
+    <ScreenContainer edges={['top', 'bottom']} floatingTabBar header={
       <View style={styles.headerRow}>
         <Text style={styles.title}>İlanlarım</Text>
         <TouchableOpacity onPress={() => router.push('/(cafe)/listing/create')} style={styles.addButton}>
-          <Icon name="addAction" size={22} color={Colors.onPrimary} />
+          <Icon name="addAction" size={19} color={Colors.onPrimary} />
         </TouchableOpacity>
       </View>
     }>
@@ -51,7 +49,7 @@ export default function CafeListingsScreen() {
       >
         {listings.length === 0 ? (
           <View style={styles.emptyState}>
-            <Icon name="eventNote" size={40} color={Colors.outline} />
+            <Icon name="eventNote" size={38} color={Colors.outline} />
             <Text style={styles.emptyTitle}>Henüz ilan yok</Text>
             <Text style={styles.emptyText}>İlk ilanını oluşturarak başlayabilirsin.</Text>
             <TouchableOpacity style={styles.emptyAction} onPress={() => router.push('/(cafe)/listing/create')}>
@@ -65,16 +63,16 @@ export default function CafeListingsScreen() {
                 {listing.photoUrls[0] ? (
                   <Image source={{ uri: listing.photoUrls[0] }} style={styles.image} />
                 ) : (
-                  <Icon name="photoCamera" size={30} color={Colors.outline} />
+                  <Icon name="photoCamera" size={26} color={Pastel.coral.text} />
                 )}
               </View>
               <View style={styles.cardBody}>
                 <Text style={styles.cardTitle}>{listing.title}</Text>
                 <Text style={styles.cardMeta}>{listing.capacity} kişi · {listing.hourlyPrice} ₺/saat</Text>
                 {listing.city ? <Text style={styles.cardCity}>{listing.city}</Text> : null}
-                <Text style={[styles.statusLabel, listing.isActive ? styles.statusActive : styles.statusInactive]}>
-                  {listing.isActive ? 'Aktif' : 'Pasif'}
-                </Text>
+                <View style={[styles.statusBadge, { backgroundColor: listing.isActive ? Pastel.teal.tintStrong : Pastel.coral.tintStrong }]}>
+                  <Text style={[styles.statusLabel, { color: listing.isActive ? Pastel.teal.text : Pastel.coral.text }]}>{listing.isActive ? 'Aktif' : 'Pasif'}</Text>
+                </View>
               </View>
             </TouchableOpacity>
             <TouchableOpacity style={styles.editButton} onPress={() => router.push(`/(cafe)/listing/${listing.id}` as any)} activeOpacity={0.85}>
@@ -90,25 +88,24 @@ export default function CafeListingsScreen() {
 const styles = StyleSheet.create({
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', width: '100%' },
-  title: { ...Typography.h3, color: Colors.onSurface },
-  addButton: { width: 40, height: 40, borderRadius: Radius.full, backgroundColor: Colors.primary, alignItems: 'center', justifyContent: 'center', ...Shadows.sm },
-  content: { padding: Spacing.md, gap: Spacing.md },
+  title: { ...Typography.serifTitleLg, color: Colors.onSurface },
+  addButton: { width: 38, height: 38, borderRadius: Radius.full, backgroundColor: Colors.primary, alignItems: 'center', justifyContent: 'center' },
+  content: { padding: Spacing.md, paddingBottom: Spacing.md + FLOATING_TAB_BAR_CLEARANCE, gap: Spacing.md },
   emptyState: { alignItems: 'center', paddingVertical: Spacing.xl * 2, gap: Spacing.xs },
-  emptyTitle: { ...Typography.h3, color: Colors.onSurface },
+  emptyTitle: { ...Typography.serifTitle, color: Colors.onSurface },
   emptyText: { ...Typography.bodyMd, color: Colors.onSurfaceVariant, textAlign: 'center' },
-  card: { backgroundColor: Colors.surfaceContainerLowest, borderRadius: Radius.lg, padding: Spacing.md, flexDirection: 'row', gap: Spacing.md, borderWidth: 1, borderColor: Colors.surfaceVariant, ...Shadows.sm },
-  imagePlaceholder: { width: 72, height: 72, borderRadius: Radius.md, backgroundColor: Colors.surfaceContainer, alignItems: 'center', justifyContent: 'center' },
+  card: { backgroundColor: Pastel.coral.tint, borderRadius: Radius.xxl, padding: Spacing.md, flexDirection: 'row', gap: Spacing.md },
+  imagePlaceholder: { width: 72, height: 72, borderRadius: Radius.xl, backgroundColor: Pastel.coral.tintStrong, alignItems: 'center', justifyContent: 'center' },
   cardBody: { flex: 1, justifyContent: 'center', gap: 4 },
   cardTitle: { ...Typography.labelMd, color: Colors.onSurface },
   cardMeta: { ...Typography.bodyMd, color: Colors.onSurfaceVariant },
-  cardCity: { ...Typography.bodyMd, color: Colors.primary },
+  cardCity: { ...Typography.bodyMd, color: Pastel.coral.text },
   cardContent: { flex: 1, flexDirection: 'row', gap: Spacing.md, alignItems: 'center' },
-  image: { width: 72, height: 72, borderRadius: Radius.md },
-  statusLabel: { ...Typography.labelSm, marginTop: Spacing.xs },
-  statusActive: { color: Colors.primary },
-  statusInactive: { color: Colors.error },
+  image: { width: 72, height: 72, borderRadius: Radius.xl },
+  statusBadge: { alignSelf: 'flex-start', borderRadius: Radius.full, paddingHorizontal: 8, paddingVertical: 2, marginTop: Spacing.xs },
+  statusLabel: { ...Typography.labelSm, fontWeight: '700' },
   editButton: { justifyContent: 'center', paddingHorizontal: Spacing.sm },
-  editButtonText: { ...Typography.labelMd, color: Colors.primary },
+  editButtonText: { ...Typography.labelMd, color: Pastel.coral.text },
   emptyAction: { marginTop: Spacing.md, backgroundColor: Colors.primary, paddingVertical: Spacing.sm, paddingHorizontal: Spacing.md, borderRadius: Radius.full },
   emptyActionText: { ...Typography.labelMd, color: Colors.onPrimary },
 });

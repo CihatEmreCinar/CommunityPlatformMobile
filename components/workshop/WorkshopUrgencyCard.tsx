@@ -1,22 +1,15 @@
 import React, { useEffect, useRef } from 'react';
 import { View, Text, Animated, StyleSheet } from 'react-native';
 import { Icon } from '../ui/Icon';
-import { Colors, Typography, Spacing, Radius, Shadows } from '../../constants/theme';
+import { Colors, Pastel, Typography, Spacing, Radius } from '../../constants/theme';
 
 export interface WorkshopUrgencyCardProps {
   capacity: number;
   enrolledCount: number;
 }
 
-const PLACEHOLDER_AVATAR_COLORS = [Colors.primaryLight, Colors.secondary, Colors.amber];
+const PLACEHOLDER_AVATAR_PALETTES = [Pastel.teal, Pastel.purple, Pastel.amber];
 
-/**
- * Sol taraf (koltuk durumu) capacity/enrolledCount'tan gerçek olarak hesaplanır.
- * Sağ taraf ("arkadaşların katıldı") yer tutucudur — Atolium'da henüz kayıtlı
- * katılımcı listesini ya da takip-kesişimini döndüren bir endpoint yok.
- * Gerçek veri bağlandığında yalnızca bu component'in `friendsJoined` prop'u
- * (şu an sabit) değişecek, dışarıdan kullanım şekli aynı kalır.
- */
 export function WorkshopUrgencyCard({ capacity, enrolledCount }: WorkshopUrgencyCardProps) {
   const remaining = Math.max(capacity - enrolledCount, 0);
   const isFull = remaining <= 0;
@@ -36,7 +29,8 @@ export function WorkshopUrgencyCard({ capacity, enrolledCount }: WorkshopUrgency
     return () => loop.stop();
   }, [isFull, isUrgent, pulse]);
 
-  const statusColor = isFull || isUrgent ? Colors.error : Colors.onSurfaceVariant;
+  const urgentState = isFull || isUrgent;
+  const statusColor = urgentState ? Pastel.coral.text : Colors.onSurfaceVariant;
   const statusText = isFull
     ? 'Kapasite doldu'
     : isUrgent
@@ -44,24 +38,20 @@ export function WorkshopUrgencyCard({ capacity, enrolledCount }: WorkshopUrgency
     : `${enrolledCount}/${capacity} kişi kayıtlı`;
 
   return (
-    <View style={styles.card}>
+    <View style={[styles.card, { backgroundColor: urgentState ? Pastel.coral.tint : Pastel.teal.tint }]}>
       <View style={styles.statusRow}>
-        {(isFull || isUrgent) && (
-          <Animated.View style={[styles.pulseDot, { opacity: pulse }]} />
-        )}
+        {urgentState && <Animated.View style={[styles.pulseDot, { opacity: pulse }]} />}
         <Text style={[styles.statusText, { color: statusColor }]}>{statusText}</Text>
       </View>
 
-      <View style={styles.divider} />
-
       <View style={styles.friendsRow}>
         <View style={styles.avatarStack}>
-          {PLACEHOLDER_AVATAR_COLORS.map((color, i) => (
+          {PLACEHOLDER_AVATAR_PALETTES.map((palette, i) => (
             <View
               key={i}
-              style={[styles.avatar, { backgroundColor: color, marginLeft: i === 0 ? 0 : -8 }]}
+              style={[styles.avatar, { backgroundColor: palette.hero, marginLeft: i === 0 ? 0 : -8 }]}
             >
-              <Icon name="person" size={12} color={Colors.white} />
+              <Icon name="person" size={12} color={palette.heroText} />
             </View>
           ))}
           <View style={[styles.avatar, styles.avatarOverflow, { marginLeft: -8 }]}>
@@ -76,12 +66,9 @@ export function WorkshopUrgencyCard({ capacity, enrolledCount }: WorkshopUrgency
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: Colors.surfaceContainerLowest,
     borderRadius: Radius.xl,
-    borderWidth: 1,
-    borderColor: Colors.surfaceVariant,
     padding: Spacing.md,
-    ...Shadows.sm,
+    gap: Spacing.sm,
   },
   statusRow: {
     flexDirection: 'row',
@@ -92,16 +79,11 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: Colors.error,
+    backgroundColor: Pastel.coral.text,
   },
   statusText: {
     ...Typography.labelMd,
     fontSize: 13,
-  },
-  divider: {
-    height: 1,
-    backgroundColor: Colors.surfaceVariant,
-    marginVertical: Spacing.sm,
   },
   friendsRow: {
     flexDirection: 'row',

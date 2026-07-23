@@ -1,10 +1,11 @@
 import { NotificationsScreen } from '../../../components/notifications/NotificationsScreen';
+import { Pastel } from '../../../constants/theme';
 
 export default function EmployeeNotificationsScreen() {
   return (
     <NotificationsScreen
-      accentColor="#6366F1"
-      unreadBannerBg="#EEF2FF"
+      accentColor={Pastel.purple.text}
+      unreadBannerBg={Pastel.purple.tint}
       emptyDescription="Yeni bildirimler burada görünür."
     />
   );

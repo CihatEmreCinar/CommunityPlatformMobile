@@ -14,6 +14,8 @@ import { PostCard } from './PostCard';
 import { CommentsModal } from './CommentModal';
 import { resolveAuthorRoute, isOwnPost } from './FeedRouteResolver';
 import { FEED_ACCENT_COLOR, type FeedConfiguration } from './FeedConfiguration';
+import { Colors, Typography, Spacing } from '../../constants/theme';
+import { FLOATING_TAB_BAR_CLEARANCE } from '../layout/FloatingTabBar';
 import type { FeedPost } from '../../types/feed.types';
 
 export type FeedScreenProps = {
@@ -63,7 +65,7 @@ export function FeedScreen({ config }: FeedScreenProps) {
   if (loading) {
     return (
       <View style={styles.centered}>
-        <ActivityIndicator size="large" color={FEED_ACCENT_COLOR} />
+        <ActivityIndicator size="large" color={Colors.primary} />
       </View>
     );
   }
@@ -71,7 +73,7 @@ export function FeedScreen({ config }: FeedScreenProps) {
   if (error && posts.length === 0) {
     return (
       <View style={styles.centered}>
-        <Icon name="cloudOfflineOutline" size={48} color="#D1D5DB" />
+        <Icon name="cloudOfflineOutline" size={48} color={Colors.outline} />
         <Text style={styles.errorText}>{error}</Text>
         <TouchableOpacity style={styles.retryBtn} onPress={refresh}>
           <Text style={styles.retryText}>Tekrar dene</Text>
@@ -91,7 +93,7 @@ export function FeedScreen({ config }: FeedScreenProps) {
         ListEmptyComponent={
           !loading ? (
             <View style={styles.empty}>
-              <Icon name="newspaperOutline" size={52} color="#D1D5DB" />
+              <Icon name="newspaperOutline" size={52} color={Colors.outline} />
               <Text style={styles.emptyTitle}>Feed boş</Text>
               <Text style={styles.emptyDesc}>İlk paylaşımı sen yap.</Text>
             </View>
@@ -100,13 +102,13 @@ export function FeedScreen({ config }: FeedScreenProps) {
         ListFooterComponent={
           loadingMore ? (
             <View style={styles.listFooter}>
-              <ActivityIndicator size="small" color={FEED_ACCENT_COLOR} />
+              <ActivityIndicator size="small" color={Colors.primary} />
             </View>
           ) : null
         }
         onEndReached={loadMore}
         onEndReachedThreshold={0.4}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refresh} tintColor={FEED_ACCENT_COLOR} />}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refresh} tintColor={Colors.primary} />}
         contentContainerStyle={posts.length === 0 ? styles.flatListEmpty : styles.flatListContent}
         showsVerticalScrollIndicator={false}
         removeClippedSubviews
@@ -120,15 +122,15 @@ export function FeedScreen({ config }: FeedScreenProps) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F3F4F6' },
-  centered: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 12, backgroundColor: '#F3F4F6' },
-  flatListContent: { paddingVertical: 8, gap: 8 },
+  container: { flex: 1, backgroundColor: Colors.background },
+  centered: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: Spacing.md, backgroundColor: Colors.background },
+  flatListContent: { paddingVertical: Spacing.sm, paddingBottom: FLOATING_TAB_BAR_CLEARANCE, gap: Spacing.sm },
   flatListEmpty: { flexGrow: 1 },
-  listFooter: { paddingVertical: 16, alignItems: 'center' },
-  empty: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 8, paddingTop: 80, paddingHorizontal: 32 },
-  emptyTitle: { fontSize: 16, fontWeight: '600', color: '#374151', marginTop: 4 },
-  emptyDesc: { fontSize: 13, color: '#9CA3AF', textAlign: 'center' },
-  errorText: { fontSize: 14, color: '#6B7280', textAlign: 'center' },
-  retryBtn: { paddingHorizontal: 20, paddingVertical: 10, backgroundColor: FEED_ACCENT_COLOR, borderRadius: 8, marginTop: 4 },
-  retryText: { fontSize: 14, fontWeight: '600', color: '#FFFFFF' },
+  listFooter: { paddingVertical: Spacing.md, alignItems: 'center' },
+  empty: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: Spacing.sm, paddingTop: 80, paddingHorizontal: Spacing.xl },
+  emptyTitle: { ...Typography.serifTitle, color: Colors.onSurface, marginTop: 4 },
+  emptyDesc: { ...Typography.bodyMd, color: Colors.onSurfaceVariant, textAlign: 'center' },
+  errorText: { ...Typography.bodyMd, color: Colors.onSurfaceVariant, textAlign: 'center' },
+  retryBtn: { paddingHorizontal: 20, paddingVertical: 10, backgroundColor: Colors.primary, borderRadius: 999, marginTop: 4 },
+  retryText: { ...Typography.labelMd, color: Colors.onPrimary },
 });

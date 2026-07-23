@@ -3,14 +3,6 @@ import { StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors, Typography, Spacing } from '../../constants/theme';
 
-/**
- * Ekranın en tepesinde, telefonun status bar / kamera çentiği alanının
- * ALTINDA kalacak şekilde safe-area'ya duyarlı marka başlığı.
- *
- * DashboardTicker'ın hemen üzerinde render edilir; böylece ticker artık
- * status bar/kamera bölgesine taşmaz — kendi safe-area hesaplamasını
- * kendi içinde yapar, kullanan ekran (home.tsx) insets ile uğraşmaz.
- */
 export function BrandHeader() {
   const insets = useSafeAreaInsets();
 
@@ -23,13 +15,12 @@ export function BrandHeader() {
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: Colors.surfaceContainerLowest,
+    backgroundColor: Colors.background,
     paddingBottom: Spacing.sm,
     alignItems: 'center',
   },
   wordmark: {
-    ...Typography.h2,
-    color: Colors.primary,
-    letterSpacing: 0.5,
+    ...Typography.serifHeading,
+    color: Colors.onSurface,
   },
 });
