@@ -52,8 +52,21 @@ export const Colors = {
 
   amber: '#F59E0B',
 
+  // Beğeni (kalp) ikonlarının kırmızısı — nötr error kırmızısından (#BA1A1A) ayrı,
+  // canlı "like" tonu. Sadece beğeni/kalp göstergelerinde kullanılır.
+  like: '#EF4444',
+
   black: '#000000',
   white: '#FFFFFF',
+
+  // Renkli/görsel arka planların üstünde kullanılan buzlu cam (frost) beyaz overlay
+  // varyantları — hero rozetleri, mascot, bento kartları vb.
+  glassOverlay: {
+    soft: 'rgba(255,255,255,0.5)',
+    medium: 'rgba(255,255,255,0.55)',
+    strong: 'rgba(255,255,255,0.6)',
+    border: 'rgba(255,255,255,0.7)',
+  },
 };
 
 // Kart hiyerarşisi + kategori renklendirmesi için pastel sistem.
@@ -117,7 +130,12 @@ export const Typography = {
   h3: { fontSize: 18, lineHeight: 24, fontFamily: Fonts.sansSemibold },
   bodyLg: { fontSize: 16, lineHeight: 24, fontFamily: Fonts.sansRegular },
   bodyMd: { fontSize: 14, lineHeight: 20, fontFamily: Fonts.sansRegular },
+  // bodyMd ile labelSm arası küçük gövde metni — birçok yerde elle yapılan
+  // "...bodyMd, fontSize: 13" override'ının yerini alır.
+  bodySm: { fontSize: 13, lineHeight: 18, fontFamily: Fonts.sansRegular },
   labelMd: { fontSize: 12, lineHeight: 16, fontFamily: Fonts.sansSemibold, letterSpacing: 0.24 },
+  // labelMd'nin 13px'lik hafif büyük varyantı — "...labelMd, fontSize: 13" override'ları için.
+  labelSmMd: { fontSize: 13, lineHeight: 16, fontFamily: Fonts.sansSemibold, letterSpacing: 0.24 },
   labelSm: { fontSize: 11, lineHeight: 14, fontFamily: Fonts.sansMedium },
   // Serif başlık varyantları — kart/ekran başlıklarında Typography.h yerine bunlar kullanılır.
   serifTitleLg: { fontSize: 22, lineHeight: 28, fontFamily: Fonts.serifSemibold },

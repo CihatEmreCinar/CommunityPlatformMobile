@@ -3,12 +3,11 @@ import {
   Modal as RNModal,
   View,
   Text,
-  TouchableOpacity,
   StyleSheet,
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
-import { Icon } from './Icon';
+import { IconCircleButton } from './IconCircleButton';
 import { Colors, Typography, Spacing } from '../../constants/theme';
 
 export interface ModalProps {
@@ -24,9 +23,7 @@ export function Modal({ visible, onClose, title, children, keyboardAvoiding = tr
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.title}>{title}</Text>
-        <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
-          <Icon name="closeModal" size={19} color={Colors.onSurface} />
-        </TouchableOpacity>
+        <IconCircleButton icon="closeModal" onPress={onClose} accessibilityLabel="Kapat" />
       </View>
       <View style={styles.body}>{children}</View>
     </View>
@@ -55,6 +52,5 @@ const styles = StyleSheet.create({
     padding: Spacing.containerMargin,
   },
   title: { ...Typography.serifTitle, color: Colors.onSurface },
-  closeBtn: { width: 34, height: 34, borderRadius: 17, backgroundColor: Colors.surfaceContainer, alignItems: 'center', justifyContent: 'center' },
   body: { padding: Spacing.containerMargin, gap: Spacing.sm },
 });

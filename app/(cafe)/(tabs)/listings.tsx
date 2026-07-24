@@ -1,14 +1,16 @@
 import { useCallback, useState } from 'react';
-import { Image, View, Text, StyleSheet, ScrollView, RefreshControl, ActivityIndicator, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, RefreshControl, ActivityIndicator, TouchableOpacity } from 'react-native';
+import { Image } from 'expo-image';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { Icon } from '../../../components/ui/Icon';
 import { ScreenContainer } from '../../../components/layout/ScreenContainer';
 import { Colors, Pastel, Typography, Spacing, Radius } from '../../../constants/theme';
 import { spaceListingService, type SpaceListing } from '../../../services/spaceListingService';
-import { FLOATING_TAB_BAR_CLEARANCE } from '../../../components/layout/FloatingTabBar';
+import { useFloatingTabBarClearance } from '../../../components/layout/FloatingTabBar';
 
 export default function CafeListingsScreen() {
   const router = useRouter();
+  const tabBarClearance = useFloatingTabBarClearance();
   const [listings, setListings] = useState<SpaceListing[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -17,7 +19,7 @@ export default function CafeListingsScreen() {
     try {
       setListings(await spaceListingService.getMine());
     } catch (error) {
-      console.log('İlanlar yüklenemedi', error);
+      if (__DEV__) console.log('İlanlar yüklenemedi', error);
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -35,17 +37,18 @@ export default function CafeListingsScreen() {
   }
 
   return (
-    <ScreenContainer edges={['top', 'bottom']} floatingTabBar header={
+    <ScreenContainer edges={['top']} scroll={false} header={
       <View style={styles.headerRow}>
         <Text style={styles.title}>İlanlarım</Text>
-        <TouchableOpacity onPress={() => router.push('/(cafe)/listing/create')} style={styles.addButton}>
+        <TouchableOpacity onPress={() => router.push('/(cafe)/listing/create')} style={styles.addButton} accessibilityRole="button" accessibilityLabel="Yeni ilan oluştur">
           <Icon name="addAction" size={19} color={Colors.onPrimary} />
         </TouchableOpacity>
       </View>
     }>
       <ScrollView
+        style={styles.scroll}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); loadListings(); }} colors={[Colors.primary]} />}
-        contentContainerStyle={styles.content}
+        contentContainerStyle={[styles.content, { paddingBottom: tabBarClearance }]}
       >
         {listings.length === 0 ? (
           <View style={styles.emptyState}>
@@ -90,7 +93,8 @@ const styles = StyleSheet.create({
   headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', width: '100%' },
   title: { ...Typography.serifTitleLg, color: Colors.onSurface },
   addButton: { width: 38, height: 38, borderRadius: Radius.full, backgroundColor: Colors.primary, alignItems: 'center', justifyContent: 'center' },
-  content: { padding: Spacing.md, paddingBottom: Spacing.md + FLOATING_TAB_BAR_CLEARANCE, gap: Spacing.md },
+  scroll: { flex: 1 },
+  content: { padding: Spacing.md, gap: Spacing.md },
   emptyState: { alignItems: 'center', paddingVertical: Spacing.xl * 2, gap: Spacing.xs },
   emptyTitle: { ...Typography.serifTitle, color: Colors.onSurface },
   emptyText: { ...Typography.bodyMd, color: Colors.onSurfaceVariant, textAlign: 'center' },

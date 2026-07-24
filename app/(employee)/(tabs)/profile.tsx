@@ -18,7 +18,7 @@ import { employeeService } from '../../../services/employeeService';
 import type { EmployeeProfile } from '../../../services/employeeService';
 import type { UserSocialStats } from '../../../types/post.types';
 import { ProfileHeader } from '../../../components/profile/ProfileHeader';
-import { FLOATING_TAB_BAR_CLEARANCE } from '../../../components/layout/FloatingTabBar';
+import { useFloatingTabBarClearance } from '../../../components/layout/FloatingTabBar';
 import { Colors, Pastel, Typography, Spacing, Radius } from '../../../constants/theme';
 import { formatCityDistrict } from '../../../utils/locationFormat';
 
@@ -28,6 +28,7 @@ const COVER_HEIGHT = 168;
 export default function EmployeeProfileScreen() {
   const router = useRouter();
   const { user, logout, refreshUser } = useAuth();
+  const tabBarClearance = useFloatingTabBarClearance();
 
   const [profile, setProfile] = useState<EmployeeProfile | null>(null);
   const [stats, setStats] = useState<UserSocialStats | null>(null);
@@ -83,7 +84,7 @@ export default function EmployeeProfileScreen() {
     <SafeAreaView style={styles.safeArea} edges={['top']}>
     <ScrollView
       style={styles.container}
-      contentContainerStyle={styles.scrollContent}
+      contentContainerStyle={{ paddingBottom: tabBarClearance }}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refresh} tintColor={ACCENT} />}
       showsVerticalScrollIndicator={false}
     >
@@ -184,7 +185,6 @@ export default function EmployeeProfileScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background },
-  scrollContent: { paddingBottom: FLOATING_TAB_BAR_CLEARANCE },
   safeArea: { flex: 1, backgroundColor: Colors.background },
 
   logoutRow: { backgroundColor: Colors.background, paddingHorizontal: Spacing.lg, paddingBottom: Spacing.md },

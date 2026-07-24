@@ -121,8 +121,8 @@ export function ProfileEditForm({
                 returnKeyType="done"
                 maxLength={30}
               />
-              <TouchableOpacity style={[styles.addTagBtn, !specInput.trim() && styles.addTagBtnDisabled]} onPress={onAddSpecialization} disabled={!specInput.trim()}>
-                <Icon name="add" size={19} color="#FFFFFF" />
+              <TouchableOpacity style={[styles.addTagBtn, !specInput.trim() && styles.addTagBtnDisabled]} onPress={onAddSpecialization} disabled={!specInput.trim()} accessibilityRole="button" accessibilityLabel="Uzmanlık alanı ekle">
+                <Icon name="add" size={19} color={Colors.white} />
               </TouchableOpacity>
             </View>
           )}
@@ -170,5 +170,5 @@ const styles = StyleSheet.create({
   categoryChip: { backgroundColor: Colors.surfaceContainer, borderRadius: Radius.full, paddingHorizontal: 12, paddingVertical: 7 },
   categoryChipSelected: { backgroundColor: Colors.primary },
   categoryChipText: { ...Typography.labelSm, color: Colors.onSurface, fontWeight: '600' },
-  categoryChipTextSelected: { color: '#FFFFFF' },
+  categoryChipTextSelected: { color: Colors.white },
 });

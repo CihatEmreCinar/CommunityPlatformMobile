@@ -1,5 +1,6 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { socialService } from '../services/socialService';
+import { optimisticToggle } from '../utils/optimistic';
 import type {
   CommentResponse,
   CreateCommentRequest,
@@ -92,35 +93,28 @@ export function useFollow(initialState?: FollowState): UseFollowReturn {
   const [loadingFollow, setLoadingFollow] = useState(false);
   const [loadingList, setLoadingList] = useState(false);
 
-  const toggleFollow = useCallback(
-    async (targetUserId: string) => {
-      if (!followState) return;
-      const prev = followState;
+  // followState'i ref'te tutuyoruz ki toggleFollow stabil kalsın (stale closure yok).
+  const followStateRef = useRef(followState);
+  followStateRef.current = followState;
 
-      // Optimistic
-      setFollowState({
-        following: !prev.following,
-        followerCount: prev.following
-          ? prev.followerCount - 1
-          : prev.followerCount + 1,
-      });
-
-      setLoadingFollow(true);
-      try {
-        const result = await socialService.toggleFollow(targetUserId);
-        setFollowState({
-          following: result.following,
-          followerCount: result.followerCount,
-        });
-      } catch {
-        // Rollback
-        setFollowState(prev);
-      } finally {
-        setLoadingFollow(false);
-      }
-    },
-    [followState]
-  );
+  const toggleFollow = useCallback((targetUserId: string) => {
+    if (!followStateRef.current) return Promise.resolve();
+    return optimisticToggle({
+      toggle: () =>
+        setFollowState((s) =>
+          s ? { following: !s.following, followerCount: s.following ? s.followerCount - 1 : s.followerCount + 1 } : s
+        ),
+      commit: async () => {
+        setLoadingFollow(true);
+        try {
+          return await socialService.toggleFollow(targetUserId);
+        } finally {
+          setLoadingFollow(false);
+        }
+      },
+      reconcile: (result) => setFollowState({ following: result.following, followerCount: result.followerCount }),
+    });
+  }, []);
 
   const fetchFollowers = useCallback(async (userId: string) => {
     setLoadingList(true);

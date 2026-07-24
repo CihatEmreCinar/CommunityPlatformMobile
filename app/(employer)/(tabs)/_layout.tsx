@@ -6,16 +6,18 @@ import { FloatingTabBar, type FloatingTabItem } from '../../../components/layout
 // "Mekan Bul" hızlı işleminden, bildirimler header zil ikonundan erişiliyor
 // (FloatingTabBar tam olarak 4 sekme için tasarlandı).
 const VISIBLE_TABS: FloatingTabItem[] = [
-  { key: 'dashboard', icon: 'dashboard' },
-  { key: 'feed', icon: 'dynamicFeed' },
-  { key: 'workshop', icon: 'projectorOutline' },
-  { key: 'profile', icon: 'person' },
+  { key: 'dashboard', icon: 'dashboard', label: 'Panel' },
+  { key: 'feed', icon: 'dynamicFeed', label: 'Akış' },
+  { key: 'workshop', icon: 'projectorOutline', label: 'Atölyelerim' },
+  { key: 'profile', icon: 'person', label: 'Profil' },
 ];
 
 function EmployerTabBar({ state, navigation }: BottomTabBarProps) {
   const router = useRouter();
   const activeRouteName = state.routes[state.index].name;
-  const activeKey = VISIBLE_TABS.some((t) => t.key === activeRouteName) ? activeRouteName : VISIBLE_TABS[0].key;
+  // Görünür 4 sekmeden biri değilse (ör. search/notifications gibi ikincil rotalar),
+  // hiçbir sekmeyi seçili gösterme — aksi halde yanlışlıkla ilk sekme aktifmiş gibi görünür.
+  const activeKey = VISIBLE_TABS.some((t) => t.key === activeRouteName) ? activeRouteName : '';
 
   return (
     <FloatingTabBar
@@ -24,6 +26,7 @@ function EmployerTabBar({ state, navigation }: BottomTabBarProps) {
       onTabPress={(key) => navigation.navigate(key)}
       showCreateButton
       onCreatePress={() => router.push('/(employer)/post/create')}
+      createLabel="Gönderi oluştur"
     />
   );
 }

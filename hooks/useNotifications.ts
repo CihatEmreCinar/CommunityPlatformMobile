@@ -1,5 +1,7 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useEffect, useCallback } from 'react';
 import { notificationService } from '../services/notificationService';
+import { usePaginatedResource } from './usePaginatedResource';
+import { useUnreadCount, unreadCountStore } from './useUnreadCount';
 import type { Notification } from '../types/notification.types';
 
 interface UseNotificationsOptions {
@@ -26,103 +28,68 @@ export function useNotifications(
 ): UseNotificationsReturn {
   const { limit = 20, pollIntervalMs = 30000 } = options;
 
-  const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [unreadCount, setUnreadCount] = useState(0);
-  const [loading, setLoading] = useState(true);
-  const [loadingMore, setLoadingMore] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [page, setPage] = useState(1);
-  const [hasMore, setHasMore] = useState(true);
+  // Okunmamış sayısı paylaşılan store'dan gelir (tek poller, tek kaynak).
+  const { unreadCount } = useUnreadCount(pollIntervalMs);
 
-  const pageRef = useRef(page);
-  pageRef.current = page;
+  // Sayfa-tabanlı kaynak: cursor = sayfa numarası. İlk sayfa cursor=null → 1.
+  const fetchPage = useCallback(
+    async (cursor: number | null) => {
+      const page = cursor ?? 1;
+      const result = await notificationService.getAll({ page, limit });
+      return { items: result.items, nextCursor: result.hasMore ? page + 1 : null, hasMore: result.hasMore };
+    },
+    [limit]
+  );
 
-  const fetchNotifications = useCallback(async (resetPage = false) => {
-    try {
-      setError(null);
-      const currentPage = resetPage ? 1 : pageRef.current;
-      const result = await notificationService.getAll({ page: currentPage, limit });
-
-      if (resetPage) {
-        setNotifications(result.items);
-        setPage(1);
-      } else {
-        setNotifications(prev => [...prev, ...result.items]);
-      }
-
-      setHasMore(result.hasMore);
-    } catch (e) {
-      setError('Bildirimler yüklenemedi.');
-    }
-  }, [limit]);
-
-  const fetchUnreadCount = useCallback(async () => {
-    try {
-      const result = await notificationService.getUnreadCount();
-      setUnreadCount(result.unreadCount);
-    } catch {
-    }
-  }, []);
+  const {
+    items: notifications,
+    setItems: setNotifications,
+    loading,
+    loadingMore,
+    error,
+    hasMore,
+    refresh: refreshList,
+    loadMore,
+  } = usePaginatedResource<Notification, number>({
+    fetchPage,
+    loadErrorMessage: 'Bildirimler yüklenemedi.',
+    loadMoreErrorMessage: 'Daha fazla yüklenemedi.',
+    autoLoad: false,
+  });
 
   const refresh = useCallback(async () => {
-    setLoading(true);
-    await Promise.all([fetchNotifications(true), fetchUnreadCount()]);
-    setLoading(false);
-  }, [fetchNotifications, fetchUnreadCount]);
-
-  const loadMore = useCallback(async () => {
-    if (loadingMore || !hasMore) return;
-    setLoadingMore(true);
-    const nextPage = pageRef.current + 1;
-    setPage(nextPage);
-    try {
-      const result = await notificationService.getAll({ page: nextPage, limit });
-      setNotifications(prev => [...prev, ...result.items]);
-      setHasMore(result.hasMore);
-    } catch {
-      setError('Daha fazla yüklenemedi.');
-    } finally {
-      setLoadingMore(false);
-    }
-  }, [loadingMore, hasMore, limit]);
+    await Promise.all([refreshList(), unreadCountStore.refresh()]);
+  }, [refreshList]);
 
   const markRead = useCallback(async (id: string) => {
     await notificationService.markRead(id);
-    setNotifications(prev =>
-      prev.map(n =>
-        n.id === id ? { ...n, isRead: true, readAt: new Date().toISOString() } : n
-      )
+    setNotifications((prev) =>
+      prev.map((n) => (n.id === id ? { ...n, isRead: true, readAt: new Date().toISOString() } : n))
     );
-    setUnreadCount(prev => Math.max(0, prev - 1));
-  }, []);
+    unreadCountStore.decrement();
+  }, [setNotifications]);
 
   const markAllRead = useCallback(async () => {
     await notificationService.markAllRead();
     const now = new Date().toISOString();
-    setNotifications(prev =>
-      prev.map(n => ({ ...n, isRead: true, readAt: now }))
-    );
-    setUnreadCount(0);
-  }, []);
+    setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true, readAt: now })));
+    unreadCountStore.reset();
+  }, [setNotifications]);
 
   const remove = useCallback(async (id: string) => {
-    const target = notifications.find(n => n.id === id);
+    const target = notifications.find((n) => n.id === id);
     await notificationService.delete(id);
-    setNotifications(prev => prev.filter(n => n.id !== id));
+    setNotifications((prev) => prev.filter((n) => n.id !== id));
     if (target && !target.isRead) {
-      setUnreadCount(prev => Math.max(0, prev - 1));
+      unreadCountStore.decrement();
     }
-  }, [notifications]);
+  }, [notifications, setNotifications]);
 
+  // İlk yüklemede sadece listeyi çek — okunmamış sayısını store (useUnreadCount) yönetir.
   useEffect(() => {
-    refresh();
+    refreshList();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  useEffect(() => {
-    if (!pollIntervalMs) return;
-    const interval = setInterval(fetchUnreadCount, pollIntervalMs);
-    return () => clearInterval(interval);
-  }, [fetchUnreadCount, pollIntervalMs]);
 
   return {
     notifications,

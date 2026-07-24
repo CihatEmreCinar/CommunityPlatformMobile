@@ -10,7 +10,7 @@ import { workshopService } from '../../../services/workshopService';
 import { categoryService } from '../../../services/categoryService';
 import { Workshop, WorkshopSearchResult } from '../../../types/workshop';
 import { Category } from '../../../types/category';
-import { FLOATING_TAB_BAR_CLEARANCE } from '../../../components/layout/FloatingTabBar';
+import { useFloatingTabBarClearance } from '../../../components/layout/FloatingTabBar';
 
 type LocationFilter = 'all' | 'online' | 'in-person';
 
@@ -18,6 +18,7 @@ const EMPTY_RESULT: WorkshopSearchResult = { workshops: [], page: 1, pageSize: 1
 
 export default function EmployeeSearchTabScreen() {
   const router = useRouter();
+  const tabBarClearance = useFloatingTabBarClearance();
   const [q, setQ] = useState('');
   const [city, setCity] = useState('');
   const [minPrice, setMinPrice] = useState('');
@@ -31,7 +32,7 @@ export default function EmployeeSearchTabScreen() {
   const [searched, setSearched] = useState(false);
 
   useEffect(() => {
-    categoryService.getAll().then(setCategories).catch((error) => console.log('Kategoriler yüklenemedi', error));
+    categoryService.getAll().then(setCategories).catch((error) => { if (__DEV__) console.log('Kategoriler yüklenemedi', error); });
   }, []);
 
   async function executeSearch(page = 1, append = false) {
@@ -53,7 +54,7 @@ export default function EmployeeSearchTabScreen() {
       setWorkshops((prev) => (append ? [...prev, ...result.workshops] : result.workshops));
       setSearched(true);
     } catch (error) {
-      console.log('Atölye arama hatası', error);
+      if (__DEV__) console.log('Atölye arama hatası', error);
     } finally {
       setLoading(false);
     }
@@ -72,8 +73,8 @@ export default function EmployeeSearchTabScreen() {
   const filterSummary = filterSummaryParts.length > 0 ? filterSummaryParts.join(' · ') : 'Tüm atölyeler';
 
   return (
-    <ScreenContainer edges={['top', 'bottom']} header={<Text style={styles.title}>Atölye Bul</Text>} scroll={false}>
-      <KeyboardAwareScreen contentContainerStyle={styles.content}>
+    <ScreenContainer edges={['top']} header={<Text style={styles.title}>Atölye Bul</Text>} scroll={false}>
+      <KeyboardAwareScreen contentContainerStyle={[styles.content, { paddingBottom: tabBarClearance }]}>
         <CollapsibleFilterPanel title="Filtreler" summary={filterSummary} defaultOpen>
           <View style={styles.filterGroup}>
             <Text style={styles.filterLabel}>Ara</Text>
@@ -234,7 +235,7 @@ export default function EmployeeSearchTabScreen() {
 
 const styles = StyleSheet.create({
   title: { ...Typography.serifTitleLg, color: Colors.onSurface },
-  content: { padding: Spacing.md, paddingBottom: Spacing.xl + FLOATING_TAB_BAR_CLEARANCE, gap: Spacing.md },
+  content: { padding: Spacing.md, gap: Spacing.md },
 
   filterGroup: { gap: Spacing.xs },
   filterLabel: { ...Typography.labelSm, color: Colors.onSurfaceVariant },

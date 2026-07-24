@@ -5,14 +5,14 @@ import { Colors, Radius } from '../../constants/theme';
 export function TicketQR({ value, size = 220 }: { value: string; size?: number }) {
   return (
     <View style={styles.wrap}>
-      <QRCode value={value} size={size} backgroundColor="#FFFFFF" color={Colors.onSurface} />
+      <QRCode value={value} size={size} backgroundColor={Colors.white} color={Colors.onSurface} />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   wrap: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.white,
     padding: 20,
     borderRadius: Radius.xl,
     alignItems: 'center',

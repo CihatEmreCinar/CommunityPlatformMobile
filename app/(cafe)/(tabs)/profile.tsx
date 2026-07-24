@@ -61,7 +61,7 @@ export default function CafeProfileScreen() {
         setSelectedCategoryIds(p.categoryIds ?? []);
         loadReviews(p.id);
       } catch (err) {
-        console.log('cafe profile load failed', err);
+        if (__DEV__) console.log('cafe profile load failed', err);
         Alert.alert('Hata', 'Profil yüklenemedi.');
       } finally {
         setLoading(false);
@@ -79,7 +79,7 @@ export default function CafeProfileScreen() {
     try {
       setReviews(await spaceBookingReviewService.getByCafeProfile(cafeProfileId));
     } catch (err) {
-      console.log('cafe reviews load failed', err);
+      if (__DEV__) console.log('cafe reviews load failed', err);
     } finally {
       setReviewsLoading(false);
     }
@@ -88,7 +88,7 @@ export default function CafeProfileScreen() {
   const handlePickAvatar = useCallback(async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') { Alert.alert('İzin gerekli', 'Fotoğraf seçmek için galeri izni vermelisin.'); return; }
-    const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ImagePicker.MediaTypeOptions.Images, allowsEditing: true, aspect: [1, 1], quality: 0.8 });
+    const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], allowsEditing: true, aspect: [1, 1], quality: 0.8 });
     if (result.canceled || !result.assets?.[0]) return;
     const uri = result.assets[0].uri;
     setAvatarUrl(uri);
@@ -107,7 +107,7 @@ export default function CafeProfileScreen() {
   const handlePickCover = useCallback(async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') { Alert.alert('İzin gerekli', 'Fotoğraf seçmek için galeri izni vermelisin.'); return; }
-    const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ImagePicker.MediaTypeOptions.Images, allowsEditing: true, aspect: [16, 9], quality: 0.8 });
+    const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], allowsEditing: true, aspect: [16, 9], quality: 0.8 });
     if (result.canceled || !result.assets?.[0]) return;
     const uri = result.assets[0].uri;
     setCoverImageUrl(uri);

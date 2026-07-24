@@ -140,6 +140,8 @@ export function EmployeeProfileEditForm({
               style={[styles.addTagBtn, !interestInput.trim() && styles.addTagBtnDisabled]}
               onPress={onAddInterest}
               disabled={!interestInput.trim()}
+              accessibilityRole="button"
+              accessibilityLabel="İlgi alanı ekle"
             >
               <Icon name="add" size={20} color={Colors.white} />
             </TouchableOpacity>
@@ -181,6 +183,8 @@ export function EmployeeProfileEditForm({
               style={[styles.addTagBtn, !hobbyInput.trim() && styles.addTagBtnDisabled]}
               onPress={onAddHobby}
               disabled={!hobbyInput.trim()}
+              accessibilityRole="button"
+              accessibilityLabel="Hobi ekle"
             >
               <Icon name="add" size={20} color={Colors.white} />
             </TouchableOpacity>

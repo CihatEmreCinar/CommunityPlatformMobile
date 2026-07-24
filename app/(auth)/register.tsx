@@ -150,6 +150,7 @@ export default function RegisterScreen() {
                 icon="lockOutline"
                 rightIcon={showPassword ? 'passwordHidden' : 'passwordVisible'}
                 onRightIconPress={() => setShowPassword(!showPassword)}
+                rightIconAccessibilityLabel={showPassword ? 'Şifreyi gizle' : 'Şifreyi göster'}
                 placeholder="En az 8 karakter"
                 value={password}
                 onChangeText={setPassword}

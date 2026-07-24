@@ -6,16 +6,18 @@ import { FloatingTabBar, type FloatingTabItem } from '../../../components/layout
 // istatistik kartı/hızlı işlemden, bildirimler header zil ikonundan erişiliyor
 // (FloatingTabBar tam olarak 4 sekme için tasarlandı).
 const VISIBLE_TABS: FloatingTabItem[] = [
-  { key: 'dashboard', icon: 'cakeSlice' },
-  { key: 'feed', icon: 'dynamicFeed' },
-  { key: 'listings', icon: 'eventNote' },
-  { key: 'profile', icon: 'person' },
+  { key: 'dashboard', icon: 'cakeSlice', label: 'Panel' },
+  { key: 'feed', icon: 'dynamicFeed', label: 'Akış' },
+  { key: 'listings', icon: 'eventNote', label: 'İlanlar' },
+  { key: 'profile', icon: 'person', label: 'Profil' },
 ];
 
 function CafeTabBar({ state, navigation }: BottomTabBarProps) {
   const router = useRouter();
   const activeRouteName = state.routes[state.index].name;
-  const activeKey = VISIBLE_TABS.some((t) => t.key === activeRouteName) ? activeRouteName : VISIBLE_TABS[0].key;
+  // Görünür 4 sekmeden biri değilse (ör. bookings/notifications gibi ikincil rotalar),
+  // hiçbir sekmeyi seçili gösterme — aksi halde yanlışlıkla ilk sekme aktifmiş gibi görünür.
+  const activeKey = VISIBLE_TABS.some((t) => t.key === activeRouteName) ? activeRouteName : '';
 
   return (
     <FloatingTabBar
@@ -24,6 +26,7 @@ function CafeTabBar({ state, navigation }: BottomTabBarProps) {
       onTabPress={(key) => navigation.navigate(key)}
       showCreateButton
       onCreatePress={() => router.push('/(cafe)/post/create')}
+      createLabel="Gönderi oluştur"
     />
   );
 }

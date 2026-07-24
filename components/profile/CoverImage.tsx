@@ -1,12 +1,12 @@
-import React, { useRef, useState } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
-  Animated,
   TouchableOpacity,
   StyleSheet,
   ActivityIndicator,
 } from 'react-native';
+import { Image } from 'expo-image';
 import { Icon } from '../ui/Icon';
 import { Colors, Radius } from '../../constants/theme';
 
@@ -41,26 +41,16 @@ export function CoverImage({
   onPress,
   accessibilityLabel = 'Kapak görseli',
 }: CoverImageProps) {
-  const opacity = useRef(new Animated.Value(uri ? 0 : 1)).current;
-
-  const handleLoad = () => {
-    Animated.timing(opacity, {
-      toValue: 1,
-      duration: 280,
-      useNativeDriver: true,
-    }).start();
-  };
-
   const [failed, setFailed] = useState(false);
   const showImage = !!uri && !failed;
 
   const content = (
     <View style={[styles.wrap, { height }]}>
       {showImage ? (
-        <Animated.Image
+        <Image
           source={{ uri }}
-          style={[styles.image, { opacity }]}
-          onLoad={handleLoad}
+          style={styles.image}
+          transition={280}
           onError={() => setFailed(true)}
           accessible
           accessibilityLabel={accessibilityLabel}

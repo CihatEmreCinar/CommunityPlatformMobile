@@ -1,7 +1,8 @@
+import { useEffect } from 'react';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { SafeAreaView, SafeAreaProvider } from 'react-native-safe-area-context';
-import { View } from 'react-native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+import * as SplashScreen from 'expo-splash-screen';
 import {
   useFonts,
   Lora_500Medium,
@@ -16,7 +17,16 @@ import {
 } from '@expo-google-fonts/plus-jakarta-sans';
 import { AuthProvider, useAuth } from '../contexts/AuthContext';
 import { usePushNotifications } from '../hooks/usePushNotifications';
-import { Colors } from '../constants/theme';
+import { ErrorBoundary } from '../components/ErrorBoundary';
+import { OfflineBanner } from '../components/OfflineBanner';
+import { initErrorReporting } from '../services/errorReporting';
+
+// Fontlar yüklenene kadar native splash ekranı açık kalsın — aksi halde
+// JS bundle çalışır çalışmaz splash kapanır ve fontsuz/boş bir an görünür.
+SplashScreen.preventAutoHideAsync();
+
+// EXPO_PUBLIC_SENTRY_DSN tanımlı değilse no-op (bkz. services/errorReporting.ts).
+initErrorReporting();
 
 function RootNavigator() {
   const { user } = useAuth();
@@ -46,16 +56,26 @@ export default function RootLayout() {
     PlusJakartaSans_700Bold,
   });
 
+  useEffect(() => {
+    if (fontsLoaded) {
+      SplashScreen.hideAsync();
+    }
+  }, [fontsLoaded]);
+
   if (!fontsLoaded) {
-    return <View style={{ flex: 1, backgroundColor: Colors.background }} />;
+    // Native splash ekranı hâlâ görünür durumda (preventAutoHideAsync sayesinde) — burada ayrıca bir placeholder render etmeye gerek yok.
+    return null;
   }
 
   return (
-    <AuthProvider>
-      <SafeAreaProvider>
-        <StatusBar style="auto" />
-        <RootNavigator />
-      </SafeAreaProvider>
-    </AuthProvider>
+    <ErrorBoundary>
+      <AuthProvider>
+        <SafeAreaProvider>
+          <StatusBar style="auto" />
+          <RootNavigator />
+          <OfflineBanner />
+        </SafeAreaProvider>
+      </AuthProvider>
+    </ErrorBoundary>
   );
 }

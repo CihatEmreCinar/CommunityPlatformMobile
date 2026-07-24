@@ -49,7 +49,7 @@ export function CommentsModal({ visible, post, onClose }: CommentsModalProps) {
       <KeyboardAvoidingView style={styles.modalContainer} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <View style={styles.modalHeader}>
           <Text style={styles.modalTitle}>Yorumlar</Text>
-          <TouchableOpacity onPress={onClose}><Icon name="close" size={22} color={Colors.onSurfaceVariant} /></TouchableOpacity>
+          <TouchableOpacity onPress={onClose} accessibilityRole="button" accessibilityLabel="Kapat"><Icon name="close" size={22} color={Colors.onSurfaceVariant} /></TouchableOpacity>
         </View>
         {loading
           ? <View style={styles.centered}><ActivityIndicator color={Colors.primary} /></View>
@@ -80,6 +80,8 @@ export function CommentsModal({ visible, post, onClose }: CommentsModalProps) {
             onPress={handleSend}
             disabled={submitting || !text.trim()}
             style={[styles.sendBtn, (!text.trim() || submitting) && styles.sendBtnDisabled]}
+            accessibilityRole="button"
+            accessibilityLabel="Gönder"
           >
             {submitting
               ? <ActivityIndicator size="small" color={Colors.onPrimary} />
@@ -99,8 +101,8 @@ const styles = StyleSheet.create({
   commentsList: { padding: Spacing.md, gap: Spacing.md },
   commentItem: { flexDirection: 'row', gap: Spacing.sm, alignItems: 'flex-start' },
   commentBody: { flex: 1, backgroundColor: Pastel.teal.tint, borderRadius: Radius.lg, padding: Spacing.sm, gap: 3 },
-  commentAuthor: { ...Typography.labelMd, fontSize: 13, color: Colors.onSurface },
-  commentText: { ...Typography.bodyMd, fontSize: 13, color: Colors.onSurface, lineHeight: 19 },
+  commentAuthor: { ...Typography.labelSmMd, color: Colors.onSurface },
+  commentText: { ...Typography.bodySm, color: Colors.onSurface, lineHeight: 19 },
   commentTime: { ...Typography.labelSm, color: Colors.outline, marginTop: 2 },
   commentsEmpty: { alignItems: 'center', justifyContent: 'center', paddingTop: 60, gap: Spacing.sm },
   commentsEmptyText: { ...Typography.bodyMd, color: Colors.outline },

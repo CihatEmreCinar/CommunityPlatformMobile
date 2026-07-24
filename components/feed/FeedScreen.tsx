@@ -1,11 +1,11 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import {
-  View, Text, FlatList, TouchableOpacity, StyleSheet,
+  View, FlatList, StyleSheet,
   ActivityIndicator, RefreshControl, Share,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Icon } from '../ui/Icon';
+import { EmptyState } from '../ui/EmptyState';
 import { useFeed } from '../../hooks/useFeed';
 import { useShare } from '../../hooks/useSocial';
 import { useAuth } from '../../contexts/AuthContext';
@@ -14,8 +14,8 @@ import { PostCard } from './PostCard';
 import { CommentsModal } from './CommentModal';
 import { resolveAuthorRoute, isOwnPost } from './FeedRouteResolver';
 import { FEED_ACCENT_COLOR, type FeedConfiguration } from './FeedConfiguration';
-import { Colors, Typography, Spacing } from '../../constants/theme';
-import { FLOATING_TAB_BAR_CLEARANCE } from '../layout/FloatingTabBar';
+import { Colors, Spacing } from '../../constants/theme';
+import { useFloatingTabBarClearance } from '../layout/FloatingTabBar';
 import type { FeedPost } from '../../types/feed.types';
 
 export type FeedScreenProps = {
@@ -25,6 +25,7 @@ export type FeedScreenProps = {
 export function FeedScreen({ config }: FeedScreenProps) {
   const router = useRouter();
   const { user } = useAuth();
+  const tabBarClearance = useFloatingTabBarClearance();
   // Her rol kendi feed'inde herkesi görmeli → explore mode
   // (backend zaten authorType/Visibility'ye göre role uygun içeriği filtreliyor).
   const { posts, loading, loadingMore, refreshing, error, hasMore, refresh, loadMore, toggleLike } =
@@ -72,13 +73,14 @@ export function FeedScreen({ config }: FeedScreenProps) {
 
   if (error && posts.length === 0) {
     return (
-      <View style={styles.centered}>
-        <Icon name="cloudOfflineOutline" size={48} color={Colors.outline} />
-        <Text style={styles.errorText}>{error}</Text>
-        <TouchableOpacity style={styles.retryBtn} onPress={refresh}>
-          <Text style={styles.retryText}>Tekrar dene</Text>
-        </TouchableOpacity>
-      </View>
+      <EmptyState
+        icon="cloudOfflineOutline"
+        iconSize={48}
+        description={error}
+        actionLabel="Tekrar dene"
+        onAction={refresh}
+        style={styles.centered}
+      />
     );
   }
 
@@ -92,11 +94,13 @@ export function FeedScreen({ config }: FeedScreenProps) {
         renderItem={renderItem}
         ListEmptyComponent={
           !loading ? (
-            <View style={styles.empty}>
-              <Icon name="newspaperOutline" size={52} color={Colors.outline} />
-              <Text style={styles.emptyTitle}>Feed boş</Text>
-              <Text style={styles.emptyDesc}>İlk paylaşımı sen yap.</Text>
-            </View>
+            <EmptyState
+              icon="newspaperOutline"
+              iconSize={52}
+              title="Feed boş"
+              description="İlk paylaşımı sen yap."
+              style={styles.empty}
+            />
           ) : null
         }
         ListFooterComponent={
@@ -109,7 +113,7 @@ export function FeedScreen({ config }: FeedScreenProps) {
         onEndReached={loadMore}
         onEndReachedThreshold={0.4}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refresh} tintColor={Colors.primary} />}
-        contentContainerStyle={posts.length === 0 ? styles.flatListEmpty : styles.flatListContent}
+        contentContainerStyle={posts.length === 0 ? styles.flatListEmpty : [styles.flatListContent, { paddingBottom: tabBarClearance }]}
         showsVerticalScrollIndicator={false}
         removeClippedSubviews
         maxToRenderPerBatch={8}
@@ -124,13 +128,8 @@ export function FeedScreen({ config }: FeedScreenProps) {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background },
   centered: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: Spacing.md, backgroundColor: Colors.background },
-  flatListContent: { paddingVertical: Spacing.sm, paddingBottom: FLOATING_TAB_BAR_CLEARANCE, gap: Spacing.sm },
+  flatListContent: { paddingVertical: Spacing.sm, gap: Spacing.sm },
   flatListEmpty: { flexGrow: 1 },
   listFooter: { paddingVertical: Spacing.md, alignItems: 'center' },
   empty: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: Spacing.sm, paddingTop: 80, paddingHorizontal: Spacing.xl },
-  emptyTitle: { ...Typography.serifTitle, color: Colors.onSurface, marginTop: 4 },
-  emptyDesc: { ...Typography.bodyMd, color: Colors.onSurfaceVariant, textAlign: 'center' },
-  errorText: { ...Typography.bodyMd, color: Colors.onSurfaceVariant, textAlign: 'center' },
-  retryBtn: { paddingHorizontal: 20, paddingVertical: 10, backgroundColor: Colors.primary, borderRadius: 999, marginTop: 4 },
-  retryText: { ...Typography.labelMd, color: Colors.onPrimary },
 });

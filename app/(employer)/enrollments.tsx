@@ -35,7 +35,7 @@ export default function EmployerEnrollmentsScreen() {
     try {
       setEnrollments(await enrollmentService.getEmployerEnrollments(status));
     } catch (error) {
-      console.log('Kayıtlar yüklenemedi', error);
+      if (__DEV__) console.log('Kayıtlar yüklenemedi', error);
     } finally {
       setIsLoading(false);
       setIsRefreshing(false);
@@ -50,7 +50,7 @@ export default function EmployerEnrollmentsScreen() {
       await enrollmentService.approve(id);
       setEnrollments((prev) => prev.map((item) => (item.id === id ? { ...item, status: 'confirmed' } : item)));
     } catch (error) {
-      console.log('Onaylanamadı', error);
+      if (__DEV__) console.log('Onaylanamadı', error);
       Alert.alert('Hata', 'Kaydı onaylarken bir sorun oluştu.');
     } finally {
       setActionId(null);
@@ -63,7 +63,7 @@ export default function EmployerEnrollmentsScreen() {
       await enrollmentService.reject(id);
       setEnrollments((prev) => prev.map((item) => (item.id === id ? { ...item, status: 'cancelled' } : item)));
     } catch (error) {
-      console.log('Reddedilemedi', error);
+      if (__DEV__) console.log('Reddedilemedi', error);
       Alert.alert('Hata', 'Kaydı reddederken bir sorun oluştu.');
     } finally {
       setActionId(null);
@@ -91,7 +91,7 @@ export default function EmployerEnrollmentsScreen() {
         refreshControl={<RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} colors={[Colors.primary]} />}
       >
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+          <TouchableOpacity onPress={() => router.back()} style={styles.backButton} accessibilityRole="button" accessibilityLabel="Geri">
             <Icon name="arrowBack" size={20} color={Colors.onSurface} />
           </TouchableOpacity>
           <Text style={styles.title}>Kayıt Talepleri</Text>
@@ -179,11 +179,11 @@ const styles = StyleSheet.create({
   messageRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.xs },
   messageText: { ...Typography.bodyMd, color: Colors.onSurfaceVariant, flex: 1 },
   metaRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.xs },
-  metaText: { ...Typography.bodyMd, color: Colors.onSurfaceVariant, fontSize: 13 },
+  metaText: { ...Typography.bodySm, color: Colors.onSurfaceVariant },
   cardActions: { flexDirection: 'row', gap: Spacing.sm, marginTop: Spacing.sm },
   actionButton: { flex: 1, paddingVertical: Spacing.sm, borderRadius: Radius.md, justifyContent: 'center', alignItems: 'center' },
   approveButton: { backgroundColor: Colors.primary },
   rejectButton: { backgroundColor: Pastel.coral.tintStrong },
-  approveText: { ...Typography.labelMd, color: '#FFFFFF' },
+  approveText: { ...Typography.labelMd, color: Colors.white },
   rejectText: { ...Typography.labelMd, color: Pastel.coral.text },
 });

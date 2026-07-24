@@ -36,7 +36,7 @@ export default function EmployerWorkshopDetailScreen() {
       setWorkshop(w);
       setReviews(r);
     } catch (error) {
-      console.log('Veri yüklenemedi', error);
+      if (__DEV__) console.log('Veri yüklenemedi', error);
     } finally {
       setIsLoading(false);
     }
@@ -71,7 +71,7 @@ export default function EmployerWorkshopDetailScreen() {
     <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
     <ScrollView style={styles.flex} contentContainerStyle={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+        <TouchableOpacity onPress={() => router.back()} style={styles.backButton} accessibilityRole="button" accessibilityLabel="Geri">
           <Icon name="arrowBack" size={20} color={Colors.onSurface} />
         </TouchableOpacity>
         <Text style={styles.headerTitle} numberOfLines={1}>{workshop.title}</Text>
@@ -205,7 +205,7 @@ const styles = StyleSheet.create({
   reviewComment: { ...Typography.bodyMd, color: Colors.onSurfaceVariant },
   replyBox: { backgroundColor: Pastel.purple.tintStrong, borderRadius: Radius.lg, padding: Spacing.sm, gap: 2 },
   replyLabel: { ...Typography.labelSm, color: Pastel.purple.text, fontWeight: '700' },
-  replyText: { ...Typography.bodyMd, fontSize: 13, color: Pastel.purple.text },
+  replyText: { ...Typography.bodySm, color: Pastel.purple.text },
   replyForm: { gap: Spacing.xs },
   replyInput: { ...Typography.bodyMd, color: Colors.onSurface, backgroundColor: Colors.surfaceContainerLowest, borderRadius: Radius.lg, paddingHorizontal: Spacing.sm, paddingVertical: Spacing.sm, minHeight: 60, textAlignVertical: 'top' },
   replyButton: { backgroundColor: Colors.primary, borderRadius: Radius.md, paddingVertical: Spacing.xs, alignItems: 'center' },

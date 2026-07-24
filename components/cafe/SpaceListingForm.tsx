@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
-import { Image, ScrollView, Text, TextInput, TouchableOpacity, View, StyleSheet, Alert } from 'react-native';
+import { ScrollView, Text, TextInput, TouchableOpacity, View, StyleSheet, Alert } from 'react-native';
+import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import { Icon } from '../ui/Icon';
 import { Colors, Pastel, Typography, Spacing, Radius } from '../../constants/theme';
@@ -48,7 +49,7 @@ export function SpaceListingForm({
     }
 
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      mediaTypes: ['images'],
       allowsEditing: true,
       allowsMultipleSelection: true,
       aspect: [4, 3],

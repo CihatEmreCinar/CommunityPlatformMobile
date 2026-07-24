@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Modal, ScrollView, ActivityIndicator } from 'react-native';
 import { Icon } from './ui/Icon';
+import { IconCircleButton } from './ui/IconCircleButton';
 import { Calendar, type DateData } from 'react-native-calendars';
 import { Colors, Pastel, Fonts, Typography, Spacing, Radius } from '../constants/theme';
 import type { CalendarEvent } from '../services/calendarService';
@@ -118,9 +119,7 @@ export function CalendarWidget({ events, loading }: CalendarWidgetProps) {
         <View style={styles.modalContainer}>
           <View style={styles.modalHeader}>
             <Text style={styles.modalTitle}>Takvim</Text>
-            <TouchableOpacity onPress={() => setVisible(false)} style={styles.closeBtn}>
-              <Icon name="closeModal" size={18} color={Colors.onSurface} />
-            </TouchableOpacity>
+            <IconCircleButton icon="closeModal" iconSize={18} onPress={() => setVisible(false)} accessibilityLabel="Kapat" />
           </View>
 
           {loading ? (
@@ -209,7 +208,6 @@ const styles = StyleSheet.create({
     padding: Spacing.md,
   },
   modalTitle: { ...Typography.serifTitle, color: Colors.onSurface },
-  closeBtn: { width: 34, height: 34, borderRadius: 17, backgroundColor: Colors.surfaceContainer, alignItems: 'center', justifyContent: 'center' },
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   modalContent: { padding: Spacing.md, paddingBottom: Spacing.xl, gap: Spacing.md },
   calendarCard: { backgroundColor: Pastel.teal.tint, borderRadius: Radius.xxl, padding: Spacing.sm, paddingBottom: Spacing.md },
@@ -230,7 +228,7 @@ const styles = StyleSheet.create({
   eventDot: { width: 10, height: 10, borderRadius: 5 },
   eventTextWrap: { flex: 1 },
   eventTitle: { ...Typography.labelMd, color: Colors.onSurface },
-  eventTime: { ...Typography.bodyMd, color: Colors.onSurfaceVariant, fontSize: 13, marginTop: 2 },
+  eventTime: { ...Typography.bodySm, color: Colors.onSurfaceVariant, marginTop: 2 },
   eventBadge: { paddingHorizontal: Spacing.sm, paddingVertical: 3, borderRadius: Radius.full },
   eventBadgeText: { ...Typography.labelSm, fontWeight: '700' },
 });

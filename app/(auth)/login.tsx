@@ -83,6 +83,7 @@ export default function LoginScreen() {
                 icon="lockOutline"
                 rightIcon={showPassword ? 'passwordHidden' : 'passwordVisible'}
                 onRightIconPress={() => setShowPassword(!showPassword)}
+                rightIconAccessibilityLabel={showPassword ? 'Şifreyi gizle' : 'Şifreyi göster'}
                 placeholder="••••••••"
                 value={password}
                 onChangeText={setPassword}

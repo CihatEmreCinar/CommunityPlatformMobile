@@ -65,7 +65,7 @@ export function PostCard({ post, onLike, onComment, onShare, isMine, onPressAuth
 
       <View style={styles.actions}>
         <TouchableOpacity style={styles.actionBtn} onPress={() => onLike(post.id)}>
-          <Icon name={post.isLikedByMe ? 'heartFilled' : 'heartOutline'} size={20} color={post.isLikedByMe ? '#EF4444' : Colors.outline} />
+          <Icon name={post.isLikedByMe ? 'heartFilled' : 'heartOutline'} size={20} color={post.isLikedByMe ? Colors.like : Colors.outline} />
           <Text style={[styles.actionText, post.isLikedByMe && styles.actionTextLiked]}>Beğen</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.actionBtn} onPress={() => onComment(post)}>
@@ -104,5 +104,5 @@ const styles = StyleSheet.create({
   actions: { flexDirection: 'row', paddingVertical: 2 },
   actionBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 5, paddingVertical: Spacing.sm },
   actionText: { ...Typography.labelSm, fontSize: 13, color: Colors.onSurfaceVariant, fontWeight: '500' },
-  actionTextLiked: { color: '#EF4444' },
+  actionTextLiked: { color: Colors.like },
 });

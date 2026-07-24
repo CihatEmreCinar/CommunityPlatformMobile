@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { View, ActivityIndicator, Text, StyleSheet } from 'react-native';
+import { View, ActivityIndicator, Text, StyleSheet, Alert } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { WorkshopForm } from '../../../../components/workshop/WorkshopForm';
@@ -34,9 +34,23 @@ export default function EditWorkshopScreen() {
     );
   }
 
-  return (
-    <WorkshopForm mode="edit" initialWorkshop={workshop} onSubmit={(payload: WorkshopRequest) => workshopService.update(workshop.id, payload).then(() => {})} />
-  );
+  const workshopId = workshop.id;
+
+  async function handleSubmit(payload: WorkshopRequest, coverUri: string | null) {
+    await workshopService.update(workshopId, payload);
+    if (!coverUri) return;
+
+    try {
+      const extension = coverUri.split('.').pop()?.split('?')[0] ?? 'jpg';
+      const formData = new FormData();
+      formData.append('file', { uri: coverUri, name: `cover_${Date.now()}.${extension}`, type: 'image/jpeg' } as any);
+      await workshopService.uploadCover(workshopId, formData);
+    } catch {
+      Alert.alert('Uyarı', 'Atölye güncellendi ancak kapak fotoğrafı yüklenemedi. Tekrar deneyebilirsin.');
+    }
+  }
+
+  return <WorkshopForm mode="edit" initialWorkshop={workshop} onSubmit={handleSubmit} />;
 }
 
 const styles = StyleSheet.create({

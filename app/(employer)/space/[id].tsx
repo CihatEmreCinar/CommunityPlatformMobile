@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity, Image, Alert, Platform } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity, Alert, Platform } from 'react-native';
+import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Icon } from '../../../components/ui/Icon';
 import DateTimePicker, { type DateTimePickerEvent } from '@react-native-community/datetimepicker';
@@ -52,7 +53,7 @@ export default function EmployerSpaceDetailScreen() {
       try {
         setListing(await spaceListingService.getById(resolvedId));
       } catch (error) {
-        console.log('Mekan detay yüklenemedi', error);
+        if (__DEV__) console.log('Mekan detay yüklenemedi', error);
       } finally {
         setLoading(false);
       }

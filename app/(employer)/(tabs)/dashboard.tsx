@@ -24,11 +24,12 @@ import type { CalendarEvent } from '../../../services/calendarService';
 import { CalendarWidget } from '../../../components/CalendarWidget';
 import { Colors, Pastel, Typography, Spacing, Radius } from '../../../constants/theme';
 import { useUnreadCount } from '../../../hooks/useUnreadCount';
-import { FLOATING_TAB_BAR_CLEARANCE } from '../../../components/layout/FloatingTabBar';
+import { useFloatingTabBarClearance } from '../../../components/layout/FloatingTabBar';
 
 export default function EmployerDashboardScreen() {
   const { user, logout } = useAuth();
   const router = useRouter();
+  const tabBarClearance = useFloatingTabBarClearance();
   const { unreadCount } = useUnreadCount(30000);
   const [dashboard, setDashboard] = useState<EmployerDashboard | null>(null);
   const [profile, setProfile] = useState<EmployerProfile | null>(null);
@@ -70,11 +71,11 @@ export default function EmployerDashboardScreen() {
             totalWorkshops: workshops.length,
           });
         } catch (fallbackError) {
-          console.log('Dashboard yedeği yüklenemedi', fallbackError);
+          if (__DEV__) console.log('Dashboard yedeği yüklenemedi', fallbackError);
         }
       }
     } catch (error) {
-      console.log('Dashboard yüklenemedi', error);
+      if (__DEV__) console.log('Dashboard yüklenemedi', error);
     } finally {
       setIsLoading(false);
       setIsRefreshing(false);
@@ -90,7 +91,7 @@ export default function EmployerDashboardScreen() {
     try {
       setCalendarEvents(await calendarService.getEmployerCalendarEvents());
     } catch (error) {
-      console.log('Takvim etkinlikleri yüklenemedi', error);
+      if (__DEV__) console.log('Takvim etkinlikleri yüklenemedi', error);
     } finally {
       setCalendarLoading(false);
     }
@@ -118,7 +119,7 @@ export default function EmployerDashboardScreen() {
     <SafeAreaView style={styles.safeArea} edges={['top']}>
     <ScrollView
       style={styles.flex}
-      contentContainerStyle={styles.container}
+      contentContainerStyle={[styles.container, { paddingBottom: tabBarClearance }]}
       refreshControl={<RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} colors={[Colors.primary]} />}
     >
       <View style={styles.header}>
@@ -127,14 +128,14 @@ export default function EmployerDashboardScreen() {
           <Text style={styles.subGreeting}>{profile?.workshopTitle || 'Profilini tamamla'}</Text>
         </View>
         <View style={styles.headerActions}>
-          <TouchableOpacity style={styles.headerActionBtn} onPress={() => router.push('/(employer)/(tabs)/search')}>
+          <TouchableOpacity style={styles.headerActionBtn} onPress={() => router.push('/(employer)/(tabs)/search')} accessibilityRole="button" accessibilityLabel="Ara">
             <Icon name="search" size={18} color={Colors.onSurfaceVariant} />
           </TouchableOpacity>
-          <TouchableOpacity style={styles.headerActionBtn} onPress={() => router.push('/(employer)/(tabs)/notifications')}>
+          <TouchableOpacity style={styles.headerActionBtn} onPress={() => router.push('/(employer)/(tabs)/notifications')} accessibilityRole="button" accessibilityLabel="Bildirimler">
             <Icon name="notifications" size={18} color={Colors.onSurfaceVariant} />
             {unreadCount > 0 && <View style={styles.headerActionBadge} />}
           </TouchableOpacity>
-          <TouchableOpacity onPress={handleLogout} style={styles.logoutButton}>
+          <TouchableOpacity onPress={handleLogout} style={styles.logoutButton} accessibilityRole="button" accessibilityLabel="Çıkış yap">
             <Icon name="logout" size={19} color={Pastel.coral.text} />
           </TouchableOpacity>
         </View>
@@ -221,7 +222,7 @@ const styles = StyleSheet.create({
   flex: { flex: 1, backgroundColor: Colors.background },
   safeArea: { flex: 1, backgroundColor: Colors.background },
   loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: Colors.background },
-  container: { paddingHorizontal: Spacing.containerMargin, paddingTop: Spacing.xl, paddingBottom: Spacing.xl + FLOATING_TAB_BAR_CLEARANCE, gap: Spacing.md },
+  container: { paddingHorizontal: Spacing.containerMargin, paddingTop: Spacing.xl, gap: Spacing.md },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: Spacing.sm },
   greeting: { ...Typography.serifHeading, fontSize: 22, lineHeight: 28, color: Colors.onSurface },
   subGreeting: { ...Typography.bodyMd, color: Colors.onSurfaceVariant, marginTop: 2 },
@@ -237,7 +238,7 @@ const styles = StyleSheet.create({
     padding: Spacing.md,
     gap: Spacing.sm,
   },
-  rankBadge: { width: 48, height: 48, borderRadius: Radius.full, backgroundColor: 'rgba(255,255,255,0.5)', justifyContent: 'center', alignItems: 'center' },
+  rankBadge: { width: 48, height: 48, borderRadius: Radius.full, backgroundColor: Colors.glassOverlay.soft, justifyContent: 'center', alignItems: 'center' },
   rankInfo: { flex: 1 },
   rankLabel: { ...Typography.labelSm, color: Pastel.purple.heroText, opacity: 0.85 },
   rankValue: { ...Typography.serifTitleLg, color: Pastel.purple.heroText, marginTop: 2 },

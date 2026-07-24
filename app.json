@@ -39,7 +39,8 @@
       [
         "expo-camera",
         {
-          "cameraPermission": "QR bilet okutmak için kameraya erişim gerekiyor."
+          "cameraPermission": "QR bilet okutmak için kameraya erişim gerekiyor.",
+          "microphonePermission": "Bu izin uygulama tarafından kullanılmıyor."
         }
       ],
       [
@@ -55,8 +56,17 @@
           "locationWhenInUsePermission": "Yakınındaki atölyeleri ve kafeleri gösterebilmek, ayrıca kafe/atölye konumunu haritada işaretleyebilmek için konumuna ihtiyacımız var."
         }
       ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Profil fotoğrafı, kapak görseli veya gönderi/ilan fotoğrafı yükleyebilmek için galeri erişimine ihtiyacımız var.",
+          "cameraPermission": false,
+          "microphonePermission": false
+        }
+      ],
       "expo-secure-store",
-      "expo-font"
+      "expo-font",
+      "@sentry/react-native"
     ],
     "extra": {
       "router": {},

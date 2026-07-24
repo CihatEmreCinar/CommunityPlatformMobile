@@ -10,12 +10,13 @@ import {
   Alert,
   KeyboardAvoidingView,
   Platform,
-  Image,
 } from 'react-native';
+import { Image } from 'expo-image';
 import { Icon } from '../../../components/ui/Icon';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
+import * as ImageManipulator from 'expo-image-manipulator';
 import { postService } from '../../../services/postService';
 import { workshopService } from '../../../services/workshopService';
 import type { Workshop } from '../../../types/workshop';
@@ -92,10 +93,21 @@ export default function PostCreateScreen() {
     const asset = result.assets?.[0];
     if (!asset?.uri) return;
     const type = (asset.type ?? 'image') as 'image' | 'video';
-    const extension = asset.uri.split('.').pop()?.split('?')[0] ?? (type === 'video' ? 'mp4' : 'jpg');
-    const mime = type === 'video' ? 'video/mp4' : 'image/jpeg';
-    const name = `media_${Date.now()}.${extension}`;
-    setMediaFiles((prev) => [...prev, { uri: asset.uri, type, name, mime }]);
+
+    if (type === 'video') {
+      const name = `media_${Date.now()}.mp4`;
+      setMediaFiles((prev) => [...prev, { uri: asset.uri, type, name, mime: 'video/mp4' }]);
+      return;
+    }
+
+    // Backend post medyası yalnızca WEBP (görsel) veya MP4 (video) kabul ediyor —
+    // galeriden gelen JPEG/PNG'yi yüklemeden önce WEBP'e çeviriyoruz.
+    const converted = await ImageManipulator.manipulateAsync(asset.uri, [], {
+      format: ImageManipulator.SaveFormat.WEBP,
+      compress: 0.85,
+    });
+    const name = `media_${Date.now()}.webp`;
+    setMediaFiles((prev) => [...prev, { uri: converted.uri, type, name, mime: 'image/webp' }]);
   }, [mediaFiles.length]);
 
   const removeMedia = useCallback((index: number) => {
@@ -128,12 +140,12 @@ export default function PostCreateScreen() {
     <SafeAreaView style={styles.root} edges={['top', 'bottom']}>
     <KeyboardAvoidingView style={styles.root} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} style={styles.closeBtn}>
+        <TouchableOpacity onPress={() => router.back()} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} style={styles.closeBtn} accessibilityRole="button" accessibilityLabel="Kapat">
           <Icon name="close" size={19} color={Colors.onSurface} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Yeni Gönderi</Text>
         <TouchableOpacity style={[styles.publishBtn, !canSubmit && styles.publishBtnDisabled]} onPress={handleSubmit} disabled={!canSubmit}>
-          {submitting ? <ActivityIndicator size="small" color="#FFFFFF" /> : <Text style={styles.publishBtnText}>Paylaş</Text>}
+          {submitting ? <ActivityIndicator size="small" color={Colors.white} /> : <Text style={styles.publishBtnText}>Paylaş</Text>}
         </TouchableOpacity>
       </View>
 
@@ -179,17 +191,17 @@ export default function PostCreateScreen() {
                   <Image source={{ uri: file.uri }} style={styles.mediaImage} />
                 ) : (
                   <View style={styles.mediaVideoPlaceholder}>
-                    <Icon name="playCircle" size={26} color="#FFFFFF" />
+                    <Icon name="playCircle" size={26} color={Colors.white} />
                   </View>
                 )}
-                <TouchableOpacity style={styles.removeMediaBtn} onPress={() => removeMedia(index)}>
-                  <Icon name="close" size={15} color="#FFFFFF" />
+                <TouchableOpacity style={styles.removeMediaBtn} onPress={() => removeMedia(index)} accessibilityRole="button" accessibilityLabel="Medyayı kaldır">
+                  <Icon name="close" size={15} color={Colors.white} />
                 </TouchableOpacity>
               </View>
             ))}
           </View>
           <TouchableOpacity style={[styles.addMediaBtn, mediaFiles.length >= MAX_MEDIA && styles.addMediaBtnDisabled]} onPress={pickMedia} disabled={mediaFiles.length >= MAX_MEDIA}>
-            <Icon name="imageOutline" size={17} color="#FFFFFF" />
+            <Icon name="imageOutline" size={17} color={Colors.white} />
             <Text style={styles.addMediaText}>Medya Ekle</Text>
           </TouchableOpacity>
           <Text style={styles.sectionHint}>{mediaFiles.length}/{MAX_MEDIA} medya eklendi</Text>
@@ -239,8 +251,8 @@ export default function PostCreateScreen() {
                 autoCapitalize="none"
                 maxLength={30}
               />
-              <TouchableOpacity style={[styles.addTagBtn, !tagInput.trim() && styles.addTagBtnDisabled]} onPress={addTag} disabled={!tagInput.trim()}>
-                <Icon name="add" size={19} color="#FFFFFF" />
+              <TouchableOpacity style={[styles.addTagBtn, !tagInput.trim() && styles.addTagBtnDisabled]} onPress={addTag} disabled={!tagInput.trim()} accessibilityRole="button" accessibilityLabel="Etiket ekle">
+                <Icon name="add" size={19} color={Colors.white} />
               </TouchableOpacity>
             </View>
           )}
@@ -263,7 +275,7 @@ const styles = StyleSheet.create({
   headerTitle: { ...Typography.serifTitle, color: Colors.onSurface },
   publishBtn: { backgroundColor: ACCENT, borderRadius: Radius.full, paddingHorizontal: 18, paddingVertical: 8, minWidth: 72, alignItems: 'center' },
   publishBtnDisabled: { backgroundColor: Colors.outlineVariant },
-  publishBtnText: { ...Typography.labelMd, color: '#FFFFFF' },
+  publishBtnText: { ...Typography.labelMd, color: Colors.white },
   body: { flex: 1 },
   bodyContent: { paddingBottom: Spacing.xl, gap: Spacing.sm },
   section: { padding: Spacing.md, backgroundColor: Pastel.teal.tint, borderRadius: Radius.xxl, marginHorizontal: Spacing.md, marginTop: Spacing.sm },
@@ -292,7 +304,7 @@ const styles = StyleSheet.create({
   removeMediaBtn: { position: 'absolute', top: 6, right: 6, width: 22, height: 22, borderRadius: 11, backgroundColor: 'rgba(0,0,0,0.55)', alignItems: 'center', justifyContent: 'center' },
   addMediaBtn: { marginTop: 12, flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: ACCENT, borderRadius: Radius.lg, paddingHorizontal: 14, paddingVertical: 12, alignSelf: 'flex-start' },
   addMediaBtnDisabled: { opacity: 0.5 },
-  addMediaText: { ...Typography.labelMd, color: '#FFFFFF' },
+  addMediaText: { ...Typography.labelMd, color: Colors.white },
   tipsSection: { flexDirection: 'row', alignItems: 'flex-start', gap: 8, padding: Spacing.md },
   tipsText: { flex: 1, ...Typography.labelSm, color: Colors.onSurfaceVariant, lineHeight: 18 },
 });

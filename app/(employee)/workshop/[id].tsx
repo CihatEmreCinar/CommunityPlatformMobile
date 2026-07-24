@@ -67,7 +67,7 @@ export default function WorkshopDetailScreen() {
       const data = await reviewService.getAll(id);
       setReviews(data);
     } catch (error) {
-      console.log('Yorumlar yüklenemedi', error);
+      if (__DEV__) console.log('Yorumlar yüklenemedi', error);
     }
   }
 
@@ -78,7 +78,7 @@ export default function WorkshopDetailScreen() {
       setCanReview(myEnrollment?.attendanceStatus === 'Attended');
       setEnrollmentStatus(myEnrollment?.status ?? null);
     } catch (error) {
-      console.log('Kayıt durumu kontrol edilemedi', error);
+      if (__DEV__) console.log('Kayıt durumu kontrol edilemedi', error);
     }
   }
 
@@ -130,7 +130,7 @@ export default function WorkshopDetailScreen() {
     try {
       await Share.share({ message: `Atolium'da "${workshop.title}" atölyesine göz at!` });
     } catch (error) {
-      console.log('Paylaşım başarısız', error);
+      if (__DEV__) console.log('Paylaşım başarısız', error);
     }
   }
 

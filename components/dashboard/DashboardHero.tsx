@@ -69,7 +69,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: 'rgba(255,255,255,0.55)',
+    backgroundColor: Colors.glassOverlay.medium,
     paddingHorizontal: Spacing.sm,
     paddingVertical: 6,
     borderRadius: Radius.full,

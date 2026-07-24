@@ -14,7 +14,7 @@ import { enrollmentService } from '../../../services/enrollmentService';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Enrollment } from '../../../types/enrollment';
 import { Colors, Pastel, Typography, Spacing, Radius } from '../../../constants/theme';
-import { FLOATING_TAB_BAR_CLEARANCE } from '../../../components/layout/FloatingTabBar';
+import { useFloatingTabBarClearance } from '../../../components/layout/FloatingTabBar';
 
 const STATUS_PASTEL: Record<string, { label: string; palette: typeof Pastel.teal }> = {
   confirmed: { label: 'Onaylandı', palette: Pastel.teal },
@@ -34,6 +34,7 @@ function resolveBadge(e: Enrollment) {
 
 export default function EnrollmentsScreen() {
   const router = useRouter();
+  const tabBarClearance = useFloatingTabBarClearance();
   const [enrollments, setEnrollments] = useState<Enrollment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -43,7 +44,7 @@ export default function EnrollmentsScreen() {
       const data = await enrollmentService.getMine();
       setEnrollments(data);
     } catch (e) {
-      console.log('Kayıtlar yüklenemedi', e);
+      if (__DEV__) console.log('Kayıtlar yüklenemedi', e);
     } finally {
       setIsLoading(false);
       setIsRefreshing(false);
@@ -59,7 +60,7 @@ export default function EnrollmentsScreen() {
       await enrollmentService.cancel(id);
       setEnrollments((prev) => prev.map((e) => (e.id === id ? { ...e, status: 'cancelled' } : e)));
     } catch (e) {
-      console.log('İptal edilemedi', e);
+      if (__DEV__) console.log('İptal edilemedi', e);
     }
   }
 
@@ -75,7 +76,7 @@ export default function EnrollmentsScreen() {
     <SafeAreaView style={styles.flex} edges={['top']}>
       <ScrollView
         style={styles.flex}
-        contentContainerStyle={styles.container}
+        contentContainerStyle={[styles.container, { paddingBottom: tabBarClearance }]}
         refreshControl={
           <RefreshControl
             refreshing={isRefreshing}
@@ -176,7 +177,7 @@ function EnrollmentCard({
 const styles = StyleSheet.create({
   flex: { flex: 1, backgroundColor: Colors.background },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: Colors.background },
-  container: { padding: Spacing.containerMargin, paddingBottom: Spacing.xl + FLOATING_TAB_BAR_CLEARANCE },
+  container: { padding: Spacing.containerMargin },
   pageTitle: { ...Typography.serifHeading, color: Colors.onSurface, marginBottom: Spacing.sm },
   totalCount: { ...Typography.bodyMd, color: Colors.onSurfaceVariant, marginBottom: Spacing.lg },
   empty: { alignItems: 'center', paddingVertical: Spacing.xl, gap: Spacing.sm },
@@ -192,7 +193,7 @@ const styles = StyleSheet.create({
   badge: { paddingHorizontal: Spacing.sm, paddingVertical: 3, borderRadius: Radius.full },
   badgeText: { ...Typography.labelSm, fontWeight: '700' },
   infoRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.xs },
-  infoText: { ...Typography.bodyMd, color: Colors.onSurfaceVariant, fontSize: 13 },
+  infoText: { ...Typography.bodySm, color: Colors.onSurfaceVariant },
   ticketRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -201,7 +202,7 @@ const styles = StyleSheet.create({
     padding: Spacing.sm,
     borderRadius: Radius.lg,
   },
-  ticketRowText: { ...Typography.bodyMd, fontSize: 13 },
+  ticketRowText: { ...Typography.bodySm },
   cancelBtn: {
     marginTop: Spacing.xs,
     paddingVertical: Spacing.sm,

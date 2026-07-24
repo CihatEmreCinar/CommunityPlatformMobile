@@ -14,7 +14,7 @@ const VARIANT_PALETTE: Record<PulseItem['variant'], typeof Pastel.teal> = {
   upcoming: Pastel.teal,
 };
 
-export function CityPulseFeed({ items, onItemPress }: CityPulseFeedProps) {
+function CityPulseFeedBase({ items, onItemPress }: CityPulseFeedProps) {
   if (items.length === 0) return null;
 
   return (
@@ -58,6 +58,10 @@ export function CityPulseFeed({ items, onItemPress }: CityPulseFeedProps) {
   );
 }
 
+// Parent (home.tsx) sık re-render olsa da items/onItemPress değişmediği sürece
+// bu liste (ve item'lardaki Pressable'lar) atlanır.
+export const CityPulseFeed = React.memo(CityPulseFeedBase);
+
 const styles = StyleSheet.create({
   wrap: { gap: Spacing.sm },
   heading: { ...Typography.serifTitle, color: Colors.onSurface },
@@ -73,7 +77,7 @@ const styles = StyleSheet.create({
   },
   wire: { width: 2, flex: 1, minHeight: 10, backgroundColor: Colors.surfaceVariant, marginVertical: 2 },
   itemContent: { flex: 1, borderRadius: Radius.lg, padding: Spacing.sm, marginBottom: Spacing.xs },
-  itemText: { ...Typography.bodyMd, fontSize: 13, color: Colors.onSurface, lineHeight: 18 },
+  itemText: { ...Typography.bodySm, color: Colors.onSurface },
   itemHighlight: { fontWeight: '700' },
   metaRow: { flexDirection: 'row', marginTop: 2 },
   timestamp: { ...Typography.labelSm, color: Colors.onSurfaceVariant },

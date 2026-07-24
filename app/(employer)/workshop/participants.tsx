@@ -49,7 +49,7 @@ export default function ParticipantsScreen() {
     try {
       setParticipants(await ticketService.getWorkshopParticipants(id));
     } catch (e) {
-      console.log('Katılımcılar yüklenemedi', e);
+      if (__DEV__) console.log('Katılımcılar yüklenemedi', e);
     } finally {
       setIsLoading(false);
       setIsRefreshing(false);
@@ -82,11 +82,11 @@ export default function ParticipantsScreen() {
   return (
     <SafeAreaView style={styles.flex} edges={['top', 'bottom']}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+        <TouchableOpacity onPress={() => router.back()} style={styles.backButton} accessibilityRole="button" accessibilityLabel="Geri">
           <Icon name="arrowBack" size={20} color={Colors.onSurface} />
         </TouchableOpacity>
         <Text style={styles.headerTitle} numberOfLines={1}>{title || 'Katılımcılar'}</Text>
-        <TouchableOpacity onPress={() => setScannerOpen(true)} style={styles.scanButton}>
+        <TouchableOpacity onPress={() => setScannerOpen(true)} style={styles.scanButton} accessibilityRole="button" accessibilityLabel="QR kod tara">
           <Icon name="qrCodeScanner" size={19} color={Colors.onPrimary} />
         </TouchableOpacity>
       </View>
@@ -208,8 +208,8 @@ function ScannerModal({ visible, onClose, onCheckedIn }: { visible: boolean; onC
         )}
 
         <View style={styles.scannerHeader}>
-          <TouchableOpacity onPress={onClose} style={styles.scannerCloseBtn}>
-            <Icon name="closeModal" size={22} color="#FFFFFF" />
+          <TouchableOpacity onPress={onClose} style={styles.scannerCloseBtn} accessibilityRole="button" accessibilityLabel="Tarayıcıyı kapat">
+            <Icon name="closeModal" size={22} color={Colors.white} />
           </TouchableOpacity>
           <Text style={styles.scannerTitle}>QR Tara</Text>
           <View style={{ width: 40 }} />
@@ -264,10 +264,10 @@ const styles = StyleSheet.create({
   scannerContainer: { flex: 1, backgroundColor: '#000000' },
   scannerHeader: { position: 'absolute', top: 50, left: 0, right: 0, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: Spacing.containerMargin },
   scannerCloseBtn: { width: 40, height: 40, borderRadius: Radius.full, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' },
-  scannerTitle: { ...Typography.h3, color: '#FFFFFF' },
-  permissionText: { ...Typography.bodyMd, color: '#FFFFFF' },
+  scannerTitle: { ...Typography.h3, color: Colors.white },
+  permissionText: { ...Typography.bodyMd, color: Colors.white },
   manualBtnDark: { paddingVertical: Spacing.sm, paddingHorizontal: Spacing.md, borderRadius: Radius.full, backgroundColor: Colors.primary },
-  manualBtnDarkText: { ...Typography.labelMd, color: '#FFFFFF' },
+  manualBtnDarkText: { ...Typography.labelMd, color: Colors.white },
   previewSheet: { position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: Colors.surfaceContainerLowest, borderTopLeftRadius: Radius.xxxl, borderTopRightRadius: Radius.xxxl, padding: Spacing.lg, gap: Spacing.xs },
   warningRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.xs },
   warningText: { ...Typography.labelMd, color: Pastel.coral.text },

@@ -78,7 +78,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   tag: {
-    backgroundColor: 'rgba(255,255,255,0.6)',
+    backgroundColor: Colors.glassOverlay.strong,
     paddingHorizontal: Spacing.xs,
     paddingVertical: 3,
     borderRadius: Radius.full,

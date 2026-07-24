@@ -30,7 +30,7 @@ export function usePushNotifications(enabled: boolean) {
     hasRunRef.current = true;
 
     registerForPushNotificationsAsync().catch((error) => {
-      console.log('Push bildirim kaydı başarısız', error);
+      if (__DEV__) console.log('Push bildirim kaydı başarısız', error);
     });
   }, [enabled]);
 }
@@ -38,7 +38,7 @@ export function usePushNotifications(enabled: boolean) {
 async function registerForPushNotificationsAsync() {
   // Emülatör/simülatörde gerçek push token alınamaz (Expo kısıtlaması).
   if (!Device.isDevice) {
-    console.log('Push bildirimleri sadece fiziksel cihazlarda çalışır (emulator/simulator atlandı).');
+    if (__DEV__) console.log('Push bildirimleri sadece fiziksel cihazlarda çalışır (emulator/simulator atlandı).');
     return;
   }
 
@@ -55,7 +55,7 @@ async function registerForPushNotificationsAsync() {
   }
 
   if (finalStatus !== 'granted') {
-    console.log('Push bildirim izni verilmedi.');
+    if (__DEV__) console.log('Push bildirim izni verilmedi.');
     return;
   }
 

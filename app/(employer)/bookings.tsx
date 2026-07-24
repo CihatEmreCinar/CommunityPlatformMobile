@@ -41,7 +41,7 @@ export default function EmployerBookingsScreen() {
     try {
       setBookings(await spaceBookingService.getMine());
     } catch (error) {
-      console.log('Rezervasyonlar yüklenemedi', error);
+      if (__DEV__) console.log('Rezervasyonlar yüklenemedi', error);
     } finally {
       setIsLoading(false);
       setIsRefreshing(false);
@@ -56,7 +56,7 @@ export default function EmployerBookingsScreen() {
       await spaceBookingService.cancel(id);
       setBookings((prev) => prev.map((item) => (item.id === id ? { ...item, status: 'Cancelled' } : item)));
     } catch (error) {
-      console.log('İptal edilemedi', error);
+      if (__DEV__) console.log('İptal edilemedi', error);
       Alert.alert('Hata', 'Rezervasyonu iptal ederken bir sorun oluştu.');
     } finally {
       setActionId(null);
@@ -89,7 +89,7 @@ export default function EmployerBookingsScreen() {
         refreshControl={<RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} colors={[Colors.primary]} />}
       >
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+          <TouchableOpacity onPress={() => router.back()} style={styles.backButton} accessibilityRole="button" accessibilityLabel="Geri">
             <Icon name="arrowBack" size={20} color={Colors.onSurface} />
           </TouchableOpacity>
           <Text style={styles.title}>Rezervasyonlarım</Text>
@@ -198,7 +198,7 @@ function SpaceBookingReviewModal({
 
       <View style={styles.starRow}>
         {[1, 2, 3, 4, 5].map((star) => (
-          <TouchableOpacity key={star} onPress={() => setRating(star)}>
+          <TouchableOpacity key={star} onPress={() => setRating(star)} accessibilityRole="button" accessibilityLabel={`${star} yıldız`}>
             <Icon name={star <= rating ? 'star' : 'starEmpty'} size={34} color={Colors.amber} />
           </TouchableOpacity>
         ))}
@@ -234,7 +234,7 @@ const styles = StyleSheet.create({
   cardTitle: { ...Typography.labelMd, fontSize: 16, color: Colors.onSurface },
   cardSubtitle: { ...Typography.bodyMd, color: Colors.onSurfaceVariant, marginTop: 2 },
   metaRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.xs },
-  metaText: { ...Typography.bodyMd, color: Colors.onSurfaceVariant, fontSize: 13 },
+  metaText: { ...Typography.bodySm, color: Colors.onSurfaceVariant },
   cardActions: { flexDirection: 'row', gap: Spacing.sm, marginTop: Spacing.sm },
   flexOne: { flex: 1 },
   modalCafeName: { ...Typography.serifTitle, color: Colors.onSurface },

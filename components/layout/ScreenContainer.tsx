@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { SafeAreaView, Edge } from 'react-native-safe-area-context';
 import { Colors } from '../../constants/theme';
-import { FLOATING_TAB_BAR_CLEARANCE } from './FloatingTabBar';
+import { useFloatingTabBarClearance } from './FloatingTabBar';
 
 type ScreenContainerProps = {
   children: React.ReactNode;
@@ -20,7 +20,13 @@ type ScreenContainerProps = {
   contentStyle?: StyleProp<ViewStyle>;
   edges?: Edge[];
   backgroundColor?: string;
-  /** true ise, altında FloatingTabBar olan ekranlarda içerik adanın/+ butonunun arkasında kalmasın diye FLOATING_TAB_BAR_CLEARANCE kadar paddingBottom eklenir. */
+  /**
+   * true ise: içerik yüzen tab bar'ın (pill) arkasında kalmasın diye
+   * useFloatingTabBarClearance() kadar paddingBottom eklenir ve alt safe-area'yı
+   * pill yönettiği için SafeAreaView'den 'bottom' kenarı düşürülür.
+   * Tek scroll sahibi ScreenContainer'ın kendi ScrollView'i olan ekranlarda kullanın;
+   * içeride ayrı bir ScrollView/FlatList varsa scroll={false} verip clearance'ı ona uygulayın.
+   */
   floatingTabBar?: boolean;
 };
 
@@ -34,7 +40,11 @@ export function ScreenContainer({
   backgroundColor = Colors.background,
   floatingTabBar = false,
 }: ScreenContainerProps) {
-  const clearanceStyle = floatingTabBar ? { paddingBottom: FLOATING_TAB_BAR_CLEARANCE } : null;
+  const clearance = useFloatingTabBarClearance();
+  const clearanceStyle = floatingTabBar ? { paddingBottom: clearance } : null;
+  // Yüzen pill alt safe-area'yı kendi yönettiği için, floatingTabBar iken 'bottom'
+  // kenarını düşürüyoruz — aksi halde alt inset iki kez sayılır ve boşluk şişer.
+  const effectiveEdges = floatingTabBar ? edges.filter((e) => e !== 'bottom') : edges;
 
   const body = scroll ? (
     <ScrollView
@@ -50,7 +60,7 @@ export function ScreenContainer({
   );
 
   return (
-    <SafeAreaView style={[styles.safeArea, { backgroundColor }]} edges={edges}>
+    <SafeAreaView style={[styles.safeArea, { backgroundColor }]} edges={effectiveEdges}>
       <KeyboardAvoidingView
         style={styles.flex}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}

@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, Image, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, TouchableOpacity, StyleSheet } from 'react-native';
+import { Image } from 'expo-image';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Icon } from '../ui/Icon';
@@ -18,7 +19,7 @@ export function WorkshopHero({ imageUrl, topInset, onBack, onShare }: WorkshopHe
   return (
     <View style={styles.container}>
       {imageUrl ? (
-        <Image source={{ uri: imageUrl }} style={styles.image} resizeMode="cover" />
+        <Image source={{ uri: imageUrl }} style={styles.image} contentFit="cover" />
       ) : (
         <View style={styles.imageFallback}>
           <View style={styles.fallbackIconWrap}>
@@ -43,7 +44,13 @@ export function WorkshopHero({ imageUrl, topInset, onBack, onShare }: WorkshopHe
 
 function GlassButton({ icon, onPress }: { icon: 'arrowBack' | 'share'; onPress: () => void }) {
   return (
-    <TouchableOpacity onPress={onPress} activeOpacity={0.8} style={styles.glassButtonTouchable}>
+    <TouchableOpacity
+      onPress={onPress}
+      activeOpacity={0.8}
+      style={styles.glassButtonTouchable}
+      accessibilityRole="button"
+      accessibilityLabel={icon === 'arrowBack' ? 'Geri' : 'Paylaş'}
+    >
       <BlurView intensity={40} tint="light" style={styles.glassButton}>
         <Icon name={icon} size={20} color={Colors.onSurface} />
       </BlurView>
@@ -102,6 +109,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',
-    backgroundColor: 'rgba(255,255,255,0.55)',
+    backgroundColor: Colors.glassOverlay.medium,
   },
 });

@@ -5,15 +5,17 @@ import { FloatingTabBar, type FloatingTabItem } from '../../../components/layout
 // Search ve Bildirimler artık tab bar'da değil — home.tsx üst köşesindeki
 // ikon butonlarından erişiliyor (FloatingTabBar tam olarak 4 sekme için tasarlandı).
 const VISIBLE_TABS: FloatingTabItem[] = [
-  { key: 'home', icon: 'house' },
-  { key: 'feed', icon: 'dynamicFeed' },
-  { key: 'enrollments', icon: 'eventAvailable' },
-  { key: 'profile', icon: 'person' },
+  { key: 'home', icon: 'house', label: 'Ana Sayfa' },
+  { key: 'feed', icon: 'dynamicFeed', label: 'Akış' },
+  { key: 'enrollments', icon: 'eventAvailable', label: 'Kayıtlarım' },
+  { key: 'profile', icon: 'person', label: 'Profil' },
 ];
 
 function EmployeeTabBar({ state, navigation }: BottomTabBarProps) {
   const activeRouteName = state.routes[state.index].name;
-  const activeKey = VISIBLE_TABS.some((t) => t.key === activeRouteName) ? activeRouteName : VISIBLE_TABS[0].key;
+  // Görünür 4 sekmeden biri değilse (ör. search/notifications gibi ikincil rotalar),
+  // hiçbir sekmeyi seçili gösterme — aksi halde yanlışlıkla ilk sekme aktifmiş gibi görünür.
+  const activeKey = VISIBLE_TABS.some((t) => t.key === activeRouteName) ? activeRouteName : '';
 
   return (
     <FloatingTabBar

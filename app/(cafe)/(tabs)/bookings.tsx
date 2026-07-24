@@ -9,9 +9,10 @@ import { ScreenContainer } from '../../../components/layout/ScreenContainer';
 import { Colors, Pastel, Typography, Spacing, Radius } from '../../../constants/theme';
 import { spaceBookingService, type SpaceBooking } from '../../../services/spaceBookingService';
 import { getSpaceBookingStatusStyle } from '../../../utils/spaceBookingStatus';
-import { FLOATING_TAB_BAR_CLEARANCE } from '../../../components/layout/FloatingTabBar';
+import { useFloatingTabBarClearance } from '../../../components/layout/FloatingTabBar';
 
 export default function CafeBookingsScreen() {
+  const tabBarClearance = useFloatingTabBarClearance();
   const [bookings, setBookings] = useState<SpaceBooking[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -21,7 +22,7 @@ export default function CafeBookingsScreen() {
     try {
       setBookings(await spaceBookingService.getIncoming());
     } catch (error) {
-      console.log('Rezervasyon talepleri yüklenemedi', error);
+      if (__DEV__) console.log('Rezervasyon talepleri yüklenemedi', error);
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -80,10 +81,11 @@ export default function CafeBookingsScreen() {
   }
 
   return (
-    <ScreenContainer edges={['top', 'bottom']} header={<Text style={styles.title}>Rezervasyonlar</Text>}>
+    <ScreenContainer edges={['top']} scroll={false} header={<Text style={styles.title}>Rezervasyonlar</Text>}>
       <ScrollView
+        style={styles.scroll}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); loadBookings(); }} colors={[Colors.primary]} />}
-        contentContainerStyle={styles.content}
+        contentContainerStyle={[styles.content, { paddingBottom: tabBarClearance }]}
       >
         {bookings.length === 0 ? (
           <EmptyState icon="eventBusy" title="Henüz talep yok" description="İlanlarına gelen rezervasyon talepleri burada görünecek." style={styles.emptyState} />
@@ -130,7 +132,8 @@ export default function CafeBookingsScreen() {
 const styles = StyleSheet.create({
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   title: { ...Typography.serifTitleLg, color: Colors.onSurface },
-  content: { padding: Spacing.md, paddingBottom: Spacing.md + FLOATING_TAB_BAR_CLEARANCE, gap: Spacing.md },
+  scroll: { flex: 1 },
+  content: { padding: Spacing.md, gap: Spacing.md },
   emptyState: { paddingVertical: Spacing.xl * 2, gap: Spacing.xs },
   card: { borderRadius: Radius.xxl, padding: Spacing.md, gap: Spacing.sm },
   cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', gap: Spacing.sm },
@@ -138,7 +141,7 @@ const styles = StyleSheet.create({
   cardTitle: { ...Typography.labelMd, fontSize: 16, color: Colors.onSurface },
   cardSubtitle: { ...Typography.bodyMd, color: Colors.onSurfaceVariant, marginTop: 2 },
   metaRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.xs },
-  metaText: { ...Typography.bodyMd, color: Colors.onSurfaceVariant, fontSize: 13 },
+  metaText: { ...Typography.bodySm, color: Colors.onSurfaceVariant },
   cardActions: { flexDirection: 'row', gap: Spacing.sm, marginTop: Spacing.sm },
   flexOne: { flex: 1 },
 });

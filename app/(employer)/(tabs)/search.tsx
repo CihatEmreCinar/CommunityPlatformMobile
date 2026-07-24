@@ -7,10 +7,11 @@ import { KeyboardAwareScreen } from '../../../components/layout/KeyboardAwareScr
 import { CollapsibleFilterPanel } from '../../../components/layout/CollapsibleFilterPanel';
 import { Colors, Pastel, Typography, Spacing, Radius } from '../../../constants/theme';
 import { spaceListingService, type SpaceListing, type SpaceListingSearchResult } from '../../../services/spaceListingService';
-import { FLOATING_TAB_BAR_CLEARANCE } from '../../../components/layout/FloatingTabBar';
+import { useFloatingTabBarClearance } from '../../../components/layout/FloatingTabBar';
 
 export default function EmployerSearchTabScreen() {
   const router = useRouter();
+  const tabBarClearance = useFloatingTabBarClearance();
   const [city, setCity] = useState('');
   const [minCapacity, setMinCapacity] = useState('');
   const [maxCapacity, setMaxCapacity] = useState('');
@@ -38,7 +39,7 @@ export default function EmployerSearchTabScreen() {
       setListings((prev) => (append ? [...prev, ...result.listings] : result.listings));
       setSearched(true);
     } catch (error) {
-      console.log('Mekan arama hatası', error);
+      if (__DEV__) console.log('Mekan arama hatası', error);
     } finally {
       setLoading(false);
     }
@@ -54,8 +55,8 @@ export default function EmployerSearchTabScreen() {
   const filterSummary = filterSummaryParts.length > 0 ? filterSummaryParts.join(' · ') : 'Tüm mekanlar';
 
   return (
-    <ScreenContainer edges={['top', 'bottom']} header={<Text style={styles.title}>Mekan Bul</Text>} scroll={false}>
-      <KeyboardAwareScreen contentContainerStyle={styles.content}>
+    <ScreenContainer edges={['top']} header={<Text style={styles.title}>Mekan Bul</Text>} scroll={false}>
+      <KeyboardAwareScreen contentContainerStyle={[styles.content, { paddingBottom: tabBarClearance }]}>
         <CollapsibleFilterPanel title="Filtreler" summary={filterSummary} defaultOpen>
           <View style={styles.filterGroup}>
             <Text style={styles.filterLabel}>Şehir</Text>
@@ -128,7 +129,7 @@ export default function EmployerSearchTabScreen() {
 
 const styles = StyleSheet.create({
   title: { ...Typography.serifTitleLg, color: Colors.onSurface },
-  content: { padding: Spacing.md, paddingBottom: Spacing.xl + FLOATING_TAB_BAR_CLEARANCE, gap: Spacing.md },
+  content: { padding: Spacing.md, gap: Spacing.md },
   filterGroup: { gap: Spacing.xs },
   filterLabel: { ...Typography.labelSm, color: Colors.onSurfaceVariant },
   input: { backgroundColor: Colors.surfaceContainer, borderRadius: Radius.full, paddingHorizontal: Spacing.md, paddingVertical: Spacing.sm, color: Colors.onSurface },

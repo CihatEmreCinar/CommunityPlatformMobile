@@ -7,9 +7,10 @@ interface AuthInputProps extends TextInputProps {
   icon?: IconName;
   rightIcon?: IconName;
   onRightIconPress?: () => void;
+  rightIconAccessibilityLabel?: string;
 }
 
-export function AuthInput({ icon, rightIcon, onRightIconPress, style, ...rest }: AuthInputProps) {
+export function AuthInput({ icon, rightIcon, onRightIconPress, rightIconAccessibilityLabel, style, ...rest }: AuthInputProps) {
   return (
     <View style={styles.wrapper}>
       {icon && <Icon name={icon} size={18} color={Colors.outline} style={styles.icon} />}
@@ -19,7 +20,12 @@ export function AuthInput({ icon, rightIcon, onRightIconPress, style, ...rest }:
         {...rest}
       />
       {rightIcon && (
-        <TouchableOpacity style={styles.rightButton} onPress={onRightIconPress}>
+        <TouchableOpacity
+          style={styles.rightButton}
+          onPress={onRightIconPress}
+          accessibilityRole="button"
+          accessibilityLabel={rightIconAccessibilityLabel}
+        >
           <Icon name={rightIcon} size={18} color={Colors.outline} />
         </TouchableOpacity>
       )}

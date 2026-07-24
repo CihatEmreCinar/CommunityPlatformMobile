@@ -73,7 +73,7 @@ export function LocationPickerModal({
       <View style={styles.container}>
         <View style={styles.header}>
           <Text style={styles.title}>{title}</Text>
-          <TouchableOpacity onPress={handleClose} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+          <TouchableOpacity onPress={handleClose} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} accessibilityRole="button" accessibilityLabel="Kapat">
             <Icon name="closeModal" size={22} color={Colors.onSurface} />
           </TouchableOpacity>
         </View>
@@ -90,7 +90,7 @@ export function LocationPickerModal({
             autoFocus
           />
           {query.length > 0 && (
-            <TouchableOpacity onPress={() => setQuery('')} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+            <TouchableOpacity onPress={() => setQuery('')} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} accessibilityRole="button" accessibilityLabel="Aramayı temizle">
               <Icon name="closeCircle" size={16} color={Colors.outline} />
             </TouchableOpacity>
           )}

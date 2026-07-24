@@ -14,7 +14,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Location from 'expo-location';
 import { Icon } from '../../../components/ui/Icon';
 import { useUnreadCount } from '../../../hooks/useUnreadCount';
-import { FLOATING_TAB_BAR_CLEARANCE } from '../../../components/layout/FloatingTabBar';
+import { useFloatingTabBarClearance } from '../../../components/layout/FloatingTabBar';
 import { AtiInsightCard } from '../../../components/home/AtiInsightCard';
 import { BentoCard } from '../../../components/home/BentoCard';
 import { CityPulseFeed } from '../../../components/home/CityPulseFeed';
@@ -40,6 +40,7 @@ export default function EmployeeHomeScreen() {
   const { user } = useAuth();
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const tabBarClearance = useFloatingTabBarClearance();
   const { unreadCount } = useUnreadCount(30000);
   const [recommended, setRecommended] = useState<Workshop[]>([]);
   const [allWorkshops, setAllWorkshops] = useState<Workshop[]>([]);
@@ -59,7 +60,7 @@ export default function EmployeeHomeScreen() {
       );
       setNearby(data);
     } catch (error) {
-      console.log('Yakındaki atölyeler yüklenemedi', error);
+      if (__DEV__) console.log('Yakındaki atölyeler yüklenemedi', error);
     }
   }, []);
 
@@ -81,7 +82,7 @@ export default function EmployeeHomeScreen() {
         await loadNearby(null);
       }
     } catch (error) {
-      console.log('Atölyeler yüklenemedi', error);
+      if (__DEV__) console.log('Atölyeler yüklenemedi', error);
     } finally {
       setIsLoading(false);
       setIsRefreshing(false);
@@ -135,6 +136,11 @@ export default function EmployeeHomeScreen() {
 
   const levelInfo = useMemo(() => calculateLevelInfo(user?.xpPoints ?? 0), [user?.xpPoints]);
 
+  const handlePulseItemPress = useCallback(
+    (workshopId: string) => router.push(`/(employee)/workshop/${workshopId}` as any),
+    [router]
+  );
+
   if (isLoading) {
     return (
       <View style={styles.loadingContainer}>
@@ -150,12 +156,16 @@ export default function EmployeeHomeScreen() {
         <TouchableOpacity
           style={styles.headerActionBtn}
           onPress={() => router.push('/(employee)/(tabs)/search')}
+          accessibilityRole="button"
+          accessibilityLabel="Ara"
         >
           <Icon name="search" size={18} color={Colors.onSurfaceVariant} />
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.headerActionBtn}
           onPress={() => router.push('/(employee)/(tabs)/notifications')}
+          accessibilityRole="button"
+          accessibilityLabel="Bildirimler"
         >
           <Icon name="notifications" size={18} color={Colors.onSurfaceVariant} />
           {unreadCount > 0 && <View style={styles.headerActionBadge} />}
@@ -166,7 +176,7 @@ export default function EmployeeHomeScreen() {
       <ScrollView
         ref={scrollRef}
         style={styles.scrollArea}
-        contentContainerStyle={styles.container}
+        contentContainerStyle={[styles.container, { paddingBottom: tabBarClearance }]}
         refreshControl={
           <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} colors={[Colors.primary]} />
         }
@@ -295,7 +305,7 @@ export default function EmployeeHomeScreen() {
         {pulseItems.length > 0 && (
           <CityPulseFeed
             items={pulseItems}
-            onItemPress={(workshopId) => router.push(`/(employee)/workshop/${workshopId}` as any)}
+            onItemPress={handlePulseItemPress}
           />
         )}
 
@@ -452,7 +462,6 @@ const styles = StyleSheet.create({
   container: {
     paddingHorizontal: Spacing.containerMargin,
     paddingTop: Spacing.xl,
-    paddingBottom: Spacing.xl + FLOATING_TAB_BAR_CLEARANCE,
     gap: Spacing.lg,
   },
   headerActions: {

@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, Text, Image, ScrollView, StyleSheet } from 'react-native';
+import { View, Text, ScrollView, StyleSheet } from 'react-native';
+import { Image } from 'expo-image';
 import { Colors, Typography, Spacing, Radius } from '../../constants/theme';
 
 export interface WorkshopGalleryProps {
@@ -13,7 +14,7 @@ export function WorkshopGallery({ imageUrl }: WorkshopGalleryProps) {
     <View style={styles.container}>
       <Text style={styles.sectionTitle}>Galeri</Text>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
-        <Image source={{ uri: imageUrl }} style={styles.image} resizeMode="cover" />
+        <Image source={{ uri: imageUrl }} style={styles.image} contentFit="cover" />
       </ScrollView>
     </View>
   );

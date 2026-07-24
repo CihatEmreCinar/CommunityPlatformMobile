@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, Text, Image, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
+import { Image } from 'expo-image';
 import { Icon, IconName } from '../ui/Icon';
 import { Colors, Typography, Spacing, Radius } from '../../constants/theme';
 
@@ -40,7 +41,7 @@ export function AuthHeader({ variant = 'logo', title, subtitle, icon, logoSize =
       <Image
         source={require('../../assets/splash-icon.png')}
         style={{ width: logoSize, height: logoSize, borderRadius: logoSize * 0.283, marginBottom: compact ? Spacing.sm : Spacing.md }}
-        resizeMode="contain"
+        contentFit="contain"
       />
       <Text style={[compact ? styles.logoTitleCompact : styles.logoTitle, { marginBottom: compact ? 2 : Spacing.xs }]}>
         {title}

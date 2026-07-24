@@ -10,6 +10,7 @@ import {
   Alert,
 } from 'react-native';
 import { Icon } from '../ui/Icon';
+import { EmptyState } from '../ui/EmptyState';
 import { useNotifications } from '../../hooks/useNotifications';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
@@ -18,7 +19,7 @@ import {
   getNotificationRoute,
 } from '../../utils/notificationUtils';
 import { Colors, Typography, Spacing, Radius } from '../../constants/theme';
-import { FLOATING_TAB_BAR_CLEARANCE } from '../layout/FloatingTabBar';
+import { useFloatingTabBarClearance } from '../layout/FloatingTabBar';
 import type { Notification } from '../../types/notification.types';
 import { useRouter } from 'expo-router';
 
@@ -41,6 +42,7 @@ export function NotificationsScreen({
   emptyDescPaddingHorizontal,
 }: NotificationsScreenTheme) {
   const router = useRouter();
+  const tabBarClearance = useFloatingTabBarClearance();
   const {
     notifications,
     unreadCount,
@@ -150,20 +152,14 @@ export function NotificationsScreen({
   const renderEmpty = () => {
     if (loading) return null;
     return (
-      <View style={styles.empty}>
-        <Icon name="notificationsOffOutline" size={44} color={Colors.outline} />
-        <Text style={styles.emptyTitle}>Bildirim yok</Text>
-        <Text
-          style={[
-            styles.emptyDesc,
-            emptyDescPaddingHorizontal !== undefined && {
-              paddingHorizontal: emptyDescPaddingHorizontal,
-            },
-          ]}
-        >
-          {emptyDescription}
-        </Text>
-      </View>
+      <EmptyState
+        icon="notificationsOffOutline"
+        iconSize={44}
+        title="Bildirim yok"
+        description={emptyDescription}
+        descriptionStyle={emptyDescPaddingHorizontal !== undefined ? { paddingHorizontal: emptyDescPaddingHorizontal } : undefined}
+        style={styles.empty}
+      />
     );
   };
 
@@ -177,16 +173,15 @@ export function NotificationsScreen({
 
   if (error && notifications.length === 0) {
     return (
-      <View style={styles.centered}>
-        <Icon name="cloudOfflineOutline" size={44} color={Colors.outline} />
-        <Text style={styles.errorText}>{error}</Text>
-        <TouchableOpacity
-          style={[styles.retryBtn, { backgroundColor: accentColor }]}
-          onPress={refresh}
-        >
-          <Text style={styles.retryText}>Tekrar dene</Text>
-        </TouchableOpacity>
-      </View>
+      <EmptyState
+        icon="cloudOfflineOutline"
+        iconSize={44}
+        description={error}
+        actionLabel="Tekrar dene"
+        onAction={refresh}
+        actionColor={accentColor}
+        style={styles.centered}
+      />
     );
   }
 
@@ -225,7 +220,7 @@ export function NotificationsScreen({
           <RefreshControl refreshing={false} onRefresh={refresh} tintColor={accentColor} />
         }
         contentContainerStyle={
-          notifications.length === 0 ? styles.flatListEmpty : styles.flatListContent
+          notifications.length === 0 ? styles.flatListEmpty : [styles.flatListContent, { paddingBottom: tabBarClearance }]
         }
         showsVerticalScrollIndicator={false}
       />
@@ -258,7 +253,7 @@ const styles = StyleSheet.create({
     borderRadius: Radius.full,
   },
   unreadBannerText: { ...Typography.labelSm, fontWeight: '600' },
-  flatListContent: { paddingHorizontal: Spacing.sm, paddingBottom: Spacing.xl + FLOATING_TAB_BAR_CLEARANCE },
+  flatListContent: { paddingHorizontal: Spacing.sm },
   flatListEmpty: { flexGrow: 1 },
   item: {
     flexDirection: 'row',
@@ -283,14 +278,9 @@ const styles = StyleSheet.create({
   bodyTop: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   title: { ...Typography.labelMd, fontSize: 14, color: Colors.onSurface, flex: 1 },
   dot: { width: 7, height: 7, borderRadius: 4, flexShrink: 0 },
-  bodyText: { ...Typography.bodyMd, fontSize: 13, color: Colors.onSurfaceVariant, lineHeight: 18 },
+  bodyText: { ...Typography.bodySm, color: Colors.onSurfaceVariant, lineHeight: 18 },
   time: { ...Typography.labelSm, color: Colors.outline, marginTop: 2 },
   deleteBtn: { paddingTop: 2, flexShrink: 0 },
   footer: { paddingVertical: Spacing.md, alignItems: 'center' },
   empty: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: Spacing.sm, paddingTop: 80 },
-  emptyTitle: { ...Typography.serifTitle, color: Colors.onSurface, marginTop: 4 },
-  emptyDesc: { ...Typography.bodyMd, fontSize: 13, color: Colors.onSurfaceVariant, textAlign: 'center' },
-  errorText: { ...Typography.bodyMd, color: Colors.onSurfaceVariant, textAlign: 'center' },
-  retryBtn: { paddingHorizontal: 20, paddingVertical: 10, borderRadius: Radius.full, marginTop: 4 },
-  retryText: { ...Typography.labelMd, color: Colors.onPrimary },
 });

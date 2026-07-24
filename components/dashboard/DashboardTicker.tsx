@@ -13,7 +13,7 @@ const SEPARATOR = '     •     ';
 const BASE_MS_PER_CHAR = 150;
 const MIN_CONTENT_LENGTH = 220;
 
-export function DashboardTicker({ messages, speed = 50 }: DashboardTickerProps) {
+function DashboardTickerBase({ messages, speed = 50 }: DashboardTickerProps) {
   if (messages.length === 0) return null;
 
   const singleContent = messages.map((m) => m.text).join(SEPARATOR);
@@ -42,6 +42,10 @@ export function DashboardTicker({ messages, speed = 50 }: DashboardTickerProps) 
     </View>
   );
 }
+
+// Parent (home.tsx) sık re-render olsa da messages/speed değişmediği sürece
+// bu bileşen (ve içindeki sürekli animasyonlu TextTicker) atlanır.
+export const DashboardTicker = React.memo(DashboardTickerBase);
 
 const styles = StyleSheet.create({
   // Lüks/pastel yön: solid koyu teal yerine hero ile aynı doygun pastel ton.

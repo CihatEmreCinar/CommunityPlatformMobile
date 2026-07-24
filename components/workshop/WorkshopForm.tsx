@@ -9,6 +9,8 @@ import {
   ActivityIndicator,
   Alert,
 } from 'react-native';
+import { Image } from 'expo-image';
+import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
 import { Icon } from '../ui/Icon';
 import { categoryService } from '../../services/categoryService';
@@ -23,7 +25,8 @@ import { useCurrentLocation } from '../../hooks/useCurrentLocation';
 export interface WorkshopFormProps {
   mode: 'create' | 'edit';
   initialWorkshop?: Workshop;
-  onSubmit: (payload: WorkshopRequest) => Promise<void>;
+  /** coverUri: kullanıcının yeni seçtiği kapak fotoğrafının yerel URI'si (seçilmediyse null). */
+  onSubmit: (payload: WorkshopRequest, coverUri: string | null) => Promise<void>;
 }
 
 function toDateInput(iso: string): string { return iso.slice(0, 10); }
@@ -32,6 +35,7 @@ function toTimeInput(iso: string): string { return iso.slice(11, 16); }
 export function WorkshopForm({ mode, initialWorkshop, onSubmit }: WorkshopFormProps) {
   const router = useRouter();
   const [isSaving, setIsSaving] = useState(false);
+  const [coverUri, setCoverUri] = useState<string | null>(null);
 
   const [title, setTitle] = useState(initialWorkshop?.title ?? '');
   const [description, setDescription] = useState(initialWorkshop?.description ?? '');
@@ -62,6 +66,17 @@ export function WorkshopForm({ mode, initialWorkshop, onSubmit }: WorkshopFormPr
 
   function toggleCategory(id: string) {
     setSelectedCategoryIds((prev) => (prev.includes(id) ? prev.filter((c) => c !== id) : [...prev, id]));
+  }
+
+  async function handlePickCover() {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert('İzin gerekli', 'Kapak görseli seçmek için galeri izni vermelisin.');
+      return;
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], allowsEditing: true, aspect: [16, 9], quality: 0.7 });
+    if (result.canceled || !result.assets?.[0]) return;
+    setCoverUri(result.assets[0].uri);
   }
 
   async function handleUseCurrentLocation() {
@@ -110,7 +125,7 @@ export function WorkshopForm({ mode, initialWorkshop, onSubmit }: WorkshopFormPr
         endAt,
         tags,
         categoryIds: selectedCategoryIds,
-      });
+      }, coverUri);
 
       if (mode === 'create') {
         Alert.alert('Başarılı', 'Atölye taslak olarak oluşturuldu.', [{ text: 'Tamam', onPress: () => router.back() }]);
@@ -128,7 +143,7 @@ export function WorkshopForm({ mode, initialWorkshop, onSubmit }: WorkshopFormPr
     <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
       <ScrollView style={styles.flex} contentContainerStyle={styles.container}>
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+          <TouchableOpacity onPress={() => router.back()} style={styles.backButton} accessibilityRole="button" accessibilityLabel="Geri">
             <Icon name="arrowBack" size={20} color={Colors.onSurface} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>{mode === 'create' ? 'Yeni Atölye' : 'Atölyeyi Düzenle'}</Text>
@@ -136,6 +151,23 @@ export function WorkshopForm({ mode, initialWorkshop, onSubmit }: WorkshopFormPr
         </View>
 
         <View style={styles.form}>
+          <View style={styles.fieldGroup}>
+            <Text style={styles.label}>Kapak Fotoğrafı</Text>
+            <TouchableOpacity style={styles.coverPicker} onPress={handlePickCover} activeOpacity={0.8}>
+              {coverUri || initialWorkshop?.coverImageUrl ? (
+                <Image source={{ uri: coverUri ?? initialWorkshop?.coverImageUrl ?? undefined }} style={styles.coverImage} contentFit="cover" />
+              ) : (
+                <View style={styles.coverPlaceholder}>
+                  <Icon name="imageOutline" size={24} color={Pastel.teal.text} />
+                  <Text style={styles.coverPlaceholderText}>Kapak fotoğrafı ekle</Text>
+                </View>
+              )}
+              <View style={styles.coverEditBadge}>
+                <Icon name="camera" size={14} color={Colors.white} />
+              </View>
+            </TouchableOpacity>
+          </View>
+
           <View style={styles.fieldGroup}>
             <Text style={styles.label}>Başlık *</Text>
             <TextInput style={styles.input} value={title} onChangeText={setTitle} placeholder="Örn: Seramik Atölyesi - Başlangıç" placeholderTextColor={Colors.outline} />
@@ -270,6 +302,11 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', gap: Spacing.sm },
   rowItem: { flex: 1 },
   label: { ...Typography.labelMd, color: Colors.onSurfaceVariant },
+  coverPicker: { width: '100%', height: 160, borderRadius: Radius.lg, overflow: 'hidden', backgroundColor: Colors.surfaceContainer },
+  coverImage: { width: '100%', height: '100%' },
+  coverPlaceholder: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: Spacing.xs },
+  coverPlaceholderText: { ...Typography.labelMd, color: Pastel.teal.text },
+  coverEditBadge: { position: 'absolute', right: Spacing.sm, bottom: Spacing.sm, width: 30, height: 30, borderRadius: 15, backgroundColor: 'rgba(0,0,0,0.55)', alignItems: 'center', justifyContent: 'center' },
   input: { ...Typography.bodyLg, color: Colors.onSurface, backgroundColor: Colors.surfaceContainer, borderRadius: Radius.lg, paddingHorizontal: Spacing.sm, paddingVertical: Spacing.sm },
   textArea: { minHeight: 90, textAlignVertical: 'top' },
   toggleRow: { flexDirection: 'row', gap: Spacing.sm },

@@ -21,11 +21,12 @@ import type { CalendarEvent } from '../../../services/calendarService';
 import { CalendarWidget } from '../../../components/CalendarWidget';
 import { Colors, Pastel, Typography, Spacing, Radius } from '../../../constants/theme';
 import { useUnreadCount } from '../../../hooks/useUnreadCount';
-import { FLOATING_TAB_BAR_CLEARANCE } from '../../../components/layout/FloatingTabBar';
+import { useFloatingTabBarClearance } from '../../../components/layout/FloatingTabBar';
 
 export default function CafeDashboardScreen() {
   const { user, logout } = useAuth();
   const router = useRouter();
+  const tabBarClearance = useFloatingTabBarClearance();
   const { unreadCount } = useUnreadCount(30000);
   const [dashboard, setDashboard] = useState<CafeDashboardStats | null>(null);
   const [profile, setProfile] = useState<CafeProfile | null>(null);
@@ -52,7 +53,7 @@ export default function CafeDashboardScreen() {
         });
       }
     } catch (error) {
-      console.log('Dashboard yüklenemedi', error);
+      if (__DEV__) console.log('Dashboard yüklenemedi', error);
     } finally {
       setIsLoading(false);
       setIsRefreshing(false);
@@ -65,7 +66,7 @@ export default function CafeDashboardScreen() {
     try {
       setCalendarEvents(await calendarService.getCafeCalendarEvents());
     } catch (error) {
-      console.log('Takvim etkinlikleri yüklenemedi', error);
+      if (__DEV__) console.log('Takvim etkinlikleri yüklenemedi', error);
     } finally {
       setCalendarLoading(false);
     }
@@ -93,7 +94,7 @@ export default function CafeDashboardScreen() {
     <SafeAreaView style={styles.safeArea} edges={['top']}>
     <ScrollView
       style={styles.flex}
-      contentContainerStyle={styles.container}
+      contentContainerStyle={[styles.container, { paddingBottom: tabBarClearance }]}
       refreshControl={<RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} colors={[Colors.primary]} />}
     >
       <View style={styles.header}>
@@ -102,11 +103,16 @@ export default function CafeDashboardScreen() {
           <Text style={styles.subGreeting}>{profile?.name || 'Profilini tamamla'}</Text>
         </View>
         <View style={styles.headerActions}>
-          <TouchableOpacity style={styles.headerActionBtn} onPress={() => router.push('/(cafe)/(tabs)/notifications')}>
+          <TouchableOpacity
+            style={styles.headerActionBtn}
+            onPress={() => router.push('/(cafe)/(tabs)/notifications')}
+            accessibilityRole="button"
+            accessibilityLabel="Bildirimler"
+          >
             <Icon name="notifications" size={18} color={Colors.onSurfaceVariant} />
             {unreadCount > 0 && <View style={styles.headerActionBadge} />}
           </TouchableOpacity>
-          <TouchableOpacity onPress={handleLogout} style={styles.logoutButton}>
+          <TouchableOpacity onPress={handleLogout} style={styles.logoutButton} accessibilityRole="button" accessibilityLabel="Çıkış yap">
             <Icon name="logout" size={19} color={Pastel.coral.text} />
           </TouchableOpacity>
         </View>
@@ -156,7 +162,7 @@ const styles = StyleSheet.create({
   flex: { flex: 1, backgroundColor: Colors.background },
   safeArea: { flex: 1, backgroundColor: Colors.background },
   loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: Colors.background },
-  container: { paddingHorizontal: Spacing.containerMargin, paddingTop: Spacing.xl, paddingBottom: Spacing.xl + FLOATING_TAB_BAR_CLEARANCE, gap: Spacing.md },
+  container: { paddingHorizontal: Spacing.containerMargin, paddingTop: Spacing.xl, gap: Spacing.md },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: Spacing.sm },
   greeting: { ...Typography.serifHeading, fontSize: 22, lineHeight: 28, color: Colors.onSurface },
   subGreeting: { ...Typography.bodyMd, color: Colors.onSurfaceVariant, marginTop: 2 },
@@ -165,7 +171,7 @@ const styles = StyleSheet.create({
   headerActionBadge: { position: 'absolute', top: 6, right: 6, width: 7, height: 7, borderRadius: 4, backgroundColor: '#EF4444' },
   logoutButton: { padding: Spacing.sm, borderRadius: Radius.full, backgroundColor: Pastel.coral.tint },
   heroCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: Pastel.coral.hero, borderRadius: Radius.xxxl, padding: Spacing.md, gap: Spacing.sm },
-  heroBadge: { width: 48, height: 48, borderRadius: Radius.full, backgroundColor: 'rgba(255,255,255,0.5)', justifyContent: 'center', alignItems: 'center' },
+  heroBadge: { width: 48, height: 48, borderRadius: Radius.full, backgroundColor: Colors.glassOverlay.soft, justifyContent: 'center', alignItems: 'center' },
   heroInfo: { flex: 1 },
   heroLabel: { ...Typography.labelSm, color: Pastel.coral.heroText, opacity: 0.85 },
   heroValue: { ...Typography.serifTitleLg, color: Pastel.coral.heroText, marginTop: 2 },

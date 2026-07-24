@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react';
-import { Animated, Image, ImageSourcePropType, StyleSheet, Text, View } from 'react-native';
+import { Animated, ImageSourcePropType, StyleSheet, Text, View } from 'react-native';
+import { Image } from 'expo-image';
 import { Icon } from '../ui/Icon';
 import { Colors, Typography } from '../../constants/theme';
 
@@ -15,7 +16,7 @@ export function AtiMascot({ size = 88, status = 'live', statusLabel = 'CANLI', s
     <View style={styles.wrap}>
       <View style={[styles.circle, { width: size, height: size, borderRadius: size / 2 }]}>
         {source ? (
-          <Image source={source} style={{ width: size * 0.7, height: size * 0.7 }} resizeMode="contain" />
+          <Image source={source} style={{ width: size * 0.7, height: size * 0.7 }} contentFit="contain" />
         ) : (
           <Icon name="aiMatch" size={size * 0.42} color={Colors.primaryDarker} />
         )}
@@ -59,11 +60,11 @@ const styles = StyleSheet.create({
   wrap: { alignItems: 'center' },
   // Hero kartın (doygun teal) üzerinde oturuyor — yarı saydam beyaz halka.
   circle: {
-    backgroundColor: 'rgba(255,255,255,0.55)',
+    backgroundColor: Colors.glassOverlay.medium,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 3,
-    borderColor: 'rgba(255,255,255,0.7)',
+    borderColor: Colors.glassOverlay.border,
   },
   statusRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 8 },
   dot: { width: 6, height: 6, borderRadius: 3 },

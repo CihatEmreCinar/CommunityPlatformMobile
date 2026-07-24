@@ -49,7 +49,7 @@ export default function TicketScreen() {
     return (
       <SafeAreaView style={styles.flex} edges={['top']}>
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+          <TouchableOpacity onPress={() => router.back()} style={styles.backButton} accessibilityRole="button" accessibilityLabel="Geri">
             <Icon name="arrowBack" size={22} color={Colors.onSurface} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Bilet</Text>
@@ -72,7 +72,7 @@ export default function TicketScreen() {
     <SafeAreaView style={styles.flex} edges={['top', 'bottom']}>
       <ScrollView style={styles.flex} contentContainerStyle={styles.container}>
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+          <TouchableOpacity onPress={() => router.back()} style={styles.backButton} accessibilityRole="button" accessibilityLabel="Geri">
             <Icon name="arrowBack" size={22} color={Colors.onSurface} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Bilet</Text>
@@ -158,7 +158,7 @@ const styles = StyleSheet.create({
   },
   statusBadge: {
     alignSelf: 'flex-start',
-    backgroundColor: 'rgba(255,255,255,0.5)',
+    backgroundColor: Colors.glassOverlay.soft,
     paddingHorizontal: Spacing.sm,
     paddingVertical: 4,
     borderRadius: Radius.full,

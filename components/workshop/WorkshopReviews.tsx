@@ -32,7 +32,13 @@ export function WorkshopReviews({
           <Text style={styles.sectionTitle}>Deneyimini Paylaş</Text>
           <View style={styles.starRow}>
             {[1, 2, 3, 4, 5].map((star) => (
-              <TouchableOpacity key={star} onPress={() => onRatingChange(star)}>
+              <TouchableOpacity
+                key={star}
+                onPress={() => onRatingChange(star)}
+                accessibilityRole="button"
+                accessibilityLabel={`${star} yıldız`}
+                accessibilityState={{ selected: star <= rating }}
+              >
                 <Icon name={star <= rating ? 'star' : 'starEmpty'} size={32} color={Colors.amber} />
               </TouchableOpacity>
             ))}

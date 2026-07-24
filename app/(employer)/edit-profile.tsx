@@ -4,6 +4,7 @@ import { useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import { employerService } from '../../services/employerService';
 import { categoryService } from '../../services/categoryService';
+import { userService } from '../../services/userService';
 import type { EmployerProfile } from '../../services/employerService';
 import type { Category } from '../../types/category';
 import { ScreenContainer } from '../../components/layout/ScreenContainer';
@@ -20,7 +21,7 @@ const MAX_SPECIALIZATION = 8;
 
 export default function EditEmployerProfileScreen() {
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, refreshUser } = useAuth();
 
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
@@ -66,11 +67,24 @@ export default function EditEmployerProfileScreen() {
       Alert.alert('İzin gerekli', 'Fotoğraf seçmek için galeri izni vermelisin.');
       return;
     }
-    const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ImagePicker.MediaTypeOptions.Images, allowsEditing: true, aspect: [1, 1], quality: 0.7 });
+    const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], allowsEditing: true, aspect: [1, 1], quality: 0.7 });
     if (result.canceled || !result.assets?.[0]) return;
-    setProfileImageUrl(result.assets[0].uri);
-    Alert.alert('Önizleme', 'Fotoğraf seçildi ancak yükleme henüz aktif değil — bu özellik yakında eklenecek.');
-  }, []);
+
+    const asset = result.assets[0];
+    setUploadingPhoto(true);
+    try {
+      const extension = asset.uri.split('.').pop()?.split('?')[0] ?? 'jpg';
+      const formData = new FormData();
+      formData.append('file', { uri: asset.uri, name: `avatar_${Date.now()}.${extension}`, type: 'image/jpeg' } as any);
+      const res = await userService.uploadAvatar(formData);
+      setProfileImageUrl(res.url);
+      await refreshUser();
+    } catch {
+      Alert.alert('Hata', 'Profil fotoğrafı yüklenemedi.');
+    } finally {
+      setUploadingPhoto(false);
+    }
+  }, [refreshUser]);
 
   const handlePickCover = useCallback(async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -78,7 +92,7 @@ export default function EditEmployerProfileScreen() {
       Alert.alert('İzin gerekli', 'Kapak görseli seçmek için galeri izni vermelisin.');
       return;
     }
-    const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ImagePicker.MediaTypeOptions.Images, allowsEditing: true, aspect: [16, 9], quality: 0.7 });
+    const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], allowsEditing: true, aspect: [16, 9], quality: 0.7 });
     if (result.canceled || !result.assets?.[0]) return;
 
     const asset = result.assets[0];

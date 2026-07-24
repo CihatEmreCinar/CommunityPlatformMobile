@@ -2,12 +2,12 @@ import React, { useRef, useState } from 'react';
 import {
   View,
   Text,
-  Image,
   Animated,
   TouchableOpacity,
   StyleSheet,
   ActivityIndicator,
 } from 'react-native';
+import { Image } from 'expo-image';
 import { Icon } from '../ui/Icon';
 import { Colors } from '../../constants/theme';
 

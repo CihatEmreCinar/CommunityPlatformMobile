@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, ActivityIndicator, Alert, TouchableOpacity, Image } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, ActivityIndicator, Alert, TouchableOpacity } from 'react-native';
+import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Icon } from '../../../components/ui/Icon';
 import { ScreenContainer } from '../../../components/layout/ScreenContainer';
@@ -24,7 +25,7 @@ export default function SpaceListingDetailScreen() {
       const data = await spaceListingService.getById(resolvedId);
       setListing(data);
     } catch (error) {
-      console.log('İlan detay yüklenemedi', error);
+      if (__DEV__) console.log('İlan detay yüklenemedi', error);
     } finally {
       if (showLoading) setLoading(false);
     }
@@ -95,7 +96,7 @@ export default function SpaceListingDetailScreen() {
         header={
           <View style={styles.headerRow}>
             <Text style={styles.title}>İlanı Düzenle</Text>
-            <TouchableOpacity onPress={() => setEditing(false)} style={styles.iconCircle}>
+            <TouchableOpacity onPress={() => setEditing(false)} style={styles.iconCircle} accessibilityRole="button" accessibilityLabel="İptal">
               <Icon name="closeModal" size={18} color={Colors.onSurface} />
             </TouchableOpacity>
           </View>
@@ -119,10 +120,10 @@ export default function SpaceListingDetailScreen() {
         <View style={styles.headerRow}>
           <Text style={styles.title} numberOfLines={1}>{listing.title}</Text>
           <View style={styles.headerActions}>
-            <TouchableOpacity onPress={() => setEditing(true)} style={[styles.iconCircle, { backgroundColor: Pastel.teal.tint }]}>
+            <TouchableOpacity onPress={() => setEditing(true)} style={[styles.iconCircle, { backgroundColor: Pastel.teal.tint }]} accessibilityRole="button" accessibilityLabel="İlanı düzenle">
               <Icon name="edit" size={17} color={Pastel.teal.text} />
             </TouchableOpacity>
-            <TouchableOpacity onPress={handleDelete} style={[styles.iconCircle, { backgroundColor: Pastel.coral.tint }]}>
+            <TouchableOpacity onPress={handleDelete} style={[styles.iconCircle, { backgroundColor: Pastel.coral.tint }]} accessibilityRole="button" accessibilityLabel="İlanı sil">
               <Icon name="delete" size={17} color={Pastel.coral.text} />
             </TouchableOpacity>
           </View>

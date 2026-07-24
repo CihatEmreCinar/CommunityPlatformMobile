@@ -1,8 +1,9 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import {
   View, Text, FlatList, TouchableOpacity, StyleSheet,
-  ActivityIndicator, Alert, RefreshControl, ScrollView, Image, Share,
+  ActivityIndicator, Alert, RefreshControl, ScrollView, Share,
 } from 'react-native';
+import { Image } from 'expo-image';
 import { Icon } from '../../../components/ui/Icon';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../../../contexts/AuthContext';
@@ -13,7 +14,7 @@ import type { Post, UserSocialStats } from '../../../types/post.types';
 import { ProfileHeader } from '../../../components/profile/ProfileHeader';
 import { formatCityDistrict } from '../../../utils/locationFormat';
 import { Colors, Pastel, Typography, Spacing, Radius } from '../../../constants/theme';
-import { FLOATING_TAB_BAR_CLEARANCE } from '../../../components/layout/FloatingTabBar';
+import { useFloatingTabBarClearance } from '../../../components/layout/FloatingTabBar';
 
 const ACCENT = Colors.primary;
 
@@ -48,7 +49,7 @@ function MyPostCard({ post, onEdit, onDelete }: {
         {post.media && post.media.length > 0 ? (
           <View style={styles.postMediaRow}>
             {post.media.slice(0, 3).map((m) => (
-              <Image key={m.id} source={{ uri: m.url }} style={styles.postMediaThumb} resizeMode="cover" />
+              <Image key={m.id} source={{ uri: m.url }} style={styles.postMediaThumb} contentFit="cover" />
             ))}
           </View>
         ) : null}
@@ -70,10 +71,10 @@ function MyPostCard({ post, onEdit, onDelete }: {
         </View>
       </View>
       <View style={styles.postCardActions}>
-        <TouchableOpacity onPress={() => onEdit(post.id)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} style={styles.postActionBtn}>
+        <TouchableOpacity onPress={() => onEdit(post.id)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} style={styles.postActionBtn} accessibilityRole="button" accessibilityLabel="Gönderiyi düzenle">
           <Icon name="pencilOutline" size={17} color={ACCENT} />
         </TouchableOpacity>
-        <TouchableOpacity onPress={() => onDelete(post.id)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} style={styles.postActionBtn}>
+        <TouchableOpacity onPress={() => onDelete(post.id)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} style={styles.postActionBtn} accessibilityRole="button" accessibilityLabel="Gönderiyi sil">
           <Icon name="trashOutline" size={17} color={Pastel.coral.text} />
         </TouchableOpacity>
       </View>
@@ -84,6 +85,7 @@ function MyPostCard({ post, onEdit, onDelete }: {
 export default function EmployerProfileScreen() {
   const router = useRouter();
   const { user, logout, refreshUser } = useAuth();
+  const tabBarClearance = useFloatingTabBarClearance();
   const profile = user?.employerProfile ?? null;
 
   const [activeTab, setActiveTab] = useState<Tab>('posts');
@@ -224,6 +226,8 @@ export default function EmployerProfileScreen() {
             { text: 'İptal', style: 'cancel' },
             { text: 'Çıkış', style: 'destructive', onPress: handleLogout },
           ])}
+          accessibilityRole="button"
+          accessibilityLabel="Çıkış yap"
         >
           <Icon name="logOutOutline" size={17} color={Pastel.coral.text} />
         </TouchableOpacity>
@@ -301,11 +305,11 @@ export default function EmployerProfileScreen() {
           onEndReachedThreshold={0.3}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refresh} tintColor={ACCENT} />}
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.listContent}
+          contentContainerStyle={{ paddingBottom: tabBarClearance }}
         />
       ) : (
         <ScrollView
-          contentContainerStyle={styles.infoScrollContent}
+          contentContainerStyle={{ paddingBottom: tabBarClearance }}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refresh} tintColor={ACCENT} />}
           showsVerticalScrollIndicator={false}
         >
@@ -319,14 +323,12 @@ export default function EmployerProfileScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background },
-  listContent: { paddingBottom: 32 + FLOATING_TAB_BAR_CLEARANCE },
-  infoScrollContent: { paddingBottom: FLOATING_TAB_BAR_CLEARANCE },
   quickActionsRow: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: Spacing.containerMargin, paddingBottom: Spacing.sm, backgroundColor: Colors.background },
   newPostBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: Colors.primary, borderRadius: Radius.full, paddingHorizontal: 14, paddingVertical: 9 },
   newPostBtnText: { ...Typography.labelMd, color: Colors.onPrimary },
   logoutBtn: { padding: 9, backgroundColor: Pastel.coral.tint, borderRadius: Radius.full },
   workshopTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 4 },
-  workshopTitleText: { ...Typography.bodyMd, fontSize: 13, color: Colors.onSurfaceVariant },
+  workshopTitleText: { ...Typography.bodySm, color: Colors.onSurfaceVariant },
   specializationRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 8 },
   specChip: { backgroundColor: Pastel.teal.tintStrong, borderRadius: Radius.full, paddingHorizontal: 10, paddingVertical: 4 },
   specChipText: { ...Typography.labelSm, color: Pastel.teal.text, fontWeight: '600' },

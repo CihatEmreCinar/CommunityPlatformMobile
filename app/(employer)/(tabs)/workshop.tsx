@@ -15,7 +15,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { workshopService } from '../../../services/workshopService';
 import { Workshop } from '../../../types/workshop';
 import { Colors, Pastel, Typography, Spacing, Radius } from '../../../constants/theme';
-import { FLOATING_TAB_BAR_CLEARANCE } from '../../../components/layout/FloatingTabBar';
+import { useFloatingTabBarClearance } from '../../../components/layout/FloatingTabBar';
 
 const STATUS_LABELS: Record<string, string> = {
   draft: 'Taslak',
@@ -35,6 +35,7 @@ const STATUS_PALETTE: Record<string, typeof Pastel.teal> = {
 export default function MyWorkshopsScreen() {
   const router = useRouter();
   const { status } = useLocalSearchParams<{ status?: string }>();
+  const tabBarClearance = useFloatingTabBarClearance();
   const [workshops, setWorkshops] = useState<Workshop[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -44,7 +45,7 @@ export default function MyWorkshopsScreen() {
     try {
       setWorkshops(await workshopService.getMyWorkshops(status));
     } catch (error) {
-      console.log('Atölyeler yüklenemedi', error);
+      if (__DEV__) console.log('Atölyeler yüklenemedi', error);
     } finally {
       setIsLoading(false);
       setIsRefreshing(false);
@@ -95,15 +96,15 @@ export default function MyWorkshopsScreen() {
     <SafeAreaView style={styles.safeArea} edges={['top']}>
       <ScrollView
         style={styles.flex}
-        contentContainerStyle={styles.container}
+        contentContainerStyle={[styles.container, { paddingBottom: tabBarClearance }]}
         refreshControl={<RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} colors={[Colors.primary]} />}
       >
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+          <TouchableOpacity onPress={() => router.back()} style={styles.backButton} accessibilityRole="button" accessibilityLabel="Geri">
             <Icon name="arrowBack" size={20} color={Colors.onSurface} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Atölyelerim</Text>
-          <TouchableOpacity onPress={() => router.push('/(employer)/workshop/create')} style={styles.addButton}>
+          <TouchableOpacity onPress={() => router.push('/(employer)/workshop/create')} style={styles.addButton} accessibilityRole="button" accessibilityLabel="Yeni atölye oluştur">
             <Icon name="addAction" size={20} color={Colors.onPrimary} />
           </TouchableOpacity>
         </View>
@@ -197,7 +198,7 @@ const styles = StyleSheet.create({
   flex: { flex: 1, backgroundColor: Colors.background },
   safeArea: { flex: 1, backgroundColor: Colors.background },
   loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: Colors.background },
-  container: { paddingHorizontal: Spacing.containerMargin, paddingTop: Spacing.xl, paddingBottom: Spacing.xl + FLOATING_TAB_BAR_CLEARANCE },
+  container: { paddingHorizontal: Spacing.containerMargin, paddingTop: Spacing.xl },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: Spacing.lg },
   backButton: { width: 38, height: 38, borderRadius: Radius.full, backgroundColor: Colors.surfaceContainer, justifyContent: 'center', alignItems: 'center' },
   headerTitle: { ...Typography.serifTitleLg, color: Colors.onSurface },

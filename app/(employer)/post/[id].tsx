@@ -111,12 +111,12 @@ export default function PostEditScreen() {
     <SafeAreaView style={styles.root} edges={['top', 'bottom']}>
     <KeyboardAvoidingView style={styles.root} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} style={styles.closeBtn}>
+        <TouchableOpacity onPress={() => router.back()} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} style={styles.closeBtn} accessibilityRole="button" accessibilityLabel="Kapat">
           <Icon name="close" size={19} color={Colors.onSurface} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Gönderiyi Düzenle</Text>
         <TouchableOpacity style={[styles.saveBtn, !canSave && styles.saveBtnDisabled]} onPress={handleSave} disabled={!canSave}>
-          {submitting ? <ActivityIndicator size="small" color="#FFFFFF" /> : <Text style={styles.saveBtnText}>Kaydet</Text>}
+          {submitting ? <ActivityIndicator size="small" color={Colors.white} /> : <Text style={styles.saveBtnText}>Kaydet</Text>}
         </TouchableOpacity>
       </View>
 
@@ -161,8 +161,8 @@ export default function PostEditScreen() {
                 autoCapitalize="none"
                 maxLength={30}
               />
-              <TouchableOpacity style={[styles.addTagBtn, !tagInput.trim() && styles.addTagBtnDisabled]} onPress={addTag} disabled={!tagInput.trim()}>
-                <Icon name="add" size={19} color="#FFFFFF" />
+              <TouchableOpacity style={[styles.addTagBtn, !tagInput.trim() && styles.addTagBtnDisabled]} onPress={addTag} disabled={!tagInput.trim()} accessibilityRole="button" accessibilityLabel="Etiket ekle">
+                <Icon name="add" size={19} color={Colors.white} />
               </TouchableOpacity>
             </View>
           )}
@@ -192,7 +192,7 @@ const styles = StyleSheet.create({
   headerTitle: { ...Typography.serifTitle, color: Colors.onSurface },
   saveBtn: { backgroundColor: ACCENT, borderRadius: Radius.full, paddingHorizontal: 18, paddingVertical: 8, minWidth: 72, alignItems: 'center' },
   saveBtnDisabled: { backgroundColor: Colors.outlineVariant },
-  saveBtnText: { ...Typography.labelMd, color: '#FFFFFF' },
+  saveBtnText: { ...Typography.labelMd, color: Colors.white },
   body: { flex: 1 },
   bodyContent: { paddingBottom: Spacing.xl, gap: Spacing.sm },
   section: { padding: Spacing.md, backgroundColor: Pastel.teal.tint, borderRadius: Radius.xxl, marginHorizontal: Spacing.md, marginTop: Spacing.sm },

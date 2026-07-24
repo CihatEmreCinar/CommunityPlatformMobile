@@ -1,5 +1,8 @@
 import { apiClient } from './apiClient';
 import { Workshop, WorkshopRequest, WorkshopSearchFilters, WorkshopSearchResult } from '../types/workshop';
+import type { UploadedFileResponse } from './userService';
+import type { UploadedFileResponseDto } from '../types/user.api';
+import { mapUploadedFileResponse } from './mappers/userMapper';
 
 interface WorkshopSearchPageResponse {
   page: number;
@@ -80,5 +83,10 @@ export const workshopService = {
       params: status ? { status } : undefined,
     });
     return data;
+  },
+
+  async uploadCover(id: string, file: FormData): Promise<UploadedFileResponse> {
+    const { data } = await apiClient.post<UploadedFileResponseDto>(`/workshops/${id}/cover`, file);
+    return mapUploadedFileResponse(data);
   },
 };

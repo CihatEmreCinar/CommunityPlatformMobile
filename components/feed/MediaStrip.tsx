@@ -1,5 +1,6 @@
 import React from 'react';
-import { Dimensions, Image, ScrollView, StyleSheet } from 'react-native';
+import { Dimensions, ScrollView, StyleSheet } from 'react-native';
+import { Image } from 'expo-image';
 import type { MediaStripProps } from './types';
 import { Radius } from '../../constants/theme';
 
@@ -9,13 +10,13 @@ export function MediaStrip({ media }: MediaStripProps) {
   if (!media || media.length === 0) return null;
 
   if (media.length === 1) {
-    return <Image source={{ uri: media[0].url }} style={styles.single} resizeMode="cover" />;
+    return <Image source={{ uri: media[0].url }} style={styles.single} contentFit="cover" />;
   }
 
   return (
     <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.strip}>
       {media.map((m) => (
-        <Image key={m.id} source={{ uri: m.url }} style={styles.thumb} resizeMode="cover" />
+        <Image key={m.id} source={{ uri: m.url }} style={styles.thumb} contentFit="cover" />
       ))}
     </ScrollView>
   );
